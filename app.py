@@ -6,7 +6,7 @@ import plotly.express as px
 from streamlit_option_menu import option_menu
 
 # Import diretti dei componenti
-from components.auth import require_auth, show_user_info, login_form
+from auth_standalone import require_auth, show_user_info, login_form
 from components.charts import Charts
 from components.client_form import ClientForm
 from components.client_table import ClientTable

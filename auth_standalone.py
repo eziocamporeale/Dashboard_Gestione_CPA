@@ -1,12 +1,43 @@
 #!/usr/bin/env python3
 """
-Componente per l'autenticazione e gestione sessioni
+Modulo standalone per l'autenticazione e gestione sessioni
 """
 
 import streamlit as st
 
-# Import dal package config
-from config.users import is_valid_user, get_user_role, has_permission
+# Credenziali utenti (username: password)
+USERS = {
+    "admin": "admin123",
+    "ezio": "password123", 
+    "user": "user123"
+}
+
+# Ruoli utenti
+USER_ROLES = {
+    "admin": "admin",
+    "ezio": "manager",
+    "user": "viewer"
+}
+
+# Permessi per ruolo
+PERMISSIONS = {
+    "admin": ["read", "write", "delete", "admin"],
+    "manager": ["read", "write", "delete"],
+    "viewer": ["read"]
+}
+
+def get_user_role(username):
+    """Restituisce il ruolo dell'utente"""
+    return USER_ROLES.get(username, "viewer")
+
+def has_permission(username, permission):
+    """Verifica se l'utente ha un determinato permesso"""
+    role = get_user_role(username)
+    return permission in PERMISSIONS.get(role, [])
+
+def is_valid_user(username, password):
+    """Verifica se le credenziali sono valide"""
+    return username in USERS and USERS[username] == password
 
 def init_auth():
     """Inizializza l'autenticazione nella sessione"""
