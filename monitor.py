@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-Modulo di monitoraggio per Dashboard Gestione CPA
-Monitora le performance, la salute del database e le risorse del sistema
+Sistema di monitoraggio per l'applicazione Dashboard Gestione CPA
 """
 
+import streamlit as st
 import psutil
 import sqlite3
-import time
-import json
+import os
 from datetime import datetime, timedelta
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from pathlib import Path
-import threading
-import queue
-from .utils.logger import log_info, log_error, log_warning
-from .utils.backup import get_backup_stats
+
+# Import diretti
+from utils.logger import log_info, log_error, log_warning
+from utils.backup import get_backup_stats
 
 class SystemMonitor:
     """Monitor del sistema"""

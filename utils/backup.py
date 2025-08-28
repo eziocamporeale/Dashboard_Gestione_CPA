@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Modulo per la gestione dei backup del database Dashboard Gestione CPA
+Modulo per la gestione dei backup del database
 """
 
-import sqlite3
-import shutil
-import zipfile
-import json
-from datetime import datetime, timedelta
-from pathlib import Path
 import os
-from .logger import log_info, log_error, log_warning
+import shutil
+import sqlite3
+from datetime import datetime
+import streamlit as st
+
+# Import diretti
+from utils.logger import log_info, log_error, log_warning
 
 class DatabaseBackup:
     """Gestore dei backup del database"""
