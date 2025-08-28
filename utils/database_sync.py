@@ -172,10 +172,24 @@ class DatabaseSyncManager:
     def auto_sync_on_startup(self):
         """Sincronizzazione automatica all'avvio dell'app"""
         try:
-            # Se il database corrente è vuoto o ha pochi dati, ripristina dal sync
-            if os.path.exists(self.db_path):
+            # Verifica che il database esista e abbia le tabelle necessarie
+            if not os.path.exists(self.db_path):
+                self.logger.info("Database non trovato, sincronizzazione non necessaria")
+                return True, "Database non trovato, sincronizzazione non necessaria"
+            
+            # Verifica che le tabelle esistano
+            try:
                 conn = sqlite3.connect(self.db_path)
                 cursor = conn.cursor()
+                
+                # Controlla se la tabella clienti esiste
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='clienti'")
+                if not cursor.fetchone():
+                    self.logger.info("Tabella clienti non trovata, sincronizzazione non necessaria")
+                    conn.close()
+                    return True, "Tabella clienti non trovata, sincronizzazione non necessaria"
+                
+                # Conta clienti solo se la tabella esiste
                 cursor.execute("SELECT COUNT(*) FROM clienti")
                 current_clienti = cursor.fetchone()[0]
                 conn.close()
@@ -189,16 +203,20 @@ class DatabaseSyncManager:
                         return True, message
                     else:
                         self.logger.warning(f"Ripristino automatico fallito: {message}")
-            
-            # Sincronizza il database corrente
-            success, message = self.sync_to_repository()
-            if success:
-                self.logger.info(f"Sincronizzazione automatica completata: {message}")
-            else:
-                self.logger.warning(f"Sincronizzazione automatica fallita: {message}")
-            
-            return success, message
-            
+                
+                # Sincronizza il database corrente
+                success, message = self.sync_to_repository()
+                if success:
+                    self.logger.info(f"Sincronizzazione automatica completata: {message}")
+                else:
+                    self.logger.warning(f"Sincronizzazione automatica fallita: {message}")
+                
+                return success, message
+                
+            except sqlite3.Error as e:
+                self.logger.warning(f"Errore SQLite durante la verifica: {str(e)}")
+                return True, f"Database non ancora inizializzato: {str(e)}"
+                
         except Exception as e:
             self.logger.error(f"Errore durante la sincronizzazione automatica: {str(e)}")
             return False, str(e)
