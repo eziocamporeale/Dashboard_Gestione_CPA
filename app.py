@@ -355,15 +355,6 @@ with st.sidebar:
     st.header("ℹ️ Informazioni")
     st.write("Dashboard per la gestione delle CPA dei broker")
     
-    # Statistiche rapide
-    df_clienti = db.ottieni_tutti_clienti()
-    stats = db.ottieni_statistiche()
-    
-    st.header("📊 Statistiche Rapide")
-    st.write(f"**Clienti Totali:** {stats['totale_clienti']}")
-    st.write(f"**Broker Attivi:** {stats['broker_attivi']}")
-    st.write(f"**Depositi Totali:** {format_currency(stats['depositi_totali'])}")
-    
     # Azioni rapide
     st.header("🔧 Azioni Rapide")
     
