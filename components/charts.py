@@ -17,27 +17,6 @@ class Charts:
             st.info("Nessun dato disponibile per i grafici")
             return
         
-        # Statistiche generali
-        st.subheader("📊 Statistiche Generali")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            totale_clienti = len(df_clienti)
-            st.metric(label="Totale Clienti", value=totale_clienti)
-        
-        with col2:
-            broker_attivi = df_clienti['broker'].nunique()
-            st.metric(label="Broker Attivi", value=broker_attivi)
-        
-        with col3:
-            depositi_totali = df_clienti['deposito'].sum()
-            st.metric(label="Depositi Totali", value=f"€{depositi_totali:,.2f}")
-        
-        with col4:
-            cpa_attive = len(df_clienti[df_clienti['deposito'] > 0])
-            st.metric(label="CPA Attive", value=cpa_attive)
-        
         # Grafici
         st.subheader("📈 Grafici Analitici")
         
