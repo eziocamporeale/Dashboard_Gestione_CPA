@@ -5,3 +5,4 @@ streamlit-option-menu>=0.3.6
 python-dotenv>=1.0.0
 pathlib2>=2.3.7
 psutil>=5.9.6
+setuptools>=65.0.0
