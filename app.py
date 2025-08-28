@@ -14,6 +14,7 @@ from components.incroci_tab import IncrociTab
 from database.database import DatabaseManager
 from database.incroci_manager import IncrociManager
 from utils.helpers import *
+from utils.backup import DatabaseBackupManager, auto_backup
 
 # Configurazione pagina
 st.set_page_config(
