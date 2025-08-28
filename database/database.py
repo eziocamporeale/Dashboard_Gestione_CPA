@@ -256,3 +256,51 @@ class DatabaseManager:
                 conn.rollback()
                 conn.close()
             return False
+
+    def ottieni_broker_predefiniti(self):
+        """Restituisce la lista dei broker predefiniti più comuni"""
+        return [
+            "FXPro",
+            "Pepperstone", 
+            "IC Markets",
+            "XM",
+            "FBS",
+            "Exness",
+            "RoboForex",
+            "Vantage",
+            "AvaTrade",
+            "Plus500",
+            "eToro",
+            "IG",
+            "Saxo Bank",
+            "Interactive Brokers",
+            "OANDA",
+            "Dukascopy",
+            "Swissquote",
+            "DEGIRO",
+            "Binance",
+            "Coinbase"
+        ]
+    
+    def ottieni_tutti_broker(self):
+        """Restituisce tutti i broker dal database (predefiniti + personalizzati)"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Ottieni broker dai clienti esistenti
+            cursor.execute("SELECT DISTINCT broker FROM clienti WHERE broker IS NOT NULL AND broker != '' ORDER BY broker")
+            broker_db = [row[0] for row in cursor.fetchall()]
+            
+            conn.close()
+            
+            # Combina broker predefiniti con quelli del database
+            broker_predefiniti = self.ottieni_broker_predefiniti()
+            tutti_broker = list(set(broker_predefiniti + broker_db))
+            tutti_broker.sort()
+            
+            return tutti_broker
+            
+        except Exception as e:
+            # In caso di errore, restituisci solo i predefiniti
+            return self.ottieni_broker_predefiniti()

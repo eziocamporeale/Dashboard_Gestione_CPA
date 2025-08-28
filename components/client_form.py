@@ -35,11 +35,29 @@ class ClientForm:
                     help="Password per l'accesso all'email"
                 )
                 
-                broker = st.text_input(
+                # Campo broker con menu a tendina e possibilità di aggiungerne di nuovi
+                broker_options = ["FXPro", "Pepperstone", "IC Markets", "XM", "FBS", "Exness", "RoboForex", "Vantage", "AvaTrade", "Plus500", "eToro", "IG", "Saxo Bank", "Interactive Brokers", "OANDA", "Dukascopy", "Swissquote", "DEGIRO", "Binance", "Coinbase", "Altro"]
+                
+                # Se è una modifica e il broker non è nella lista, aggiungilo
+                if dati_cliente and dati_cliente.get('broker') and dati_cliente.get('broker') not in broker_options:
+                    broker_options.insert(-1, dati_cliente.get('broker'))
+                
+                broker_selection = st.selectbox(
                     "Broker *", 
-                    value=dati_cliente.get('broker', '') if dati_cliente else '',
-                    help="Nome del broker utilizzato"
+                    options=broker_options,
+                    index=broker_options.index(dati_cliente.get('broker', 'FXPro')) if dati_cliente and dati_cliente.get('broker') in broker_options else 0,
+                    help="Seleziona il broker o scegli 'Altro' per inserirne uno nuovo"
                 )
+                
+                # Se seleziona "Altro", mostra campo di testo per inserire nuovo broker
+                if broker_selection == "Altro":
+                    broker = st.text_input(
+                        "Nome Nuovo Broker *",
+                        value="",
+                        help="Inserisci il nome del nuovo broker"
+                    )
+                else:
+                    broker = broker_selection
                 
                 data_registrazione = st.date_input(
                     "Data Registrazione *", 
