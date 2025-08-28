@@ -85,6 +85,8 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
     """Gestisce il salvataggio di un nuovo cliente"""
     success, result = db.aggiungi_cliente(dati_cliente, campi_aggiuntivi)
     if success:
+        # Backup automatico dopo aggiunta cliente
+        auto_backup()
         show_success_message(f"Cliente {dati_cliente['nome_cliente']} salvato con successo!")
         st.session_state.editing_client = None
         st.rerun()
@@ -127,6 +129,8 @@ def handle_delete_client(cliente_id):
                 success = db.elimina_cliente(cliente_id)
                 
                 if success:
+                    # Backup automatico dopo eliminazione cliente
+                    auto_backup()
                     st.success(f"✅ Cliente {cliente_id} eliminato con successo!")
                     # Reset dello stato
                     st.session_state[delete_key] = False
@@ -146,6 +150,8 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
     success = db.modifica_cliente(cliente_id, dati_cliente, campi_aggiuntivi)
     if success:
+        # Backup automatico dopo modifica cliente
+        auto_backup()
         show_success_message(f"Cliente {dati_cliente['nome_cliente']} aggiornato con successo!")
         st.session_state.editing_client = None
         st.rerun()
@@ -349,6 +355,53 @@ elif selected == "⚙️ Impostazioni":
         st.write(f"**Data Creazione:** {datetime.now().strftime('%d/%m/%Y')}")
         st.write(f"**Ultimo Aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
         st.write(f"**Stato:** Attivo")
+    
+    # Gestione Backup
+    st.subheader("💾 Gestione Backup")
+    st.info("⚠️ **IMPORTANTE**: I backup vengono creati automaticamente dopo ogni operazione critica per prevenire la perdita di dati.")
+    
+    col_backup1, col_backup2 = st.columns(2)
+    
+    with col_backup1:
+        if st.button("🔄 Crea Backup Manuale"):
+            success, message = auto_backup()
+            if success:
+                st.success(f"✅ Backup creato: {message}")
+            else:
+                st.error(f"❌ Backup fallito: {message}")
+    
+    with col_backup2:
+        if st.button("📋 Lista Backup"):
+            backup_manager = DatabaseBackupManager()
+            backups = backup_manager.list_backups()
+            
+            if backups:
+                st.write(f"**Backup disponibili:** {len(backups)}")
+                for i, backup in enumerate(backups[:5]):  # Mostra solo i primi 5
+                    st.write(f"{i+1}. {backup['filename']} - {backup['modified'].strftime('%d/%m/%Y %H:%M')}")
+                    if backup['metadata'] and 'statistics' in backup['metadata']:
+                        stats = backup['metadata']['statistics']
+                        st.write(f"   📊 {stats.get('clienti_count', 0)} clienti, {stats.get('incroci_count', 0)} incroci")
+            else:
+                st.warning("Nessun backup disponibile")
+    
+    # Informazioni database corrente
+    st.subheader("🗄️ Stato Database")
+    backup_manager = DatabaseBackupManager()
+    db_info = backup_manager.get_database_info()
+    
+    if db_info:
+        col_db1, col_db2 = st.columns(2)
+        with col_db1:
+            st.write(f"**Percorso:** {db_info['path']}")
+            st.write(f"**Dimensione:** {db_info['size'] / 1024:.1f} KB")
+        with col_db2:
+            st.write(f"**Clienti:** {db_info['statistics']['clienti_count']}")
+            st.write(f"**Incroci:** {db_info['statistics']['incroci_count']}")
+            if db_info['statistics']['last_client_update']:
+                st.write(f"**Ultimo aggiornamento:** {db_info['statistics']['last_client_update']}")
+    else:
+        st.error("❌ Impossibile ottenere informazioni sul database")
 
 # Sidebar con informazioni aggiuntive
 with st.sidebar:
