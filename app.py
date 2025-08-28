@@ -107,18 +107,40 @@ def handle_delete_client(cliente_id):
         st.error("🔒 Accesso richiesto per eliminare clienti")
         return
     
-    # Mostra conferma semplice
-    if st.button(f"❌ Conferma Eliminazione Cliente {cliente_id}", key=f"confirm_delete_{cliente_id}", type="primary"):
-        # Elimina il cliente dopo conferma
-        success = db.elimina_cliente(cliente_id)
-        
-        if success:
-            st.success(f"✅ Cliente {cliente_id} eliminato con successo!")
+    # Gestisci lo stato di conferma per questo cliente
+    delete_key = f"delete_confirm_{cliente_id}"
+    if delete_key not in st.session_state:
+        st.session_state[delete_key] = False
+    
+    # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
+    if not st.session_state[delete_key]:
+        if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=f"delete_{cliente_id}", type="secondary"):
+            st.session_state[delete_key] = True
             st.rerun()
-        else:
-            st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id}")
+    
+    # Se è richiesta la conferma, mostra il pulsante di conferma
     else:
-        st.info(f"⚠️ Clicca 'Conferma Eliminazione' per eliminare il cliente {cliente_id}")
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button(f"✅ Conferma Eliminazione", key=f"confirm_{cliente_id}", type="primary"):
+                # Elimina il cliente
+                success = db.elimina_cliente(cliente_id)
+                
+                if success:
+                    st.success(f"✅ Cliente {cliente_id} eliminato con successo!")
+                    # Reset dello stato
+                    st.session_state[delete_key] = False
+                    st.rerun()
+                else:
+                    st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id}")
+                    st.session_state[delete_key] = False
+        
+        with col2:
+            if st.button(f"❌ Annulla", key=f"cancel_{cliente_id}", type="secondary"):
+                st.session_state[delete_key] = False
+                st.rerun()
+        
+        st.warning(f"⚠️ Sei sicuro di voler eliminare il cliente {cliente_id}?")
 
 def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
