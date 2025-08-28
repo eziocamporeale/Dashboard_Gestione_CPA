@@ -46,21 +46,22 @@ def init_components():
 db = init_database()
 components = init_components()
 
-# Sincronizzazione automatica del database per persistenza
-st.info("🔄 Sincronizzazione database in corso...")
-sync_success, sync_message = auto_sync_database()
-if sync_success:
-    st.success(f"✅ Database sincronizzato: {sync_message}")
-else:
-    st.warning(f"⚠️ Sincronizzazione fallita: {sync_message}")
-st.rerun()
-
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
     st.session_state.editing_client = None
 
 if 'show_charts' not in st.session_state:
     st.session_state.show_charts = False
+
+# Sincronizzazione automatica del database per persistenza (DOPO inizializzazione)
+try:
+    sync_success, sync_message = auto_sync_database()
+    if sync_success:
+        st.sidebar.success(f"✅ DB sincronizzato")
+    else:
+        st.sidebar.warning(f"⚠️ Sync: {sync_message}")
+except Exception as e:
+    st.sidebar.warning(f"⚠️ Sync non disponibile: {str(e)}")
 
 # Sistema di autenticazione
 if not st.session_state.get('authenticated', False):
