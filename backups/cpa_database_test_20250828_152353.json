@@ -1,0 +1,10 @@
+{
+  "backup_type": "test",
+  "timestamp": "2025-08-28T15:23:53.730102",
+  "source_db": "cpa_database.db",
+  "backup_path": "backups/cpa_database_test_20250828_152353.db",
+  "statistics": {
+    "clienti_count": 2,
+    "incroci_count": 0
+  }
+}

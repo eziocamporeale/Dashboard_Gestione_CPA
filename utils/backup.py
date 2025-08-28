@@ -20,14 +20,11 @@ class DatabaseBackupManager:
         self.backup_dir = Path(backup_dir)
         self.backup_dir.mkdir(exist_ok=True)
         
-        # Configura logging
+        # Configura logging - solo console per compatibilità Streamlit Cloud
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler('logs/backup.log'),
-                logging.StreamHandler()
-            ]
+            handlers=[logging.StreamHandler()]  # Solo console, niente file
         )
         self.logger = logging.getLogger(__name__)
     
