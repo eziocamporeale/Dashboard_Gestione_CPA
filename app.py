@@ -15,6 +15,7 @@ from database.database import DatabaseManager
 from database.incroci_manager import IncrociManager
 from utils.helpers import *
 from utils.backup import DatabaseBackupManager, auto_backup
+from utils.database_sync import auto_sync_database, manual_sync_database, restore_database
 
 # Configurazione pagina
 st.set_page_config(
@@ -44,6 +45,15 @@ def init_components():
 # Inizializzazione
 db = init_database()
 components = init_components()
+
+# Sincronizzazione automatica del database per persistenza
+st.info("🔄 Sincronizzazione database in corso...")
+sync_success, sync_message = auto_sync_database()
+if sync_success:
+    st.success(f"✅ Database sincronizzato: {sync_message}")
+else:
+    st.warning(f"⚠️ Sincronizzazione fallita: {sync_message}")
+st.rerun()
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
@@ -385,6 +395,45 @@ elif selected == "⚙️ Impostazioni":
                         st.write(f"   📊 {stats.get('clienti_count', 0)} clienti, {stats.get('incroci_count', 0)} incroci")
             else:
                 st.warning("Nessun backup disponibile")
+    
+    # Gestione Sincronizzazione Database
+    st.subheader("🔄 Sincronizzazione Database")
+    st.info("💾 **PERSISTENZA DATI**: La sincronizzazione mantiene i tuoi dati permanenti anche dopo riavvii di Streamlit Cloud.")
+    
+    col_sync1, col_sync2, col_sync3 = st.columns(3)
+    
+    with col_sync1:
+        if st.button("💾 Sincronizza Database"):
+            success, message = manual_sync_database()
+            if success:
+                st.success(f"✅ Sincronizzazione completata: {message}")
+            else:
+                st.error(f"❌ Sincronizzazione fallita: {message}")
+    
+    with col_sync2:
+        if st.button("📥 Ripristina Database"):
+            success, message = restore_database()
+            if success:
+                st.success(f"✅ Ripristino completato: {message}")
+                st.rerun()
+            else:
+                st.error(f"❌ Ripristino fallito: {message}")
+    
+    with col_sync3:
+        if st.button("📋 Stato Sincronizzazione"):
+            from utils.database_sync import DatabaseSyncManager
+            sync_manager = DatabaseSyncManager()
+            sync_files = sync_manager.list_sync_files()
+            
+            if sync_files:
+                st.write(f"**File di sync disponibili:** {len(sync_files)}")
+                for i, sync_file in enumerate(sync_files[:3]):  # Mostra solo i primi 3
+                    st.write(f"{i+1}. {sync_file['filename']} - {sync_file['modified'].strftime('%d/%m/%Y %H:%M')}")
+                    if sync_file['metadata'] and 'statistics' in sync_file['metadata']:
+                        stats = sync_file['metadata']['statistics']
+                        st.write(f"   📊 {stats.get('clienti_count', 0)} clienti, {stats.get('incroci_count', 0)} incroci")
+            else:
+                st.warning("Nessun file di sincronizzazione disponibile")
     
     # Informazioni database corrente
     st.subheader("🗄️ Stato Database")

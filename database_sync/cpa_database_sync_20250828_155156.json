@@ -1,0 +1,11 @@
+{
+  "sync_type": "repository_persistence",
+  "timestamp": "2025-08-28T15:51:56.976424",
+  "source_db": "cpa_database.db",
+  "sync_path": "database_sync/cpa_database_sync_20250828_155156.db",
+  "statistics": {
+    "clienti_count": 2,
+    "incroci_count": 0
+  },
+  "purpose": "Persistenza dati tra riavvii Streamlit Cloud"
+}
