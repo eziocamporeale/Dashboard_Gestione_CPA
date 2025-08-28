@@ -6,14 +6,9 @@ import plotly.express as px
 from streamlit_option_menu import option_menu
 
 # Import dei componenti
-from database.database import DatabaseManager
-from database.incroci_manager import IncrociManager
-from components.client_form import ClientForm
-from components.client_table import ClientTable
-from components.charts import Charts
-from components.incroci_tab import IncrociTab
-from components.auth import require_auth, show_user_info, login_form
-from utils.helpers import *
+from database import DatabaseManager, IncrociManager
+from components import ClientForm, ClientTable, Charts, IncrociTab, require_auth, show_user_info, login_form
+from utils import *
 
 # Configurazione pagina
 st.set_page_config(

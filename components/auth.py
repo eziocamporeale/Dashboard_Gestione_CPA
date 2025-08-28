@@ -4,11 +4,8 @@ Componente per l'autenticazione e gestione sessioni
 """
 
 import streamlit as st
-import sys
-import os
 
-# Aggiungi il path per importare config
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# Import dal package config
 from config.users import is_valid_user, get_user_role, has_permission
 
 def init_auth():
