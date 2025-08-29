@@ -1083,6 +1083,159 @@ export SUPABASE_ANON_KEY="your-anon-key"
                 except Exception as e:
                     st.error(f"Errore pulizia logs: {e}")
 
+def test_database_operations():
+    """Test diretto delle operazioni database"""
+    st.header("🧪 TEST DIRETTO DATABASE")
+    
+    # Test 1: Verifica connessione e tabelle
+    st.subheader("1. Verifica Database")
+    try:
+        conn = sqlite3.connect('cpa_database.db')
+        cursor = conn.cursor()
+        
+        # Verifica tabelle
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = cursor.fetchall()
+        st.write(f"✅ **Tabelle trovate:** {[t[0] for t in tables]}")
+        
+        # Conta clienti
+        cursor.execute("SELECT COUNT(*) FROM clienti")
+        count = cursor.fetchone()[0]
+        st.write(f"📊 **Clienti totali:** {count}")
+        
+        # Mostra primi 5 clienti
+        cursor.execute("SELECT id, nome_cliente, email FROM clienti LIMIT 5")
+        clienti = cursor.fetchall()
+        st.write("📋 **Primi 5 clienti:**")
+        for cliente in clienti:
+            st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}")
+        
+        conn.close()
+        st.success("✅ **Connessione database OK**")
+        
+    except Exception as e:
+        st.error(f"❌ **Errore database:** {e}")
+        return
+    
+    # Test 2: Test eliminazione diretta
+    st.subheader("2. Test Eliminazione Diretta")
+    
+    # Input per ID da eliminare
+    cliente_id_test = st.number_input("Inserisci ID cliente da eliminare:", min_value=1, value=1, step=1)
+    
+    if st.button("🗑️ TEST ELIMINAZIONE DIRETTA"):
+        try:
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            # Verifica esistenza
+            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_test,))
+            count_before = cursor.fetchone()[0]
+            st.write(f"📊 **Clienti con ID {cliente_id_test} PRIMA:** {count_before}")
+            
+            if count_before == 0:
+                st.warning(f"⚠️ Cliente ID {cliente_id_test} non trovato")
+                conn.close()
+                return
+            
+            # Eliminazione diretta
+            cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id_test,))
+            rows_deleted = cursor.rowcount
+            st.write(f"🗑️ **Righe eliminate:** {rows_deleted}")
+            
+            # Commit
+            conn.commit()
+            st.write("💾 **Commit eseguito**")
+            
+            # Verifica post-eliminazione
+            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_test,))
+            count_after = cursor.fetchone()[0]
+            st.write(f"📊 **Clienti con ID {cliente_id_test} DOPO:** {count_after}")
+            
+            # Conta totale
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            total_after = cursor.fetchone()[0]
+            st.write(f"📊 **Totale clienti DOPO:** {total_after}")
+            
+            conn.close()
+            
+            if count_after == 0 and rows_deleted > 0:
+                st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_id_test} eliminato")
+            else:
+                st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente ancora presente")
+                
+        except Exception as e:
+            st.error(f"❌ **Errore eliminazione:** {e}")
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
+    
+    # Test 3: Test funzione db.elimina_cliente
+    st.subheader("3. Test Funzione db.elimina_cliente")
+    
+    cliente_id_func = st.number_input("Inserisci ID per test funzione:", min_value=1, value=1, step=1)
+    
+    if st.button("🔧 TEST FUNZIONE ELIMINA"):
+        try:
+            # Conta prima
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_func,))
+            count_before = cursor.fetchone()[0]
+            conn.close()
+            
+            st.write(f"📊 **Clienti con ID {cliente_id_func} PRIMA:** {count_before}")
+            
+            # Usa funzione database
+            success = db.elimina_cliente(cliente_id_func)
+            st.write(f"🔧 **Risultato funzione:** {success}")
+            
+            # Conta dopo
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_func,))
+            count_after = cursor.fetchone()[0]
+            conn.close()
+            
+            st.write(f"📊 **Clienti con ID {cliente_id_func} DOPO:** {count_after}")
+            
+            if count_after == 0 and success:
+                st.success(f"✅ **FUNZIONE FUNZIONA!** Cliente {cliente_id_func} eliminato")
+            else:
+                st.error(f"❌ **FUNZIONE NON FUNZIONA!** Cliente ancora presente")
+                
+        except Exception as e:
+            st.error(f"❌ **Errore test funzione:** {e}")
+    
+    # Test 4: Verifica foreign keys e constraints
+    st.subheader("4. Verifica Constraints Database")
+    try:
+        conn = sqlite3.connect('cpa_database.db')
+        cursor = conn.cursor()
+        
+        # Verifica foreign keys
+        cursor.execute("PRAGMA foreign_keys")
+        fk_enabled = cursor.fetchone()[0]
+        st.write(f"🔗 **Foreign Keys abilitate:** {fk_enabled}")
+        
+        # Verifica constraints
+        cursor.execute("PRAGMA table_info(clienti)")
+        columns = cursor.fetchall()
+        st.write("📋 **Struttura tabella clienti:**")
+        for col in columns:
+            st.write(f"  - {col[1]} ({col[2]}) - PK: {col[5]}")
+        
+        conn.close()
+        
+    except Exception as e:
+        st.error(f"❌ **Errore verifica constraints:** {e}")
+
+# Aggiungi il test alla sidebar
+with st.sidebar:
+    st.header("🧪 Test Database")
+    if st.button("🔧 Test Database"):
+        test_database_operations()
+
 # Sidebar con informazioni aggiuntive
 with st.sidebar:
     st.header("ℹ️ Informazioni")
