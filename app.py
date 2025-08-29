@@ -203,6 +203,8 @@ def create_database_tables():
 # Crea le tabelle all'avvio
 create_database_tables()
 
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-29 21:45
+
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
     st.session_state.editing_client = None
