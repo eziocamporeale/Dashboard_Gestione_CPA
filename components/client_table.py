@@ -94,7 +94,7 @@ class ClientTable:
         # Mostra la tabella con st.dataframe per una migliore interazione
         st.dataframe(
             df_display,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             height=300,  # Altezza fissa per compattezza
             column_config={
@@ -116,22 +116,21 @@ class ClientTable:
         col_azione1, col_azione2, col_azione3 = st.columns(3)
         
         with col_azione1:
-            if st.button("📊 Esporta", help="Esporta i dati filtrati in formato CSV", use_container_width=True):
+            if st.button("📊 Esporta", help="Esporta i dati filtrati in formato CSV"):
                 csv = df_filtrato.to_csv(index=False)
                 st.download_button(
                     label="💾 CSV",
                     data=csv,
                     file_name=f"clienti_cpa_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv",
-                    use_container_width=True
+                    mime="text/csv"
                 )
         
         with col_azione2:
-            if st.button("🔄 Aggiorna", help="Aggiorna i dati dalla tabella", use_container_width=True):
+            if st.button("🔄 Aggiorna", help="Aggiorna i dati dalla tabella"):
                 st.rerun()
         
         with col_azione3:
-            if st.button("📈 Grafici", help="Mostra grafici riassuntivi", use_container_width=True):
+            if st.button("📈 Grafici", help="Mostra grafici riassuntivi"):
                 st.session_state.show_charts = True
                 st.rerun()
         
@@ -190,7 +189,7 @@ class ClientTable:
                     import time
                     timestamp = int(time.time() * 1000)  # Millisecondi per unicità
                     unique_edit_key = f"edit_btn_{cliente_dettagli['id']}_{timestamp}_{id(st.session_state)}"
-                    if st.button("✏️ Modifica", key=unique_edit_key, help="Modifica cliente", use_container_width=True):
+                    if st.button("✏️ Modifica", key=unique_edit_key, help="Modifica cliente"):
                         if on_edit:
                             on_edit(cliente_dettagli)
                 
@@ -198,7 +197,7 @@ class ClientTable:
                     # Chiave unica con timestamp per eliminazione
                     timestamp = int(time.time() * 1000)  # Millisecondi per unicità
                     unique_delete_key = f"delete_btn_{cliente_dettagli['id']}_{timestamp}_{id(st.session_state)}"
-                    if st.button("🗑️ Elimina", key=unique_delete_key, type="secondary", help="Elimina cliente", use_container_width=True):
+                    if st.button("🗑️ Elimina", key=unique_delete_key, type="secondary", help="Elimina cliente"):
                         if on_delete:
                             on_delete(cliente_dettagli['id'])
                 
@@ -206,6 +205,6 @@ class ClientTable:
                     # Chiave unica con timestamp per copia
                     timestamp = int(time.time() * 1000)  # Millisecondi per unicità
                     unique_copy_key = f"copy_btn_{cliente_dettagli['id']}_{timestamp}_{id(st.session_state)}"
-                    if st.button("📋 Copia Dati", key=unique_copy_key, help="Copia dati", use_container_width=True):
+                    if st.button("📋 Copia Dati", key=unique_copy_key, help="Copia dati"):
                         # Copia i dati negli appunti (simulato)
                         st.success("Dati copiati negli appunti!")
