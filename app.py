@@ -13,17 +13,76 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-# Import diretti dei componenti
-from auth_standalone import require_auth, show_user_info, login_form
-from components.charts import Charts
-from components.client_form import ClientForm
-from components.client_table import ClientTable
-from components.incroci_tab import IncrociTab
-from database.database import DatabaseManager
-from database.incroci_manager import IncrociManager
-from utils.helpers import *
-from utils.backup import DatabaseBackupManager, auto_backup
-from utils.secure_backup import create_secure_backup, list_secure_backups, restore_from_secure_backup
+# Import diretti dei componenti con gestione errori
+try:
+    from auth_standalone import require_auth, show_user_info, login_form
+    print("✅ auth_standalone importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import auth_standalone: {e}")
+    st.error(f"Errore import auth_standalone: {e}")
+
+try:
+    from components.charts import Charts
+    print("✅ Charts importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import Charts: {e}")
+    st.error(f"Errore import Charts: {e}")
+
+try:
+    from components.client_form import ClientForm
+    print("✅ ClientForm importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import ClientForm: {e}")
+    st.error(f"Errore import ClientForm: {e}")
+
+try:
+    from components.client_table import ClientTable
+    print("✅ ClientTable importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import ClientTable: {e}")
+    st.error(f"Errore import ClientTable: {e}")
+
+try:
+    from components.incroci_tab import IncrociTab
+    print("✅ IncrociTab importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import IncrociTab: {e}")
+    st.error(f"Errore import IncrociTab: {e}")
+
+try:
+    from database.database import DatabaseManager
+    print("✅ DatabaseManager importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import DatabaseManager: {e}")
+    st.error(f"Errore import DatabaseManager: {e}")
+
+try:
+    from database.incroci_manager import IncrociManager
+    print("✅ IncrociManager importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import IncrociManager: {e}")
+    st.error(f"Errore import IncrociManager: {e}")
+
+try:
+    from utils.helpers import *
+    print("✅ utils.helpers importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import utils.helpers: {e}")
+    st.error(f"Errore import utils.helpers: {e}")
+
+try:
+    from utils.backup import DatabaseBackupManager, auto_backup
+    print("✅ utils.backup importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import utils.backup: {e}")
+    st.error(f"Errore import utils.backup: {e}")
+
+try:
+    from utils.secure_backup import create_secure_backup, list_secure_backups, restore_from_secure_backup
+    print("✅ utils.secure_backup importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import utils.secure_backup: {e}")
+    st.error(f"Errore import utils.secure_backup: {e}")
 import tempfile
 import shutil
 import os
@@ -47,16 +106,45 @@ def init_database():
 @st.cache_resource
 def init_components():
     """Inizializza i componenti"""
-    return {
-        'client_form': ClientForm(),
-        'client_table': ClientTable(),
-        'charts': Charts(),
-        'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
-    }
+    try:
+        print("🔧 Inizializzazione componenti...")
+        
+        # Verifica che tutti i componenti siano disponibili
+        if not all([Charts, ClientForm, ClientTable, IncrociTab]):
+            raise Exception("Uno o più componenti non sono disponibili")
+        
+        components_dict = {
+            'client_form': ClientForm(),
+            'client_table': ClientTable(),
+            'charts': Charts(),
+            'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
+        }
+        
+        print("✅ Componenti inizializzati correttamente")
+        return components_dict
+        
+    except Exception as e:
+        print(f"❌ Errore inizializzazione componenti: {e}")
+        st.error(f"Errore inizializzazione componenti: {e}")
+        return None
 
 # Inizializzazione
-db = init_database()
-components = init_components()
+try:
+    print("🔧 Inizializzazione database...")
+    db = init_database()
+    print("✅ Database inizializzato correttamente")
+    
+    print("🔧 Inizializzazione componenti...")
+    components = init_components()
+    if components is None:
+        st.error("❌ Impossibile inizializzare i componenti. Controlla i log per dettagli.")
+        st.stop()
+    print("✅ Componenti inizializzati correttamente")
+    
+except Exception as e:
+    print(f"❌ Errore inizializzazione: {e}")
+    st.error(f"Errore inizializzazione: {e}")
+    st.stop()
 
 # Creazione automatica tabelle se non esistono
 def create_database_tables():
