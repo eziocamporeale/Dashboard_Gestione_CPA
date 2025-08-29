@@ -346,6 +346,72 @@ def show_broker_accounts():
         )
         st.plotly_chart(fig, use_container_width=True)
 
+def show_new_accounts():
+    """Gestione account broker nuovo schema"""
+    st.subheader("🏦 Aggiungi Nuovo Account Broker")
+    
+    # Ottieni lista clienti base per selezione
+    try:
+        clienti_base = db.ottieni_tutti_clienti_base()
+        
+        if not clienti_base:
+            st.warning("⚠️ Nessun cliente base presente. Aggiungi prima un cliente base.")
+            return
+        
+        with st.form("add_broker_account_form"):
+            # Selezione cliente base
+            cliente_options = {f"{c['nome_cliente']} ({c['email']})": c['id'] for c in clienti_base}
+            cliente_selezionato = st.selectbox("Cliente Base *", options=list(cliente_options.keys()), key="cliente_select")
+            cliente_id = cliente_options[cliente_selezionato]
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                broker = st.text_input("Broker *", key="broker_account")
+                piattaforma = st.selectbox("Piattaforma", ["MT4", "MT5", "cTrader", "WebTrader", "Mobile"], key="piattaforma_account")
+                numero_conto = st.text_input("Numero Conto *", key="conto_account")
+                password = st.text_input("Password *", type="password", key="password_account")
+            
+            with col2:
+                api_key = st.text_input("API Key (opzionale)", key="api_key_account")
+                secret_key = st.text_input("Secret Key (opzionale)", key="secret_key_account")
+                ip_address = st.text_input("IP Address (opzionale)", key="ip_account")
+                volume_posizione = st.number_input("Volume Posizione", min_value=0.0, value=0.0, step=0.01, key="volume_account")
+                ruolo = st.selectbox("Ruolo", ["User", "Admin", "Manager"], key="ruolo_account")
+            
+            submitted = st.form_submit_button("🏦 Aggiungi Account Broker")
+            
+            if submitted:
+                if not broker or not numero_conto or not password:
+                    show_error_message("❌ Broker, numero conto e password sono obbligatori!")
+                    return
+                
+                dati_account = {
+                    'cliente_base_id': cliente_id,
+                    'broker': broker,
+                    'piattaforma': piattaforma,
+                    'numero_conto': numero_conto,
+                    'password': password,
+                    'api_key': api_key,
+                    'secret_key': secret_key,
+                    'ip_address': ip_address,
+                    'volume_posizione': volume_posizione,
+                    'ruolo': ruolo
+                }
+                
+                success, result = db.aggiungi_account_broker(dati_account)
+                
+                if success:
+                    show_success_message(f"✅ Account broker {broker} - {numero_conto} aggiunto con successo!")
+                    # Backup automatico
+                    auto_backup()
+                else:
+                    show_error_message(f"❌ Errore aggiunta account: {result}")
+                    
+    except Exception as e:
+        st.error(f"❌ Errore caricamento clienti base: {e}")
+        logger.error(f"Errore in show_new_accounts: {e}")
+
 # ===== GRAFICI E STATISTICHE =====
 
 def show_charts():
@@ -465,7 +531,7 @@ def main():
             show_broker_accounts()
         
         with tab2:
-            handle_add_broker_account()
+            show_new_accounts()
             
     elif page == "📊 Statistiche":
         st.header("📊 Statistiche Dettagliate")
