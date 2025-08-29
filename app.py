@@ -1603,3 +1603,94 @@ with st.sidebar:
     st.write("• [Documentazione Streamlit](https://docs.streamlit.io/)")
     st.write("• [Plotly Charts](https://plotly.com/python/)")
     st.write("• [SQLite Tutorial](https://www.sqlitetutorial.net/)")
+
+def test_super_simple():
+    """Test super semplice per verificare il funzionamento"""
+    st.header("🧪 TEST SUPER SEMPLICE")
+    
+    # Test 1: Pulsante base
+    if st.button("🔘 TEST PULSANTE BASE"):
+        st.success("✅ PULSANTE BASE FUNZIONA!")
+    
+    # Test 2: Connessione database
+    if st.button("🗄️ TEST CONNESSIONE DATABASE"):
+        try:
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            count = cursor.fetchone()[0]
+            st.success(f"✅ Database OK! Clienti: {count}")
+            
+            conn.close()
+        except Exception as e:
+            st.error(f"❌ Errore database: {e}")
+    
+    # Test 3: Eliminazione diretta
+    if st.button("🗑️ TEST ELIMINAZIONE DIRETTA"):
+        try:
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            # Conta prima
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            count_before = cursor.fetchone()[0]
+            st.write(f"📊 Clienti PRIMA: {count_before}")
+            
+            # Elimina cliente ID 30 se esiste
+            cursor.execute("DELETE FROM clienti WHERE id = 30")
+            rows_deleted = cursor.rowcount
+            st.write(f"🗑️ Righe eliminate: {rows_deleted}")
+            
+            # Commit
+            conn.commit()
+            st.write("💾 Commit eseguito")
+            
+            # Conta dopo
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            count_after = cursor.fetchone()[0]
+            st.write(f"📊 Clienti DOPO: {count_after}")
+            
+            conn.close()
+            
+            if count_after < count_before:
+                st.success("✅ ELIMINAZIONE RIUSCITA!")
+            else:
+                st.warning("⚠️ Nessun cliente eliminato")
+                
+        except Exception as e:
+            st.error(f"❌ Errore: {e}")
+            if 'conn' in locals():
+                conn.close()
+    
+    # Test 4: Verifica email duplicate
+    if st.button("📧 VERIFICA EMAIL DUPLICATE"):
+        try:
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT email, COUNT(*) as count
+                FROM clienti 
+                GROUP BY email 
+                HAVING COUNT(*) > 1
+            """)
+            duplicates = cursor.fetchall()
+            
+            if duplicates:
+                st.warning(f"⚠️ Email duplicate: {len(duplicates)}")
+                for dup in duplicates:
+                    st.write(f"  - {dup[0]} (conteggio: {dup[1]})")
+            else:
+                st.success("✅ Nessuna email duplicata")
+            
+            conn.close()
+            
+        except Exception as e:
+            st.error(f"❌ Errore: {e}")
+
+# Aggiungi il test super semplice alla sidebar
+with st.sidebar:
+    st.header("🧪 Test Super Semplice")
+    if st.button("🔧 Test Super Semplice"):
+        test_super_simple()
