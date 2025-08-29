@@ -430,6 +430,12 @@ def handle_delete_client(cliente_id):
     st.write(f"🕐 Timestamp: `{time.time()}`")
     st.write(f"🔄 Session ID: `{id(st.session_state)}`")
     
+    # Test: pulsante COMPLETAMENTE SENZA CHIAVI
+    st.write("🧪 **TEST PULSANTE SENZA CHIAVI:**")
+    if st.button("🧪 CLICK SENZA CHIAVI"):
+        st.write("✅ PULSANTE SENZA CHIAVI FUNZIONA!")
+        st.write("🔍 Questo pulsante non ha chiave!")
+    
     # Verifica permessi
     if not st.session_state.get('authenticated', False):
         st.error("🔒 Accesso richiesto per eliminare clienti")
@@ -456,14 +462,26 @@ def handle_delete_client(cliente_id):
         st.write(f"🔑 Chiave: `{unique_delete_key}`")
         st.write(f"📊 Stato attuale: `{st.session_state[delete_key]}`")
         
-        # Test: pulsante semplice per debug
-        if st.button("🧪 TEST CLICK", key=f"test_{unique_delete_key}"):
-            st.write("✅ PULSANTE TEST FUNZIONA!")
-            st.write(f"🔍 Stato prima: {st.session_state[delete_key]}")
-            st.session_state[delete_key] = True
-            st.write(f"🔍 Stato dopo: {st.session_state[delete_key]}")
-            st.rerun()
+        # Test: pulsante SEMPLICE senza chiavi per debug
+        st.write("🧪 **TEST PULSANTE SEMPLICE:**")
+        if st.button("🧪 TEST SEMPLICE", key="test_semplice"):
+            st.write("✅ PULSANTE SEMPLICE FUNZIONA!")
+            st.write(f"🔍 Stato attuale: {st.session_state[delete_key]}")
         
+        # Test: pulsante con chiave semplice
+        st.write("🧪 **TEST PULSANTE CON CHIAVE:**")
+        if st.button("🧪 TEST CHIAVE", key="test_chiave"):
+            st.write("✅ PULSANTE CHIAVE FUNZIONA!")
+            st.write(f"🔍 Stato attuale: {st.session_state[delete_key]}")
+        
+        # Test: pulsante elimina con chiave SEMPLICE
+        st.write("🧪 **TEST PULSANTE ELIMINA SEMPLICE:**")
+        if st.button(f"🗑️ TEST ELIMINA {cliente_id}", key="test_elimina_semplice"):
+            st.write("✅ PULSANTE TEST ELIMINA FUNZIONA!")
+            st.write(f"🔍 Stato attuale: {st.session_state[delete_key]}")
+        
+        # Pulsante elimina ORIGINALE
+        st.write("🗑️ **PULSANTE ELIMINA ORIGINALE:**")
         if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=unique_delete_key, type="secondary"):
             logging.info(f"🔍 Pulsante elimina cliccato per cliente {cliente_id}")
             st.write("✅ PULSANTE ELIMINA CLICCATO!")
