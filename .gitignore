@@ -44,6 +44,7 @@ logs/
 # Secure backups (NON tracciati da Git)
 CPA_Backups_Sicuri/
 ~/CPA_Backups_Sicuri/
+secure_backups/
 backups/
 database_sync/
 

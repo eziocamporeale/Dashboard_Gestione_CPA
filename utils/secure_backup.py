@@ -19,7 +19,15 @@ class SecureBackupManager:
     Salva i dati in una cartella esterna al repository
     """
     
-    def __init__(self, backup_dir="~/CPA_Backups_Sicuri"):
+    def __init__(self, backup_dir=None):
+        # Su Streamlit Cloud usa una cartella locale, altrimenti usa la cartella home
+        if backup_dir is None:
+            import os
+            if os.path.exists("/mount/src"):  # Streamlit Cloud
+                backup_dir = "./secure_backups"
+            else:  # Ambiente locale
+                backup_dir = "~/CPA_Backups_Sicuri"
+        
         self.backup_dir = Path(backup_dir).expanduser()
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         
