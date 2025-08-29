@@ -1,0 +1,20 @@
+# 🚀 SUPABASE DEPENDENCIES
+# 📦 Pacchetti per database remoto professionale
+
+# Client Supabase ufficiale
+supabase>=2.0.0
+
+# Dipendenze aggiuntive per performance
+psycopg2-binary>=2.9.0
+asyncpg>=0.28.0
+
+# Utility per gestione dati
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Logging avanzato
+structlog>=23.0.0
+
+# Test e validazione
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
