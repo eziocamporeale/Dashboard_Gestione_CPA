@@ -28,11 +28,14 @@ venv.bak/
 ENV/
 env/
 
-# Database files
+# Database files (con dati sensibili)
 *.db
 *.sqlite
 *.sqlite3
 cpa_database.db
+
+# Script SQL di inizializzazione (NON sensibili)
+!database/*.sql
 
 # Logs
 *.log
