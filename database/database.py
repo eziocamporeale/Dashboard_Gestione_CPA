@@ -193,16 +193,49 @@ class DatabaseManager:
     def elimina_cliente(self, cliente_id):
         """Elimina un cliente dal database"""
         try:
+            import logging
+            logging.info(f"🔍 Tentativo eliminazione cliente ID: {cliente_id} (tipo: {type(cliente_id)})")
+            
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id,))
+            # Verifica che il cliente esista prima di eliminarlo
+            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id,))
+            count_before = cursor.fetchone()[0]
+            logging.info(f"📊 Clienti trovati prima eliminazione: {count_before}")
             
+            if count_before == 0:
+                logging.warning(f"⚠️ Cliente ID {cliente_id} non trovato nel database")
+                conn.close()
+                return False
+            
+            # Esegui eliminazione
+            cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id,))
+            rows_deleted = cursor.rowcount
+            logging.info(f"🗑️ Righe eliminate: {rows_deleted}")
+            
+            # Verifica eliminazione
+            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id,))
+            count_after = cursor.fetchone()[0]
+            logging.info(f"📊 Clienti trovati dopo eliminazione: {count_after}")
+            
+            # Commit transazione
             conn.commit()
+            logging.info(f"💾 Transazione committata")
+            
             conn.close()
-            return True
+            
+            success = count_after == 0 and rows_deleted > 0
+            logging.info(f"✅ Eliminazione cliente {cliente_id}: {'SUCCESSO' if success else 'FALLITA'}")
+            
+            return success
             
         except Exception as e:
+            import logging
+            logging.error(f"❌ Errore eliminazione cliente {cliente_id}: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
             return False
     
     def modifica_cliente(self, cliente_id, dati_cliente, campi_aggiuntivi=None):

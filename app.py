@@ -329,6 +329,10 @@ def handle_edit_client(cliente_data):
 
 def handle_delete_client(cliente_id):
     """Gestisce l'eliminazione di un cliente"""
+    # Log per debug
+    import logging
+    logging.info(f"🔍 handle_delete_client chiamato con ID: {cliente_id} (tipo: {type(cliente_id)})")
+    
     # Verifica permessi
     if not st.session_state.get('authenticated', False):
         st.error("🔒 Accesso richiesto per eliminare clienti")
@@ -354,8 +358,23 @@ def handle_delete_client(cliente_id):
             # Chiave unica per conferma
             unique_confirm_key = f"confirm_btn_{cliente_id}_{id(st.session_state)}"
             if st.button(f"✅ Conferma Eliminazione", key=unique_confirm_key, type="primary"):
+                # Log per debug
+                import logging
+                logging.info(f"🔍 Conferma eliminazione cliente ID: {cliente_id}")
+                
                 # Elimina il cliente dal database locale
-                success = db.elimina_cliente(cliente_id)
+                # Converti in intero se necessario
+                try:
+                    cliente_id_int = int(cliente_id)
+                    logging.info(f"🔄 ID convertito in intero: {cliente_id_int}")
+                except (ValueError, TypeError):
+                    logging.error(f"❌ Impossibile convertire ID {cliente_id} in intero")
+                    st.error(f"❌ ID cliente non valido: {cliente_id}")
+                    st.session_state[delete_key] = False
+                    return
+                
+                success = db.elimina_cliente(cliente_id_int)
+                logging.info(f"📊 Risultato eliminazione: {success}")
                 
                 if success:
                     # Backup automatico dopo eliminazione cliente
@@ -373,7 +392,7 @@ def handle_delete_client(cliente_id):
                             
                             # Cerca per ID o email (se disponibile)
                             for c in clienti_supabase:
-                                if str(c.get('id')) == str(cliente_id) or c.get('email') == st.session_state.get('cliente_email', ''):
+                                if str(c.get('id')) == str(cliente_id_int) or c.get('email') == st.session_state.get('cliente_email', ''):
                                     cliente_supabase = c
                                     break
                             
@@ -381,13 +400,13 @@ def handle_delete_client(cliente_id):
                                 supabase_success, supabase_message = supabase_manager.delete_cliente(cliente_supabase['id'])
                                 
                                 if supabase_success:
-                                    st.success(f"✅ Cliente {cliente_id} eliminato da LOCALE e SUPABASE!")
+                                    st.success(f"✅ Cliente {cliente_id_int} eliminato da LOCALE e SUPABASE!")
                                 else:
                                     st.warning(f"⚠️ Cliente eliminato da LOCALE ma errore SUPABASE: {supabase_message}")
                             else:
                                 st.warning(f"⚠️ Cliente eliminato da LOCALE ma non trovato in SUPABASE")
                         else:
-                            st.success(f"✅ Cliente {cliente_id} eliminato da LOCALE (Supabase non configurato)")
+                            st.success(f"✅ Cliente {cliente_id_int} eliminato da LOCALE (Supabase non configurato)")
                             
                     except Exception as e:
                         st.warning(f"⚠️ Cliente eliminato da LOCALE ma errore sincronizzazione SUPABASE: {e}")
@@ -396,17 +415,18 @@ def handle_delete_client(cliente_id):
                     st.session_state[delete_key] = False
                     st.rerun()
                 else:
-                    st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id}")
+                    st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id_int}")
+                    logging.error(f"❌ Eliminazione fallita per cliente {cliente_id_int}")
                     st.session_state[delete_key] = False
         
         with col2:
             # Chiave unica per annulla
-            unique_cancel_key = f"cancel_btn_{cliente_id}_{id(st.session_state)}"
+            unique_cancel_key = f"cancel_btn_{cliente_id_int}_{id(st.session_state)}"
             if st.button(f"❌ Annulla", key=unique_cancel_key, type="secondary"):
                 st.session_state[delete_key] = False
                 st.rerun()
         
-        st.warning(f"⚠️ Sei sicuro di voler eliminare il cliente {cliente_id}?")
+        st.warning(f"⚠️ Sei sicuro di voler eliminare il cliente {cliente_id_int}?")
 
 def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
