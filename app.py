@@ -421,6 +421,12 @@ def handle_delete_client(cliente_id):
     import logging
     logging.info(f"🔍 handle_delete_client chiamato con ID: {cliente_id} (tipo: {type(cliente_id)})")
     
+    # Debug: mostra informazioni funzione
+    st.write(f"🔍 **DEBUG FUNZIONE:** handle_delete_client chiamata")
+    st.write(f"📊 ID Cliente: `{cliente_id}`")
+    st.write(f"🔧 Tipo ID: `{type(cliente_id)}`")
+    st.write(f"🔐 Autenticato: `{st.session_state.get('authenticated', False)}`")
+    
     # Verifica permessi
     if not st.session_state.get('authenticated', False):
         st.error("🔒 Accesso richiesto per eliminare clienti")
@@ -442,6 +448,11 @@ def handle_delete_client(cliente_id):
         unique_delete_key = f"delete_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
         logging.info(f"🔑 Chiave pulsante elimina: {unique_delete_key}")
         
+        # Debug: mostra informazioni pulsante
+        st.write(f"🔍 **DEBUG:** Pulsante elimina per cliente {cliente_id}")
+        st.write(f"🔑 Chiave: `{unique_delete_key}`")
+        st.write(f"📊 Stato attuale: `{st.session_state[delete_key]}`")
+        
         if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=unique_delete_key, type="secondary"):
             logging.info(f"🔍 Pulsante elimina cliccato per cliente {cliente_id}")
             st.session_state[delete_key] = True
@@ -457,6 +468,11 @@ def handle_delete_client(cliente_id):
             timestamp = int(time.time() * 1000)  # Millisecondi per unicità
             unique_confirm_key = f"confirm_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
             logging.info(f"🔑 Chiave pulsante conferma: {unique_confirm_key}")
+            
+            # Debug: mostra informazioni pulsante conferma
+            st.write(f"🔍 **DEBUG:** Pulsante conferma per cliente {cliente_id}")
+            st.write(f"🔑 Chiave: `{unique_confirm_key}`")
+            st.write(f"📊 Stato attuale: `{st.session_state[delete_key]}`")
             
             if st.button(f"✅ Conferma Eliminazione", key=unique_confirm_key, type="primary"):
                 # Log per debug
