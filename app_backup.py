@@ -207,8 +207,8 @@ def handle_delete_client(cliente_id):
                     st.success(f"✅ Cliente {cliente_id} eliminato con successo!")
                     # Reset dello stato
                     st.session_state[delete_key] = False
-                    st.rerun()
-                else:
+            st.rerun()
+        else:
                     st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id}")
                     st.session_state[delete_key] = False
         
@@ -293,7 +293,7 @@ elif selected == "👥 Gestione Clienti":
     else:
         # Form per aggiungere nuovo cliente (collassato di default)
         with st.expander("➕ Aggiungi Nuovo Cliente", expanded=False):
-            success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
+        success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
         
         if success:
             handle_save_client(dati_cliente, campi_aggiuntivi)
@@ -711,8 +711,8 @@ export SUPABASE_ANON_KEY="your-anon-key"
                     file_name=f"statistiche_cpa_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv"
                 )
-    else:
-        st.warning("Nessun cliente presente per l'esportazione")
+        else:
+            st.warning("Nessun cliente presente per l'esportazione")
         
         # Logs e debugging
         st.markdown("---")
