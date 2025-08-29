@@ -404,9 +404,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
             st.warning(f"⚠️ Cliente salvato in LOCALE ma errore sincronizzazione SUPABASE: {e}")
         
         st.session_state.editing_client = None
-        st.rerun()
-    else:
-        show_error_message(f"Errore nel salvataggio: {result}")
+        # RIMOSSO st.rerun() per fermare il loop
 
 def handle_edit_client(cliente_data):
     """Gestisce la modifica di un cliente esistente"""
@@ -415,10 +413,10 @@ def handle_edit_client(cliente_data):
         st.session_state.editing_client = cliente_data.to_dict()
     else:
         st.session_state.editing_client = cliente_data
-    st.rerun()
+    # RIMOSSO st.rerun() per fermare il loop
 
 def handle_delete_client(cliente_id):
-    """Gestisce l'eliminazione di un cliente - VERSIONE TEST SEMPLICE"""
+    """Gestisce l'eliminazione di un cliente - VERSIONE SENZA RERUN"""
     st.write(f"🔍 **TEST ELIMINAZIONE:** Cliente ID {cliente_id}")
     
     # Test 1: Verifica autenticazione
@@ -453,7 +451,7 @@ def handle_delete_client(cliente_id):
                 clienti_dopo = db.ottieni_tutti_clienti()
                 st.write(f"📊 **Clienti nel database DOPO:** {len(clienti_dopo)}")
                 
-                st.rerun()
+                # RIMOSSO st.rerun() per fermare il loop
             else:
                 st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente {cliente_id_int} non eliminato")
                 
@@ -463,7 +461,7 @@ def handle_delete_client(cliente_id):
     # Test 4: Pulsante conferma (se necessario)
     if st.button(f"✅ CONFERMA ELIMINAZIONE {cliente_id}", key=f"test_conferma_{cliente_id}"):
         st.write("✅ **CONFERMA CLICCATO!**")
-        st.rerun()
+        # RIMOSSO st.rerun() per fermare il loop
     
     st.write("ℹ️ **Test completato - Nessun pulsante cliccato**")
 
@@ -519,7 +517,7 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
             st.warning(f"⚠️ Cliente aggiornato in LOCALE ma errore sincronizzazione SUPABASE: {e}")
         
         st.session_state.editing_client = None
-        st.rerun()
+        # RIMOSSO st.rerun() per fermare il loop
     else:
         show_error_message("Errore nell'aggiornamento del cliente")
 
@@ -567,7 +565,7 @@ elif selected == "👥 Gestione Clienti":
         # Pulsante per tornare indietro
         if st.button("← Torna alla Lista"):
             st.session_state.editing_client = None
-            st.rerun()
+            # RIMOSSO st.rerun() per fermare il loop
         
         # Form di modifica
         success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form(
@@ -675,7 +673,7 @@ elif selected == "⚙️ Impostazioni":
                 db.aggiungi_cliente(dati_cliente)
             
             show_success_message("Dati di esempio inseriti con successo!")
-            st.rerun()
+            # RIMOSSO st.rerun() per fermare il loop
     
         # Stato database corrente
         st.markdown("---")
@@ -761,7 +759,7 @@ elif selected == "⚙️ Impostazioni":
                 success, message = sync_all_data_to_supabase()
                 if success:
                     st.success(message)
-                    st.rerun()
+                    # RIMOSSO st.rerun() per fermare il loop
                 else:
                     st.error(message)
         
@@ -833,7 +831,7 @@ elif selected == "⚙️ Impostazioni":
                         success, message = restore_from_secure_backup(backup_path)
                         if success:
                             st.success(f"✅ {message}")
-                            st.rerun()
+                            # RIMOSSO st.rerun() per fermare il loop
                         else:
                             st.error(f"❌ Ripristino fallito: {message}")
                 else:
@@ -874,7 +872,7 @@ elif selected == "⚙️ Impostazioni":
                         
                         st.success("✅ Database importato con successo!")
                         st.info("🔄 L'app si riavvierà automaticamente per applicare le modifiche...")
-                        st.rerun()
+                        # RIMOSSO st.rerun() per fermare il loop
                         
                     except Exception as e:
                         st.error(f"❌ Errore durante l'import: {e}")
@@ -1095,10 +1093,10 @@ with st.sidebar:
     
     if st.button("➕ Nuovo Cliente"):
         st.session_state.editing_client = None
-        st.rerun()
+        # RIMOSSO st.rerun() per fermare il loop
     
     if st.button("📊 Aggiorna Dati"):
-        st.rerun()
+        pass  # RIMOSSO st.rerun() per fermare il loop
     
     # Informazioni sui broker più comuni
     st.header("🏢 Broker Popolari")
