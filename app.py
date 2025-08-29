@@ -17,6 +17,7 @@ from utils.helpers import *
 from utils.backup import DatabaseBackupManager, auto_backup
 from utils.database_sync import auto_sync_database, manual_sync_database, restore_database
 from utils.auto_sync import start_auto_sync, stop_auto_sync, get_auto_sync_status
+from utils.secure_backup import create_secure_backup, list_secure_backups, restore_from_secure_backup
 
 # Configurazione pagina
 st.set_page_config(
@@ -418,8 +419,58 @@ elif selected == "⚙️ Impostazioni":
                     st.error(f"❌ Errore creazione backup: {backup_path}")
             except Exception as e:
                 st.error(f"❌ Errore durante download: {e}")
-    # Gestione Sincronizzazione Database
-    st.subheader("🔄 Sincronizzazione Database")
+            # Gestione Backup Sicuri (NON tracciati da Git)
+        st.subheader("🔒 Backup Sicuri Locali")
+        st.warning("⚠️ **SICUREZZA MASSIMA**: Questi backup sono salvati SOLO in locale e NON sono visibili su GitHub!")
+        st.info("💾 **LOCAZIONE**: ~/CPA_Backups_Sicuri/ (cartella esterna al progetto)")
+        
+        col_secure1, col_secure2, col_secure3 = st.columns(3)
+        
+        with col_secure1:
+            if st.button("🔒 Crea Backup Sicuro"):
+                success, backup_path, metadata = create_secure_backup("manual")
+                if success:
+                    st.success(f"✅ Backup sicuro creato: {backup_path}")
+                    if metadata:
+                        st.write(f"📊 {metadata['statistics']['clienti_count']} clienti, {metadata['statistics']['incroci_count']} incroci")
+                else:
+                    st.error(f"❌ Errore backup sicuro: {backup_path}")
+        
+        with col_secure2:
+            if st.button("📋 Lista Backup Sicuri"):
+                secure_backups = list_secure_backups()
+                if secure_backups:
+                    st.write(f"🔒 **Backup sicuri disponibili:** {len(secure_backups)}")
+                    for i, backup in enumerate(secure_backups[:5]):
+                        st.write(f"{i+1}. {backup['filename']} - {backup['modified'].strftime('%d/%m/%Y %H:%M')}")
+                        st.write(f"   📁 {backup['category']} - {backup['size_mb']} MB")
+                        if 'metadata' in backup and 'statistics' in backup['metadata']:
+                            stats = backup['metadata']['statistics']
+                            st.write(f"📊 {stats.get('clienti_count', 0)} clienti, {stats.get('incroci_count', 0)} incroci")
+                else:
+                    st.warning("Nessun backup sicuro disponibile")
+        
+        with col_secure3:
+            if st.button("🔄 Ripristina da Backup Sicuro"):
+                secure_backups = list_secure_backups()
+                if secure_backups:
+                    # Mostra selezione backup
+                    backup_options = [f"{b['filename']} ({b['category']})" for b in secure_backups[:5]]
+                    selected_backup = st.selectbox("Seleziona backup da ripristinare:", backup_options)
+                    
+                    if st.button("✅ Conferma Ripristino"):
+                        selected_index = backup_options.index(selected_backup)
+                        backup_path = secure_backups[selected_index]['path']
+                        success, message = restore_from_secure_backup(backup_path)
+                        if success:
+                            st.success(f"✅ {message}")
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Ripristino fallito: {message}")
+                else:
+                    st.warning("Nessun backup sicuro disponibile per il ripristino")
+    
+        # Gestione Sincronizzazione Database
     st.info("💾 **PERSISTENZA DATI**: La sincronizzazione mantiene i tuoi dati permanenti anche dopo riavvii di Streamlit Cloud.")
     
     col_sync1, col_sync2, col_sync3 = st.columns(3)

@@ -38,6 +38,16 @@ cpa_database.db
 *.log
 logs/
 
+# Secure backups (NON tracciati da Git)
+CPA_Backups_Sicuri/
+~/CPA_Backups_Sicuri/
+backups/
+database_sync/
+
+# Local backup files
+*.backup*
+*backup_*
+
 # Temporary files
 *.tmp
 *.temp
