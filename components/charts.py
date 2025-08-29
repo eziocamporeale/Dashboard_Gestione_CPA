@@ -34,7 +34,7 @@ class Charts:
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig_broker.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_broker, use_container_width=True)
+            st.plotly_chart(fig_broker, width='stretch')
         
         with col_chart2:
             st.write("**Distribuzione per Piattaforma**")
@@ -48,7 +48,7 @@ class Charts:
                 color_continuous_scale='viridis'
             )
             fig_piattaforma.update_layout(xaxis_title="Piattaforma", yaxis_title="Numero Clienti")
-            st.plotly_chart(fig_piattaforma, use_container_width=True)
+            st.plotly_chart(fig_piattaforma, width='stretch')
         
         # Grafico 2: Depositi per Broker
         st.write("**Depositi Totali per Broker**")
@@ -66,7 +66,7 @@ class Charts:
             yaxis_title="Depositi Totali (€)",
             xaxis_tickangle=-45
         )
-        st.plotly_chart(fig_depositi, use_container_width=True)
+        st.plotly_chart(fig_depositi, width='stretch')
         
         # Grafico 3: Trend temporale
         st.write("**Trend Registrazioni nel Tempo**")
@@ -91,7 +91,7 @@ class Charts:
                 yaxis_title="Numero Registrazioni",
                 xaxis_tickangle=-45
             )
-            st.plotly_chart(fig_trend, use_container_width=True)
+            st.plotly_chart(fig_trend, width='stretch')
     
     def render_summary_charts(self, df_clienti):
         """Rende i grafici per la sezione riepilogo"""
@@ -113,7 +113,7 @@ class Charts:
         stats_broker = stats_broker.sort_values('Numero Clienti', ascending=False)
         
         st.write("**Statistiche per Broker:**")
-        st.dataframe(stats_broker, use_container_width=True)
+        st.dataframe(stats_broker, width='stretch')
         
         # Grafico a torta per i depositi
         st.write("**Distribuzione Depositi per Broker**")
@@ -127,7 +127,7 @@ class Charts:
             color_discrete_sequence=px.colors.qualitative.Pastel
         )
         fig_depositi_pie.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_depositi_pie, use_container_width=True)
+        st.plotly_chart(fig_depositi_pie, width='stretch')
         
         # Grafico a barre per piattaforme
         st.write("**Distribuzione per Piattaforma e Broker**")
@@ -144,7 +144,7 @@ class Charts:
             yaxis_title="Numero Clienti",
             legend_title="Broker"
         )
-        st.plotly_chart(fig_piattaforma_broker, use_container_width=True)
+        st.plotly_chart(fig_piattaforma_broker, width='stretch')
         
         # Grafico per range di depositi
         st.write("**Distribuzione per Range di Depositi**")
@@ -169,7 +169,7 @@ class Charts:
             xaxis_title="Range Depositi (€)",
             yaxis_title="Numero Clienti"
         )
-        st.plotly_chart(fig_range, use_container_width=True)
+        st.plotly_chart(fig_range, width='stretch')
         
         # Grafico per VPS
         st.write("**Utilizzo VPS**")
@@ -186,7 +186,7 @@ class Charts:
             color_discrete_sequence=['#00ff00', '#ff0000']
         )
         fig_vps.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_vps, use_container_width=True)
+        st.plotly_chart(fig_vps, width='stretch')
     
     def render_export_options(self, df_clienti):
         """Rende le opzioni di esportazione"""

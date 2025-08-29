@@ -630,7 +630,7 @@ elif selected == "📈 Riepilogo":
         st.subheader("📋 Tabella Completa Clienti")
         st.dataframe(
             df_clienti,
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
     else:

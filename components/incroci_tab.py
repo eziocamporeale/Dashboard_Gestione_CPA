@@ -375,20 +375,20 @@ class IncrociTab:
             if stats['per_pair']:
                 pair_data = pd.DataFrame(stats['per_pair'], columns=['Pair', 'Utilizzi', 'Volume'])
                 fig = px.pie(pair_data, values='Utilizzi', names='Pair', title="Distribuzione per Pair")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
         
         with col_chart2:
             st.write("**Incroci per Broker**")
             if stats['per_broker']:
                 broker_data = pd.DataFrame(stats['per_broker'], columns=['Broker', 'Utilizzi', 'Incroci Unici'])
                 fig = px.bar(broker_data, x='Broker', y='Utilizzi', title="Utilizzo per Broker")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
         
         # Tabella dettagliata
         st.write("**Dettagli per Pair**")
         if stats['per_pair']:
             pair_df = pd.DataFrame(stats['per_pair'], columns=['Pair', 'Utilizzi', 'Volume Totale'])
-            st.dataframe(pair_df, use_container_width=True)
+            st.dataframe(pair_df, width='stretch')
     
     def render_ricerca(self):
         """Rende la ricerca incroci"""
