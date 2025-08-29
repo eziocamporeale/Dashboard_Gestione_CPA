@@ -199,6 +199,12 @@ class SupabaseManager:
 
 def show_supabase_status():
     """Mostra lo stato di Supabase nell'interfaccia"""
+    try:
+        import streamlit as st
+    except ImportError:
+        logger.error("❌ Streamlit non disponibile")
+        return False
+    
     manager = SupabaseManager()
     
     if not manager.is_configured:
