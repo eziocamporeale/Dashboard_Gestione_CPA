@@ -1,0 +1,1 @@
+# App Unificata - Schema Raggruppato
