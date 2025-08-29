@@ -418,185 +418,36 @@ def handle_edit_client(cliente_data):
     st.rerun()
 
 def handle_delete_client(cliente_id):
-    """Gestisce l'eliminazione di un cliente"""
-    # Log per debug
-    import logging
-    import time
-    logging.info(f"🔍 handle_delete_client chiamato con ID: {cliente_id} (tipo: {type(cliente_id)})")
+    """Gestisce l'eliminazione di un cliente - VERSIONE SEMPLIFICATA PER TEST"""
+    st.write(f"🔍 **FUNZIONE CHIAMATA:** handle_delete_client con ID {cliente_id}")
     
-    # Debug: mostra informazioni funzione
-    st.write(f"🔍 **DEBUG FUNZIONE:** handle_delete_client chiamata")
-    st.write(f"📊 ID Cliente: `{cliente_id}`")
-    st.write(f"🔧 Tipo ID: `{type(cliente_id)}`")
-    st.write(f"🔐 Autenticato: `{st.session_state.get('authenticated', False)}`")
-    st.write(f"🕐 Timestamp: `{time.time()}`")
-    st.write(f"🔄 Session ID: `{id(st.session_state)}`")
-    
-    # Test: pulsante COMPLETAMENTE SENZA CHIAVI
-    st.write("🧪 **TEST PULSANTE SENZA CHIAVI:**")
+    # Test 1: Pulsante senza chiave
+    st.write("🧪 **TEST 1: Pulsante senza chiave**")
     if st.button("🧪 CLICK SENZA CHIAVI"):
         st.write("✅ PULSANTE SENZA CHIAVI FUNZIONA!")
-        st.write("🔍 Questo pulsante non ha chiave!")
+        st.rerun()
     
-    # Verifica permessi
-    if not st.session_state.get('authenticated', False):
-        st.error("🔒 Accesso richiesto per eliminare clienti")
-        return
+    # Test 2: Pulsante con chiave semplice
+    st.write("🧪 **TEST 2: Pulsante con chiave semplice**")
+    if st.button("🧪 TEST CHIAVE", key="test_chiave"):
+        st.write("✅ PULSANTE CHIAVE FUNZIONA!")
+        st.rerun()
     
-    # Gestisci lo stato di conferma per questo cliente
-    delete_key = f"delete_confirm_{cliente_id}"
-    if delete_key not in st.session_state:
-        st.session_state[delete_key] = False
+    # Test 3: Pulsante elimina semplice
+    st.write("🧪 **TEST 3: Pulsante elimina semplice**")
+    if st.button(f"🗑️ TEST ELIMINA {cliente_id}", key="test_elimina"):
+        st.write("✅ PULSANTE TEST ELIMINA FUNZIONA!")
+        st.rerun()
     
-    logging.info(f"🔍 Stato conferma per cliente {cliente_id}: {st.session_state[delete_key]}")
+    # Test 4: Pulsante elimina originale
+    st.write("🗑️ **TEST 4: Pulsante elimina originale**")
+    if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=f"elimina_{cliente_id}"):
+        st.write("✅ PULSANTE ELIMINA ORIGINALE FUNZIONA!")
+        st.write("🔍 Ora dovrebbe mostrare la conferma...")
+        st.rerun()
     
-    # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
-    if not st.session_state[delete_key]:
-        logging.info(f"🔍 Mostrando pulsante elimina per cliente {cliente_id}")
-        # Chiave unica con timestamp per evitare duplicati
-        import time
-        timestamp = int(time.time() * 1000)  # Millisecondi per unicità
-        unique_delete_key = f"delete_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
-        logging.info(f"🔑 Chiave pulsante elimina: {unique_delete_key}")
-        
-        # Debug: mostra informazioni pulsante
-        st.write(f"🔍 **DEBUG:** Pulsante elimina per cliente {cliente_id}")
-        st.write(f"🔑 Chiave: `{unique_delete_key}`")
-        st.write(f"📊 Stato attuale: `{st.session_state[delete_key]}`")
-        
-        # Test: pulsante SEMPLICE senza chiavi per debug
-        st.write("🧪 **TEST PULSANTE SEMPLICE:**")
-        if st.button("🧪 TEST SEMPLICE", key="test_semplice"):
-            st.write("✅ PULSANTE SEMPLICE FUNZIONA!")
-            st.write(f"🔍 Stato attuale: {st.session_state[delete_key]}")
-        
-        # Test: pulsante con chiave semplice
-        st.write("🧪 **TEST PULSANTE CON CHIAVE:**")
-        if st.button("🧪 TEST CHIAVE", key="test_chiave"):
-            st.write("✅ PULSANTE CHIAVE FUNZIONA!")
-            st.write(f"🔍 Stato attuale: {st.session_state[delete_key]}")
-        
-        # Test: pulsante elimina con chiave SEMPLICE
-        st.write("🧪 **TEST PULSANTE ELIMINA SEMPLICE:**")
-        if st.button(f"🗑️ TEST ELIMINA {cliente_id}", key="test_elimina_semplice"):
-            st.write("✅ PULSANTE TEST ELIMINA FUNZIONA!")
-            st.write(f"🔍 Stato attuale: {st.session_state[delete_key]}")
-        
-        # Pulsante elimina ORIGINALE
-        st.write("🗑️ **PULSANTE ELIMINA ORIGINALE:**")
-        if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=unique_delete_key, type="secondary"):
-            logging.info(f"🔍 Pulsante elimina cliccato per cliente {cliente_id}")
-            st.write("✅ PULSANTE ELIMINA CLICCATO!")
-            st.session_state[delete_key] = True
-            logging.info(f"🔍 Stato conferma aggiornato: {st.session_state[delete_key]}")
-            st.rerun()
-    
-    # Se è richiesta la conferma, mostra il pulsante di conferma
-    else:
-        logging.info(f"🔍 Mostrando conferma eliminazione per cliente {cliente_id}")
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            # Chiave unica con timestamp per conferma
-            timestamp = int(time.time() * 1000)  # Millisecondi per unicità
-            unique_confirm_key = f"confirm_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
-            logging.info(f"🔑 Chiave pulsante conferma: {unique_confirm_key}")
-            
-            # Debug: mostra informazioni pulsante conferma
-            st.write(f"🔍 **DEBUG:** Pulsante conferma per cliente {cliente_id}")
-            st.write(f"🔑 Chiave: `{unique_confirm_key}`")
-            st.write(f"📊 Stato attuale: `{st.session_state[delete_key]}`")
-            
-            if st.button(f"✅ Conferma Eliminazione", key=unique_confirm_key, type="primary"):
-                # Log per debug
-                import logging
-                logging.info(f"🔍 Conferma eliminazione cliente ID: {cliente_id}")
-                
-                # Elimina il cliente dal database locale
-                # Converti in intero se necessario
-                try:
-                    cliente_id_int = int(cliente_id)
-                    logging.info(f"🔄 ID convertito in intero: {cliente_id_int}")
-                except (ValueError, TypeError):
-                    logging.error(f"❌ Impossibile convertire ID {cliente_id} in intero")
-                    st.error(f"❌ ID cliente non valido: {cliente_id}")
-                    st.session_state[delete_key] = False
-                    return
-                
-                # Verifica cliente esistente prima eliminazione
-                try:
-                    clienti_prima = db.ottieni_tutti_clienti()
-                    cliente_prima = clienti_prima[clienti_prima['id'] == cliente_id_int]
-                    logging.info(f"📊 Cliente trovato prima eliminazione: {len(cliente_prima)} righe")
-                    if len(cliente_prima) > 0:
-                        logging.info(f"📊 Dettagli cliente prima: {cliente_prima.iloc[0].to_dict()}")
-                except Exception as e:
-                    logging.error(f"❌ Errore verifica cliente prima: {e}")
-                
-                # Esegui eliminazione
-                logging.info(f"🗑️ Eseguendo eliminazione cliente {cliente_id_int}...")
-                success = db.elimina_cliente(cliente_id_int)
-                logging.info(f"📊 Risultato eliminazione: {success}")
-                
-                # Verifica cliente dopo eliminazione
-                try:
-                    clienti_dopo = db.ottieni_tutti_clienti()
-                    cliente_dopo = clienti_dopo[clienti_dopo['id'] == cliente_id_int]
-                    logging.info(f"📊 Cliente trovato dopo eliminazione: {len(cliente_dopo)} righe")
-                except Exception as e:
-                    logging.error(f"❌ Errore verifica cliente dopo: {e}")
-                
-                if success:
-                    # Backup automatico dopo eliminazione cliente
-                    auto_backup()
-                    
-                    # SINCRONIZZAZIONE AUTOMATICA CON SUPABASE
-                    try:
-                        from supabase_manager import SupabaseManager
-                        supabase_manager = SupabaseManager()
-                        
-                        if supabase_manager.is_configured:
-                            # Cerca cliente in Supabase per eliminarlo
-                            clienti_supabase = supabase_manager.get_clienti()
-                            cliente_supabase = None
-                            
-                            # Cerca per ID o email (se disponibile)
-                            for c in clienti_supabase:
-                                if str(c.get('id')) == str(cliente_id_int) or c.get('email') == st.session_state.get('cliente_email', ''):
-                                    cliente_supabase = c
-                                    break
-                            
-                            if cliente_supabase:
-                                supabase_success, supabase_message = supabase_manager.delete_cliente(cliente_supabase['id'])
-                                
-                                if supabase_success:
-                                    st.success(f"✅ Cliente {cliente_id_int} eliminato da LOCALE e SUPABASE!")
-                                else:
-                                    st.warning(f"⚠️ Cliente eliminato da LOCALE ma errore SUPABASE: {supabase_message}")
-                            else:
-                                st.warning(f"⚠️ Cliente eliminato da LOCALE ma non trovato in SUPABASE")
-                        else:
-                            st.success(f"✅ Cliente {cliente_id_int} eliminato da LOCALE (Supabase non configurato)")
-                            
-                    except Exception as e:
-                        st.warning(f"⚠️ Cliente eliminato da LOCALE ma errore sincronizzazione SUPABASE: {e}")
-                    
-                    # Reset dello stato
-                    st.session_state[delete_key] = False
-                    st.rerun()
-                else:
-                    st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id_int}")
-                    logging.error(f"❌ Eliminazione fallita per cliente {cliente_id_int}")
-                    st.session_state[delete_key] = False
-        
-        with col2:
-            # Chiave unica con timestamp per annulla
-            timestamp = int(time.time() * 1000)  # Millisecondi per unicità
-            unique_cancel_key = f"cancel_btn_{cliente_id_int}_{timestamp}_{id(st.session_state)}"
-            if st.button(f"❌ Annulla", key=unique_cancel_key, type="secondary"):
-                st.session_state[delete_key] = False
-                st.rerun()
-        
-        st.warning(f"⚠️ Sei sicuro di voler eliminare il cliente {cliente_id_int}?")
+    # Se arriviamo qui, nessun pulsante è stato cliccato
+    st.write("ℹ️ **Nessun pulsante cliccato ancora**")
 
 def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
