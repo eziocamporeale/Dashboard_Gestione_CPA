@@ -24,6 +24,9 @@ from database.incroci_manager import IncrociManager
 from utils.helpers import *
 from utils.backup import DatabaseBackupManager, auto_backup
 from utils.secure_backup import create_secure_backup, list_secure_backups, restore_from_secure_backup
+import tempfile
+import shutil
+import os
 
 # Configurazione pagina
 st.set_page_config(
@@ -524,6 +527,64 @@ elif selected == "⚙️ Impostazioni":
                             st.error(f"❌ Ripristino fallito: {message}")
                 else:
                     st.warning("Nessun backup sicuro disponibile per il ripristino")
+    
+        # Import Manuale Database (per Collaboratori)
+        st.subheader("📥 Import Manuale Database")
+        st.info("🤝 **COLLABORAZIONE TEAM**: I collaboratori possono importare database esportati dal tuo PC per sincronizzare i dati.")
+        st.warning("⚠️ **ATTENZIONE**: Importa solo file database che ti fidi completamente!")
+        
+        col_import1, col_import2 = st.columns(2)
+        
+        with col_import1:
+            uploaded_file = st.file_uploader(
+                "📁 Carica File Database (.db)",
+                type=['db'],
+                help="Seleziona un file database (.db) esportato dal PC principale"
+            )
+            
+            if uploaded_file is not None:
+                # Mostra informazioni sul file caricato
+                file_size = len(uploaded_file.getvalue())
+                file_size_mb = round(file_size / (1024 * 1024), 2)
+                st.write(f"📊 **File caricato:** {uploaded_file.name}")
+                st.write(f"💾 **Dimensione:** {file_size_mb} MB")
+                
+                # Pulsante per confermare l'import
+                if st.button("✅ Conferma Import Database", type="primary"):
+                    try:
+                        # Crea backup del database corrente
+                        current_db_path = db.db_path if hasattr(db, 'db_path') else "cpa_database.db"
+                        backup_name = f"backup_prima_import_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                        
+                        if os.path.exists(current_db_path):
+                            shutil.copy2(current_db_path, f"{backup_name}")
+                            st.success(f"✅ Backup database corrente: {backup_name}")
+                        
+                        # Salva il file caricato come nuovo database
+                        with open(current_db_path, "wb") as f:
+                            f.write(uploaded_file.getvalue())
+                        
+                        st.success("✅ Database importato con successo!")
+                        st.info("🔄 L'app si riavvierà automaticamente per applicare le modifiche...")
+                        
+                        # Riavvia l'app
+                        st.rerun()
+                        
+                    except Exception as e:
+                        st.error(f"❌ Errore durante l'import: {e}")
+                        st.error("Il database originale è rimasto intatto.")
+        
+        with col_import2:
+            st.write("**📋 Istruzioni per i Collaboratori:**")
+            st.write("1. **Richiedi** il file database al responsabile")
+            st.write("2. **Carica** il file .db usando il pulsante a sinistra")
+            st.write("3. **Conferma** l'import per applicare i dati")
+            st.write("4. **L'app si riavvia** automaticamente")
+            st.write("")
+            st.write("**🔒 Sicurezza:**")
+            st.write("• Solo file .db sono accettati")
+            st.write("• Backup automatico prima dell'import")
+            st.write("• Database originale protetto")
     
 
 
