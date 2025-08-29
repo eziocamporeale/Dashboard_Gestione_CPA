@@ -120,6 +120,18 @@ class AutoSyncManager:
     def _auto_push_to_github(self):
         """Esegue il push automatico su GitHub"""
         try:
+            # Verifica se Git è configurato correttamente
+            git_config = subprocess.run(
+                ["git", "config", "--get", "user.email"],
+                capture_output=True,
+                text=True,
+                cwd=self.repo_path
+            )
+            
+            if git_config.returncode != 0 or not git_config.stdout.strip():
+                logging.warning("⚠️ Git non configurato, salto push automatico (solo sync locale)")
+                return
+            
             # Verifica se ci sono modifiche
             result = subprocess.run(
                 ["git", "status", "--porcelain"],

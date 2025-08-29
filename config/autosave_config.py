@@ -40,7 +40,7 @@ ENVIRONMENT_CONFIGS = {
     "streamlit_cloud": {
         "sync_interval_minutes": 3,  # Più frequente su Streamlit Cloud
         "backup_interval_minutes": 5,
-        "auto_push_enabled": True,
+        "auto_push_enabled": False,  # Disabilitato finché non configuriamo Git
     }
 }
 
