@@ -419,6 +419,7 @@ def handle_delete_client(cliente_id):
     """Gestisce l'eliminazione di un cliente"""
     # Log per debug
     import logging
+    import time
     logging.info(f"🔍 handle_delete_client chiamato con ID: {cliente_id} (tipo: {type(cliente_id)})")
     
     # Debug: mostra informazioni funzione
@@ -426,6 +427,8 @@ def handle_delete_client(cliente_id):
     st.write(f"📊 ID Cliente: `{cliente_id}`")
     st.write(f"🔧 Tipo ID: `{type(cliente_id)}`")
     st.write(f"🔐 Autenticato: `{st.session_state.get('authenticated', False)}`")
+    st.write(f"🕐 Timestamp: `{time.time()}`")
+    st.write(f"🔄 Session ID: `{id(st.session_state)}`")
     
     # Verifica permessi
     if not st.session_state.get('authenticated', False):
@@ -453,8 +456,17 @@ def handle_delete_client(cliente_id):
         st.write(f"🔑 Chiave: `{unique_delete_key}`")
         st.write(f"📊 Stato attuale: `{st.session_state[delete_key]}`")
         
+        # Test: pulsante semplice per debug
+        if st.button("🧪 TEST CLICK", key=f"test_{unique_delete_key}"):
+            st.write("✅ PULSANTE TEST FUNZIONA!")
+            st.write(f"🔍 Stato prima: {st.session_state[delete_key]}")
+            st.session_state[delete_key] = True
+            st.write(f"🔍 Stato dopo: {st.session_state[delete_key]}")
+            st.rerun()
+        
         if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=unique_delete_key, type="secondary"):
             logging.info(f"🔍 Pulsante elimina cliccato per cliente {cliente_id}")
+            st.write("✅ PULSANTE ELIMINA CLICCATO!")
             st.session_state[delete_key] = True
             logging.info(f"🔍 Stato conferma aggiornato: {st.session_state[delete_key]}")
             st.rerun()
