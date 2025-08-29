@@ -154,13 +154,132 @@ selected = option_menu(
 )
 
 # Funzioni per la gestione dei clienti
+def sync_all_data_to_supabase():
+    """Sincronizza manualmente tutti i dati dal database locale a Supabase"""
+    try:
+        from supabase_manager import SupabaseManager
+        
+        # Inizializza manager Supabase
+        supabase_manager = SupabaseManager()
+        
+        if not supabase_manager.is_configured:
+            return False, "❌ Supabase non configurato"
+        
+        # Ottieni tutti i clienti dal database locale
+        clienti_locali = db.ottieni_tutti_clienti()
+        
+        if not clienti_locali:
+            return False, "❌ Nessun cliente presente nel database locale"
+        
+        # Contatori per statistiche
+        sincronizzati = 0
+        errori = 0
+        gia_presenti = 0
+        
+        st.info(f"🔄 Sincronizzazione in corso... {len(clienti_locali)} clienti da processare")
+        
+        # Progress bar
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        for i, cliente in enumerate(clienti_locali):
+            # Aggiorna progress bar
+            progress = (i + 1) / len(clienti_locali)
+            progress_bar.progress(progress)
+            status_text.text(f"🔄 Sincronizzando cliente {i+1}/{len(clienti_locali)}: {cliente.get('nome_cliente', 'N/A')}")
+            
+            try:
+                # Prepara dati per Supabase
+                supabase_data = {
+                    'nome_cliente': cliente.get('nome_cliente', ''),
+                    'email': cliente.get('email', f"cliente_{i}@local.com"),
+                    'broker': cliente.get('broker', ''),
+                    'piattaforma': cliente.get('piattaforma', ''),
+                    'numero_conto': cliente.get('numero_conto', ''),
+                    'volume_posizione': cliente.get('volume_posizione', 0.0)
+                }
+                
+                # Verifica se il cliente esiste già in Supabase (per email)
+                clienti_supabase = supabase_manager.get_clienti()
+                cliente_esistente = None
+                
+                for c in clienti_supabase:
+                    if c.get('email') == supabase_data['email']:
+                        cliente_esistente = c
+                        break
+                
+                if cliente_esistente:
+                    # Aggiorna cliente esistente
+                    success, message = supabase_manager.update_cliente(
+                        cliente_esistente['id'], supabase_data
+                    )
+                    if success:
+                        gia_presenti += 1
+                    else:
+                        errori += 1
+                else:
+                    # Aggiungi nuovo cliente
+                    success, message = supabase_manager.add_cliente(supabase_data)
+                    if success:
+                        sincronizzati += 1
+                    else:
+                        errori += 1
+                        
+            except Exception as e:
+                errori += 1
+                st.error(f"❌ Errore sincronizzazione cliente {cliente.get('nome_cliente', 'N/A')}: {e}")
+        
+        # Nascondi progress bar
+        progress_bar.empty()
+        status_text.empty()
+        
+        # Risultato finale
+        if errori == 0:
+            return True, f"✅ Sincronizzazione completata! {sincronizzati} nuovi clienti, {gia_presenti} aggiornati"
+        else:
+            return True, f"⚠️ Sincronizzazione parziale: {sincronizzati} nuovi, {gia_presenti} aggiornati, {errori} errori"
+            
+    except Exception as e:
+        return False, f"❌ Errore sincronizzazione: {e}"
+
 def handle_save_client(dati_cliente, campi_aggiuntivi):
     """Gestisce il salvataggio di un nuovo cliente"""
+    # Salva nel database locale
     success, result = db.aggiungi_cliente(dati_cliente, campi_aggiuntivi)
+    
     if success:
         # Backup automatico dopo aggiunta cliente
         auto_backup()
-        show_success_message(f"Cliente {dati_cliente['nome_cliente']} salvato con successo!")
+        
+        # SINCRONIZZAZIONE AUTOMATICA CON SUPABASE
+        try:
+            from supabase_manager import SupabaseManager
+            supabase_manager = SupabaseManager()
+            
+            if supabase_manager.is_configured:
+                # Prepara dati per Supabase
+                supabase_data = {
+                    'nome_cliente': dati_cliente['nome_cliente'],
+                    'email': dati_cliente['email'],
+                    'broker': dati_cliente['broker'],
+                    'piattaforma': dati_cliente.get('piattaforma', ''),
+                    'numero_conto': dati_cliente.get('numero_conto', ''),
+                    'volume_posizione': dati_cliente.get('volume_posizione', 0.0)
+                }
+                
+                # Salva in Supabase
+                supabase_success, supabase_message = supabase_manager.add_cliente(supabase_data)
+                
+                if supabase_success:
+                    st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE e SUPABASE!")
+                else:
+                    st.warning(f"⚠️ Cliente salvato in LOCALE ma errore SUPABASE: {supabase_message}")
+            else:
+                st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE (Supabase non configurato)")
+                
+        except Exception as e:
+            st.warning(f"⚠️ Cliente salvato in LOCALE ma errore sincronizzazione SUPABASE: {e}")
+        
         st.session_state.editing_client = None
         st.rerun()
     else:
@@ -198,13 +317,44 @@ def handle_delete_client(cliente_id):
         col1, col2 = st.columns([1, 1])
         with col1:
             if st.button(f"✅ Conferma Eliminazione", key=f"confirm_{cliente_id}", type="primary"):
-                # Elimina il cliente
+                # Elimina il cliente dal database locale
                 success = db.elimina_cliente(cliente_id)
                 
                 if success:
                     # Backup automatico dopo eliminazione cliente
                     auto_backup()
-                    st.success(f"✅ Cliente {cliente_id} eliminato con successo!")
+                    
+                    # SINCRONIZZAZIONE AUTOMATICA CON SUPABASE
+                    try:
+                        from supabase_manager import SupabaseManager
+                        supabase_manager = SupabaseManager()
+                        
+                        if supabase_manager.is_configured:
+                            # Cerca cliente in Supabase per eliminarlo
+                            clienti_supabase = supabase_manager.get_clienti()
+                            cliente_supabase = None
+                            
+                            # Cerca per ID o email (se disponibile)
+                            for c in clienti_supabase:
+                                if str(c.get('id')) == str(cliente_id) or c.get('email') == st.session_state.get('cliente_email', ''):
+                                    cliente_supabase = c
+                                    break
+                            
+                            if cliente_supabase:
+                                supabase_success, supabase_message = supabase_manager.delete_cliente(cliente_supabase['id'])
+                                
+                                if supabase_success:
+                                    st.success(f"✅ Cliente {cliente_id} eliminato da LOCALE e SUPABASE!")
+                                else:
+                                    st.warning(f"⚠️ Cliente eliminato da LOCALE ma errore SUPABASE: {supabase_message}")
+                            else:
+                                st.warning(f"⚠️ Cliente eliminato da LOCALE ma non trovato in SUPABASE")
+                        else:
+                            st.success(f"✅ Cliente {cliente_id} eliminato da LOCALE (Supabase non configurato)")
+                            
+                    except Exception as e:
+                        st.warning(f"⚠️ Cliente eliminato da LOCALE ma errore sincronizzazione SUPABASE: {e}")
+                    
                     # Reset dello stato
                     st.session_state[delete_key] = False
                     st.rerun()
@@ -221,11 +371,55 @@ def handle_delete_client(cliente_id):
 
 def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
+    # Aggiorna nel database locale
     success = db.modifica_cliente(cliente_id, dati_cliente, campi_aggiuntivi)
+    
     if success:
         # Backup automatico dopo modifica cliente
         auto_backup()
-        show_success_message(f"Cliente {dati_cliente['nome_cliente']} aggiornato con successo!")
+        
+        # SINCRONIZZAZIONE AUTOMATICA CON SUPABASE
+        try:
+            from supabase_manager import SupabaseManager
+            supabase_manager = SupabaseManager()
+            
+            if supabase_manager.is_configured:
+                # Prepara dati per Supabase
+                supabase_data = {
+                    'nome_cliente': dati_cliente['nome_cliente'],
+                    'email': dati_cliente['email'],
+                    'broker': dati_cliente['broker'],
+                    'piattaforma': dati_cliente.get('piattaforma', ''),
+                    'numero_conto': dati_cliente.get('numero_conto', ''),
+                    'volume_posizione': dati_cliente.get('volume_posizione', 0.0)
+                }
+                
+                # Aggiorna in Supabase (cerca per email per matching)
+                clienti_supabase = supabase_manager.get_clienti()
+                cliente_supabase = None
+                
+                for c in clienti_supabase:
+                    if c.get('email') == dati_cliente['email']:
+                        cliente_supabase = c
+                        break
+                
+                if cliente_supabase:
+                    supabase_success, supabase_message = supabase_manager.update_cliente(
+                        cliente_supabase['id'], supabase_data
+                    )
+                    
+                    if supabase_success:
+                        st.success(f"✅ Cliente {dati_cliente['nome_cliente']} aggiornato in LOCALE e SUPABASE!")
+                    else:
+                        st.warning(f"⚠️ Cliente aggiornato in LOCALE ma errore SUPABASE: {supabase_message}")
+                else:
+                    st.warning(f"⚠️ Cliente aggiornato in LOCALE ma non trovato in SUPABASE")
+            else:
+                st.success(f"✅ Cliente {dati_cliente['nome_cliente']} aggiornato in LOCALE (Supabase non configurato)")
+                
+        except Exception as e:
+            st.warning(f"⚠️ Cliente aggiornato in LOCALE ma errore sincronizzazione SUPABASE: {e}")
+        
         st.session_state.editing_client = None
         st.rerun()
     else:
@@ -456,6 +650,45 @@ elif selected == "⚙️ Impostazioni":
                         st.error(f"❌ Errore creazione backup: {backup_path}")
                 except Exception as e:
                     st.error(f"❌ Errore durante download: {e}")
+        
+        # Sincronizzazione Manuale con Supabase
+        st.markdown("---")
+        st.subheader("🔄 Sincronizzazione Manuale Supabase")
+        st.info("🔄 **SINCRONIZZAZIONE**: Carica manualmente tutti i dati dal database locale a Supabase")
+        
+        col_sync1, col_sync2 = st.columns(2)
+        
+        with col_sync1:
+            if st.button("🔄 Sincronizza Tutti i Dati", type="primary"):
+                success, message = sync_all_data_to_supabase()
+                if success:
+                    st.success(message)
+                    st.rerun()
+                else:
+                    st.error(message)
+        
+        with col_sync2:
+            # Mostra stato sincronizzazione
+            try:
+                from supabase_manager import SupabaseManager
+                supabase_manager = SupabaseManager()
+                
+                if supabase_manager.is_configured:
+                    clienti_supabase = supabase_manager.get_clienti()
+                    clienti_locali = db.ottieni_tutti_clienti()
+                    
+                    st.write("**📊 Stato Sincronizzazione:**")
+                    st.write(f"• **Locale:** {len(clienti_locali)} clienti")
+                    st.write(f"• **Supabase:** {len(clienti_supabase)} clienti")
+                    
+                    if len(clienti_locali) == len(clienti_supabase):
+                        st.success("✅ **SINCRONIZZATO**")
+                    else:
+                        st.warning(f"⚠️ **NON SINCRONIZZATO** (differenza: {abs(len(clienti_locali) - len(clienti_supabase))})")
+                else:
+                    st.warning("⚠️ Supabase non configurato")
+            except Exception as e:
+                st.error(f"❌ Errore verifica stato: {e}")
         
         # Backup Sicuri Locali
         st.markdown("---")
