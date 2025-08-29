@@ -16,6 +16,7 @@ from database.incroci_manager import IncrociManager
 from utils.helpers import *
 from utils.backup import DatabaseBackupManager, auto_backup
 from utils.database_sync import auto_sync_database, manual_sync_database, restore_database
+from utils.auto_sync import start_auto_sync, stop_auto_sync, get_auto_sync_status
 
 # Configurazione pagina
 st.set_page_config(
@@ -436,6 +437,31 @@ elif selected == "⚙️ Impostazioni":
             else:
                 st.warning("Nessun file di sincronizzazione disponibile")
     
+        # Gestione Autosave Automatico
+        st.subheader("🤖 Autosave Automatico")
+        st.info("🔄 **AUTOSAVE**: Sincronizzazione e backup automatici per massima sicurezza dati.")
+        
+        col_auto1, col_auto2, col_auto3 = st.columns(3)
+        
+        with col_auto1:
+            if st.button("🚀 Avvia Autosave"):
+                success = start_auto_sync(sync_interval_minutes=5, backup_interval_minutes=10)
+                if success:
+                    st.success("✅ Autosave avviato (Sync ogni 5 min, Backup ogni 10 min)")
+                else:
+                    st.error("❌ Errore nell'avvio dell'autosave")
+        
+        with col_auto2:
+            if st.button("⏹️ Ferma Autosave"):
+                stop_auto_sync()
+                st.success("✅ Autosave fermato")
+        
+        with col_auto3:
+            if st.button("📊 Stato Autosave"):
+                status = get_auto_sync_status()
+                st.write(f"**Stato:** {'🟢 Attivo' if status['running'] else '🔴 Inattivo'}")
+                st.write(f"**Sync:** ogni {status['sync_interval_minutes']} min")
+                st.write(f"**Backup:** ogni {status['backup_interval_minutes']} min")
     # Informazioni database corrente
     st.subheader("🗄️ Stato Database")
     backup_manager = DatabaseBackupManager()
