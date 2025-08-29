@@ -1572,6 +1572,10 @@ with st.sidebar:
     st.header("🔧 Riparazioni")
     if st.button("🔧 Ripara Database"):
         fix_supabase_and_duplicates()
+    
+    st.header("🧪 Test Diretto")
+    if st.button("🔧 Test Diretto Database"):
+        test_direct_database_fix()
 
 # Sidebar con informazioni aggiuntive
 with st.sidebar:
