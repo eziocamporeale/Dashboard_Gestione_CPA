@@ -68,8 +68,17 @@ def create_database_tables():
                 sql_script = f.read()
             
             # Esegui lo script SQL
-            conn = sqlite3.connect("cpa_database.db")
+            # Usa il percorso corretto del database
+            db_path = db.db_path if hasattr(db, 'db_path') else "cpa_database.db"
+            logging.info(f"🔍 Creazione tabelle su database: {db_path}")
+            
+            conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
+            
+            # Verifica se le tabelle esistono già
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            existing_tables = [row[0] for row in cursor.fetchall()]
+            logging.info(f"📋 Tabelle esistenti prima: {existing_tables}")
             
             # Esegui ogni comando SQL separatamente
             for command in sql_script.split(';'):
@@ -83,6 +92,12 @@ def create_database_tables():
                             logging.warning(f"SQL warning: {e}")
             
             conn.commit()
+            
+            # Verifica se le tabelle sono state create
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            final_tables = [row[0] for row in cursor.fetchall()]
+            logging.info(f"📋 Tabelle esistenti dopo: {final_tables}")
+            
             conn.close()
             logging.info("✅ Tabelle database create/verificate con successo")
             return True
