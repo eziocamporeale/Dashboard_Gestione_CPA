@@ -188,11 +188,16 @@ def sync_all_data_to_supabase():
         progress_bar = st.progress(0)
         status_text = st.empty()
         
+        # Log dettagliato per debug
+        debug_info = []
+        
         for i, cliente in enumerate(clienti_locali):
             # Aggiorna progress bar
             progress = (i + 1) / len(clienti_locali)
             progress_bar.progress(progress)
-            status_text.text(f"🔄 Sincronizzando cliente {i+1}/{len(clienti_locali)}: {cliente.get('nome_cliente', 'N/A')}")
+            
+            nome_cliente = cliente.get('nome_cliente', 'N/A') if hasattr(cliente, 'get') else str(cliente)
+            status_text.text(f"🔄 Sincronizzando cliente {i+1}/{len(clienti_locali)}: {nome_cliente}")
             
             try:
                 # Prepara dati per Supabase
@@ -204,6 +209,9 @@ def sync_all_data_to_supabase():
                     'numero_conto': str(cliente.get('numero_conto', '')),
                     'volume_posizione': float(cliente.get('volume_posizione', 0.0))
                 }
+                
+                # Log dati preparati
+                debug_info.append(f"Cliente {i+1}: {supabase_data['nome_cliente']} - Email: {supabase_data['email']}")
                 
                 # Verifica se il cliente esiste già in Supabase (per email)
                 clienti_supabase = supabase_manager.get_clienti()
@@ -221,24 +229,42 @@ def sync_all_data_to_supabase():
                     )
                     if success:
                         gia_presenti += 1
+                        debug_info.append(f"✅ Aggiornato: {supabase_data['nome_cliente']}")
                     else:
                         errori += 1
+                        debug_info.append(f"❌ Errore aggiornamento: {supabase_data['nome_cliente']} - {message}")
                 else:
                     # Aggiungi nuovo cliente
                     success, message = supabase_manager.add_cliente(supabase_data)
                     if success:
                         sincronizzati += 1
+                        debug_info.append(f"✅ Aggiunto: {supabase_data['nome_cliente']}")
                     else:
                         errori += 1
+                        debug_info.append(f"❌ Errore aggiunta: {supabase_data['nome_cliente']} - {message}")
                         
             except Exception as e:
                 errori += 1
                 nome_cliente = cliente.get('nome_cliente', 'N/A') if hasattr(cliente, 'get') else str(cliente)
-                st.error(f"❌ Errore sincronizzazione cliente {nome_cliente}: {e}")
+                error_msg = f"❌ Errore sincronizzazione cliente {nome_cliente}: {e}"
+                st.error(error_msg)
+                debug_info.append(error_msg)
         
         # Nascondi progress bar
         progress_bar.empty()
         status_text.empty()
+        
+        # Mostra log dettagliato
+        with st.expander("📋 Log Dettagliato Sincronizzazione", expanded=True):
+            st.write("**🔄 Processo di sincronizzazione:**")
+            for info in debug_info:
+                st.write(info)
+            
+            st.write(f"\n**📊 Riepilogo finale:**")
+            st.write(f"• Sincronizzati: {sincronizzati}")
+            st.write(f"• Aggiornati: {gia_presenti}")
+            st.write(f"• Errori: {errori}")
+            st.write(f"• Totale processati: {len(clienti_locali)}")
         
         # Risultato finale
         if errori == 0:
