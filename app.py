@@ -1363,6 +1363,10 @@ with st.sidebar:
     st.header("🧪 Test Database")
     if st.button("🔧 Test Database"):
         test_database_operations()
+    
+    st.header("🔧 Riparazioni")
+    if st.button("🔧 Ripara Database"):
+        fix_supabase_and_duplicates()
 
 # Sidebar con informazioni aggiuntive
 with st.sidebar:
