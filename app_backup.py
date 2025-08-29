@@ -189,8 +189,10 @@ def handle_delete_client(cliente_id):
     
     # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
     if not st.session_state[delete_key]:
-        # Chiave unica per evitare duplicati
-        unique_delete_key = f"delete_btn_{cliente_id}_{id(st.session_state)}"
+        # Chiave unica con timestamp per evitare duplicati
+        import time
+        timestamp = int(time.time() * 1000)  # Millisecondi per unicità
+        unique_delete_key = f"delete_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
         if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=unique_delete_key, type="secondary"):
             st.session_state[delete_key] = True
             st.rerun()
@@ -199,8 +201,9 @@ def handle_delete_client(cliente_id):
     else:
         col1, col2 = st.columns([1, 1])
         with col1:
-            # Chiave unica per conferma
-            unique_confirm_key = f"confirm_btn_{cliente_id}_{id(st.session_state)}"
+            # Chiave unica con timestamp per conferma
+            timestamp = int(time.time() * 1000)  # Millisecondi per unicità
+            unique_confirm_key = f"confirm_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
             if st.button(f"✅ Conferma Eliminazione", key=unique_confirm_key, type="primary"):
                 # Elimina il cliente
                 success = db.elimina_cliente(cliente_id)
@@ -217,8 +220,9 @@ def handle_delete_client(cliente_id):
                     st.session_state[delete_key] = False
         
         with col2:
-            # Chiave unica per annulla
-            unique_cancel_key = f"cancel_btn_{cliente_id}_{id(st.session_state)}"
+            # Chiave unica con timestamp per annulla
+            timestamp = int(time.time() * 1000)  # Millisecondi per unicità
+            unique_cancel_key = f"cancel_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
             if st.button(f"❌ Annulla", key=unique_cancel_key, type="secondary"):
                 st.session_state[delete_key] = False
                 st.rerun()
