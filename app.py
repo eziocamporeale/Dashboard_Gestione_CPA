@@ -431,23 +431,33 @@ def handle_delete_client(cliente_id):
     if delete_key not in st.session_state:
         st.session_state[delete_key] = False
     
+    logging.info(f"🔍 Stato conferma per cliente {cliente_id}: {st.session_state[delete_key]}")
+    
     # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
     if not st.session_state[delete_key]:
+        logging.info(f"🔍 Mostrando pulsante elimina per cliente {cliente_id}")
         # Chiave unica con timestamp per evitare duplicati
         import time
         timestamp = int(time.time() * 1000)  # Millisecondi per unicità
         unique_delete_key = f"delete_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
+        logging.info(f"🔑 Chiave pulsante elimina: {unique_delete_key}")
+        
         if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=unique_delete_key, type="secondary"):
+            logging.info(f"🔍 Pulsante elimina cliccato per cliente {cliente_id}")
             st.session_state[delete_key] = True
+            logging.info(f"🔍 Stato conferma aggiornato: {st.session_state[delete_key]}")
             st.rerun()
     
     # Se è richiesta la conferma, mostra il pulsante di conferma
     else:
+        logging.info(f"🔍 Mostrando conferma eliminazione per cliente {cliente_id}")
         col1, col2 = st.columns([1, 1])
         with col1:
             # Chiave unica con timestamp per conferma
             timestamp = int(time.time() * 1000)  # Millisecondi per unicità
             unique_confirm_key = f"confirm_btn_{cliente_id}_{timestamp}_{id(st.session_state)}"
+            logging.info(f"🔑 Chiave pulsante conferma: {unique_confirm_key}")
+            
             if st.button(f"✅ Conferma Eliminazione", key=unique_confirm_key, type="primary"):
                 # Log per debug
                 import logging
@@ -464,8 +474,28 @@ def handle_delete_client(cliente_id):
                     st.session_state[delete_key] = False
                     return
                 
+                # Verifica cliente esistente prima eliminazione
+                try:
+                    clienti_prima = db.ottieni_tutti_clienti()
+                    cliente_prima = clienti_prima[clienti_prima['id'] == cliente_id_int]
+                    logging.info(f"📊 Cliente trovato prima eliminazione: {len(cliente_prima)} righe")
+                    if len(cliente_prima) > 0:
+                        logging.info(f"📊 Dettagli cliente prima: {cliente_prima.iloc[0].to_dict()}")
+                except Exception as e:
+                    logging.error(f"❌ Errore verifica cliente prima: {e}")
+                
+                # Esegui eliminazione
+                logging.info(f"🗑️ Eseguendo eliminazione cliente {cliente_id_int}...")
                 success = db.elimina_cliente(cliente_id_int)
                 logging.info(f"📊 Risultato eliminazione: {success}")
+                
+                # Verifica cliente dopo eliminazione
+                try:
+                    clienti_dopo = db.ottieni_tutti_clienti()
+                    cliente_dopo = clienti_dopo[clienti_dopo['id'] == cliente_id_int]
+                    logging.info(f"📊 Cliente trovato dopo eliminazione: {len(cliente_dopo)} righe")
+                except Exception as e:
+                    logging.error(f"❌ Errore verifica cliente dopo: {e}")
                 
                 if success:
                     # Backup automatico dopo eliminazione cliente
