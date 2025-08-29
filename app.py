@@ -1103,12 +1103,21 @@ def test_database_operations():
         count = cursor.fetchone()[0]
         st.write(f"📊 **Clienti totali:** {count}")
         
-        # Mostra primi 5 clienti
-        cursor.execute("SELECT id, nome_cliente, email FROM clienti LIMIT 5")
+        # Mostra TUTTI i clienti con ID e email
+        cursor.execute("SELECT id, nome_cliente, email, broker FROM clienti ORDER BY id")
         clienti = cursor.fetchall()
-        st.write("📋 **Primi 5 clienti:**")
+        st.write("📋 **TUTTI i clienti nel database locale:**")
         for cliente in clienti:
-            st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}")
+            st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}, Broker: {cliente[3]}")
+        
+        # Verifica specificamente ID 30
+        cursor.execute("SELECT * FROM clienti WHERE id = 30")
+        cliente_30 = cursor.fetchone()
+        if cliente_30:
+            st.success(f"✅ **Cliente ID 30 TROVATO:** {cliente_30}")
+        else:
+            st.error(f"❌ **Cliente ID 30 NON TROVATO nel database locale!**")
+            st.warning("⚠️ Questo spiega perché l'eliminazione non funziona!")
         
         conn.close()
         st.success("✅ **Connessione database OK**")
@@ -1117,11 +1126,44 @@ def test_database_operations():
         st.error(f"❌ **Errore database:** {e}")
         return
     
-    # Test 2: Test eliminazione diretta
-    st.subheader("2. Test Eliminazione Diretta")
+    # Test 2: Verifica Supabase (se configurato)
+    st.subheader("2. Verifica Supabase")
+    try:
+        from supabase_manager import SupabaseManager
+        supabase_manager = SupabaseManager()
+        
+        if supabase_manager.is_configured:
+            st.write("✅ **Supabase configurato**")
+            
+            # Ottieni clienti da Supabase
+            clienti_supabase = supabase_manager.get_clienti()
+            st.write(f"📊 **Clienti in Supabase:** {len(clienti_supabase)}")
+            
+            # Cerca cliente con email simile
+            cursor.execute("SELECT email FROM clienti WHERE id = 30")
+            email_30 = cursor.fetchone()
+            if email_30:
+                email = email_30[0]
+                st.write(f"🔍 **Cercando email:** {email}")
+                
+                # Cerca in Supabase
+                for cliente in clienti_supabase:
+                    if cliente.get('email') == email:
+                        st.success(f"✅ **Cliente trovato in Supabase:** ID {cliente.get('id')}, Email: {cliente.get('email')}")
+                        break
+                else:
+                    st.warning(f"⚠️ **Email {email} non trovata in Supabase**")
+        else:
+            st.info("ℹ️ **Supabase non configurato**")
+            
+    except Exception as e:
+        st.error(f"❌ **Errore Supabase:** {e}")
+    
+    # Test 3: Test eliminazione diretta
+    st.subheader("3. Test Eliminazione Diretta")
     
     # Input per ID da eliminare
-    cliente_id_test = st.number_input("Inserisci ID cliente da eliminare:", min_value=1, value=1, step=1)
+    cliente_id_test = st.number_input("Inserisci ID cliente da eliminare:", min_value=1, value=30, step=1)
     
     if st.button("🗑️ TEST ELIMINAZIONE DIRETTA"):
         try:
@@ -1134,7 +1176,8 @@ def test_database_operations():
             st.write(f"📊 **Clienti con ID {cliente_id_test} PRIMA:** {count_before}")
             
             if count_before == 0:
-                st.warning(f"⚠️ Cliente ID {cliente_id_test} non trovato")
+                st.warning(f"⚠️ Cliente ID {cliente_id_test} non trovato nel database locale!")
+                st.info("💡 **Possibile causa:** Cliente sincronizzato con Supabase ma non salvato localmente")
                 conn.close()
                 return
             
@@ -1170,65 +1213,32 @@ def test_database_operations():
                 conn.rollback()
                 conn.close()
     
-    # Test 3: Test funzione db.elimina_cliente
-    st.subheader("3. Test Funzione db.elimina_cliente")
-    
-    cliente_id_func = st.number_input("Inserisci ID per test funzione:", min_value=1, value=1, step=1)
-    
-    if st.button("🔧 TEST FUNZIONE ELIMINA"):
-        try:
-            # Conta prima
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_func,))
-            count_before = cursor.fetchone()[0]
-            conn.close()
-            
-            st.write(f"📊 **Clienti con ID {cliente_id_func} PRIMA:** {count_before}")
-            
-            # Usa funzione database
-            success = db.elimina_cliente(cliente_id_func)
-            st.write(f"🔧 **Risultato funzione:** {success}")
-            
-            # Conta dopo
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_func,))
-            count_after = cursor.fetchone()[0]
-            conn.close()
-            
-            st.write(f"📊 **Clienti con ID {cliente_id_func} DOPO:** {count_after}")
-            
-            if count_after == 0 and success:
-                st.success(f"✅ **FUNZIONE FUNZIONA!** Cliente {cliente_id_func} eliminato")
-            else:
-                st.error(f"❌ **FUNZIONE NON FUNZIONA!** Cliente ancora presente")
-                
-        except Exception as e:
-            st.error(f"❌ **Errore test funzione:** {e}")
-    
-    # Test 4: Verifica foreign keys e constraints
-    st.subheader("4. Verifica Constraints Database")
+    # Test 4: Verifica duplicati email
+    st.subheader("4. Verifica Duplicati Email")
     try:
         conn = sqlite3.connect('cpa_database.db')
         cursor = conn.cursor()
         
-        # Verifica foreign keys
-        cursor.execute("PRAGMA foreign_keys")
-        fk_enabled = cursor.fetchone()[0]
-        st.write(f"🔗 **Foreign Keys abilitate:** {fk_enabled}")
+        # Cerca email duplicate
+        cursor.execute("""
+            SELECT email, COUNT(*) as count 
+            FROM clienti 
+            GROUP BY email 
+            HAVING COUNT(*) > 1
+        """)
+        duplicates = cursor.fetchall()
         
-        # Verifica constraints
-        cursor.execute("PRAGMA table_info(clienti)")
-        columns = cursor.fetchall()
-        st.write("📋 **Struttura tabella clienti:**")
-        for col in columns:
-            st.write(f"  - {col[1]} ({col[2]}) - PK: {col[5]}")
+        if duplicates:
+            st.warning(f"⚠️ **Email duplicate trovate:** {len(duplicates)}")
+            for dup in duplicates:
+                st.write(f"  - Email: {dup[0]} (conteggio: {dup[1]})")
+        else:
+            st.success("✅ **Nessuna email duplicata nel database locale**")
         
         conn.close()
         
     except Exception as e:
-        st.error(f"❌ **Errore verifica constraints:** {e}")
+        st.error(f"❌ **Errore verifica duplicati:** {e}")
 
 # Aggiungi il test alla sidebar
 with st.sidebar:
