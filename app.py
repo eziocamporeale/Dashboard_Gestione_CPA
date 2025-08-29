@@ -27,6 +27,7 @@ from utils.secure_backup import create_secure_backup, list_secure_backups, resto
 import tempfile
 import shutil
 import os
+import sys
 
 # Configurazione pagina
 st.set_page_config(
@@ -171,7 +172,7 @@ def handle_edit_client(cliente_data):
     if hasattr(cliente_data, 'to_dict'):
         st.session_state.editing_client = cliente_data.to_dict()
     else:
-        st.session_state.editing_client = cliente_data
+    st.session_state.editing_client = cliente_data
     st.rerun()
 
 def handle_delete_client(cliente_id):
@@ -206,8 +207,8 @@ def handle_delete_client(cliente_id):
                     st.success(f"✅ Cliente {cliente_id} eliminato con successo!")
                     # Reset dello stato
                     st.session_state[delete_key] = False
-                    st.rerun()
-                else:
+            st.rerun()
+        else:
                     st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id}")
                     st.session_state[delete_key] = False
         
@@ -292,10 +293,10 @@ elif selected == "👥 Gestione Clienti":
     else:
         # Form per aggiungere nuovo cliente (collassato di default)
         with st.expander("➕ Aggiungi Nuovo Cliente", expanded=False):
-            success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
-            
-            if success:
-                handle_save_client(dati_cliente, campi_aggiuntivi)
+        success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
+        
+        if success:
+            handle_save_client(dati_cliente, campi_aggiuntivi)
         
         # Tabella dei clienti esistenti (sempre visibile)
         if not df_clienti.empty:
@@ -339,11 +340,18 @@ elif selected == "📈 Riepilogo":
         st.info("Nessun cliente presente nel database. Aggiungi clienti per visualizzare i dati!")
 
 elif selected == "⚙️ Impostazioni":
-    st.header("Impostazioni")
-    st.write("Configura le impostazioni dell'applicazione")
+    st.header("⚙️ Impostazioni Sistema")
+    st.info("🔧 **CONFIGURAZIONE COMPLETA**: Gestisci database, backup, sicurezza e sistema remoto")
     
-    # Configurazione database
-    st.subheader("🗄️ Database")
+    # Tab per organizzare le impostazioni
+    tab_config, tab_backup, tab_supabase, tab_system = st.tabs([
+        "🗄️ Database", "💾 Backup & Sicurezza", "🚀 Supabase", "ℹ️ Sistema"
+    ])
+    
+    # TAB 1: Database
+    with tab_config:
+        st.subheader("🗄️ Gestione Database")
+        st.write("Configura e gestisci il database locale dell'applicazione")
     
     col_db1, col_db2 = st.columns(2)
     
@@ -377,107 +385,80 @@ elif selected == "⚙️ Impostazioni":
             show_success_message("Dati di esempio inseriti con successo!")
             st.rerun()
     
-    # Esportazione dati
-    st.subheader("📤 Esportazione")
-    
-    df_clienti = db.ottieni_tutti_clienti()
-    
-    if not df_clienti.empty:
-        col_exp1, col_exp2 = st.columns(2)
+        # Stato database corrente
+        st.markdown("---")
+        st.subheader("📊 Stato Database Corrente")
         
-        with col_exp1:
-            if st.button("📊 Esporta Tutti i Dati"):
-                csv_data = df_clienti.to_csv(index=False)
-                st.download_button(
-                    label="💾 Scarica CSV Completo",
-                    data=csv_data,
-                    file_name=f"clienti_cpa_completo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
+        backup_manager = DatabaseBackupManager()
+        db_info = backup_manager.get_database_info()
         
-        with col_exp2:
-            if st.button("📈 Esporta Statistiche"):
-                stats = db.ottieni_statistiche()
-                stats_df = pd.DataFrame([
-                    ['Totale Clienti', stats['totale_clienti']],
-                    ['Broker Attivi', stats['broker_attivi']],
-                    ['Depositi Totali', f"€{stats['depositi_totali']:,.2f}"],
-                    ['CPA Attive', stats['cpa_attive']]
-                ], columns=['Metrica', 'Valore'])
-                
-                csv_stats = stats_df.to_csv(index=False)
-                st.download_button(
-                    label="💾 Scarica Statistiche",
-                    data=csv_stats,
-                    file_name=f"statistiche_cpa_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-    
-    # Informazioni sistema
-    st.subheader("ℹ️ Informazioni Sistema")
-    
-    col_info1, col_info2 = st.columns(2)
-    
-    with col_info1:
-        st.write(f"**Versione:** 1.0.0")
-        st.write(f"**Database:** SQLite")
-        st.write(f"**Framework:** Streamlit")
-    
-    with col_info2:
-        st.write(f"**Data Creazione:** {datetime.now().strftime('%d/%m/%Y')}")
-        st.write(f"**Ultimo Aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-        st.write(f"**Stato:** Attivo")
-    
-    # Gestione Backup
-    st.subheader("💾 Gestione Backup")
-    st.info("⚠️ **IMPORTANTE**: I backup vengono creati automaticamente dopo ogni operazione critica per prevenire la perdita di dati.")
-    
-    col_backup1, col_backup2, col_backup3 = st.columns(3)
-    
-    with col_backup1:
-        if st.button("🔄 Crea Backup Manuale"):
-            success, message = auto_backup()
-            if success:
-                st.success(f"✅ Backup creato: {message}")
-            else:
-                st.error(f"❌ Backup fallito: {message}")
-    
-    with col_backup2:
-        if st.button("📋 Lista Backup"):
-            backup_manager = DatabaseBackupManager()
-            backups = backup_manager.list_backups()
+        if db_info:
+            col_info1, col_info2, col_info3 = st.columns(3)
+            with col_info1:
+                st.metric("💾 Dimensione", f"{db_info['size'] / 1024:.1f} KB")
+            with col_info2:
+                st.metric("📊 Clienti", db_info.get('clienti_count', 0))
+            with col_info3:
+                st.metric("🔄 Incroci", db_info.get('incroci_count', 0))
             
-            if backups:
-                st.write(f"**Backup disponibili:** {len(backups)}")
-                for i, backup in enumerate(backups[:5]):  # Mostra solo i primi 5
-                    st.write(f"{i+1}. {backup['filename']} - {backup['modified'].strftime('%d/%m/%Y %H:%M')}")
-                    if backup['metadata'] and 'statistics' in backup['metadata']:
-                        stats = backup['metadata']['statistics']
-                        st.write(f"   📊 {stats.get('clienti_count', 0)} clienti, {stats.get('incroci_count', 0)} incroci")
-            else:
-                st.warning("Nessun backup disponibile")
+            st.write(f"**📍 Percorso:** `{db_info['path']}`")
+            st.write(f"**🕒 Ultimo aggiornamento:** {db_info.get('ultimo_aggiornamento', 'N/A')}")
+        else:
+            st.error("❌ Impossibile ottenere informazioni sul database")
     
-    with col_backup3:
-        if st.button("💾 Download Backup Completo"):
-            try:
-                # Crea backup istantaneo
-                backup_manager = DatabaseBackupManager()
-                success, backup_path = backup_manager.create_backup("download_istantaneo")
+    # TAB 2: Backup & Sicurezza
+    with tab_backup:
+        st.subheader("💾 Gestione Backup & Sicurezza")
+        st.info("⚠️ **IMPORTANTE**: I backup vengono creati automaticamente dopo ogni operazione critica per prevenire la perdita di dati.")
+        
+        # Backup Manuali
+        st.subheader("📋 Backup Manuali")
+        col_backup1, col_backup2, col_backup3 = st.columns(3)
+        
+        with col_backup1:
+            if st.button("🔄 Crea Backup Manuale"):
+                success, message = auto_backup()
                 if success:
-                    # Prepara il file per il download
-                    with open(backup_path, "rb") as file:
-                        st.download_button(
-                            label="📥 Scarica Database Completo",
-                            data=file.read(),
-                            file_name=f"cpa_database_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db",
-                            mime="application/octet-stream"
-                        )
-                    st.success("✅ Backup pronto per il download!")
+                    st.success(f"✅ Backup creato: {message}")
                 else:
-                    st.error(f"❌ Errore creazione backup: {backup_path}")
-            except Exception as e:
-                st.error(f"❌ Errore durante download: {e}")
-            # Gestione Backup Sicuri (NON tracciati da Git)
+                    st.error(f"❌ Backup fallito: {message}")
+        
+        with col_backup2:
+            if st.button("📋 Lista Backup"):
+                backup_manager = DatabaseBackupManager()
+                backups = backup_manager.list_backups()
+                
+                if backups:
+                    st.write(f"**Backup disponibili:** {len(backups)}")
+                    for i, backup in enumerate(backups[:5]):
+                        st.write(f"{i+1}. {backup['filename']} - {backup['modified'].strftime('%d/%m/%Y %H:%M')}")
+                        if backup['metadata'] and 'statistics' in backup['metadata']:
+                            stats = backup['metadata']['statistics']
+                            st.write(f"   📊 {stats.get('clienti_count', 0)} clienti, {stats.get('incroci_count', 0)} incroci")
+                else:
+                    st.warning("Nessun backup disponibile")
+        
+        with col_backup3:
+            if st.button("💾 Download Backup Completo"):
+                try:
+                    backup_manager = DatabaseBackupManager()
+                    success, backup_path = backup_manager.create_backup("download_istantaneo")
+                    if success:
+                        with open(backup_path, "rb") as file:
+                            st.download_button(
+                                label="📥 Scarica Database Completo",
+                                data=file.read(),
+                                file_name=f"cpa_database_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db",
+                                mime="application/octet-stream"
+                            )
+                        st.success("✅ Backup pronto per il download!")
+                    else:
+                        st.error(f"❌ Errore creazione backup: {backup_path}")
+                except Exception as e:
+                    st.error(f"❌ Errore durante download: {e}")
+        
+        # Backup Sicuri Locali
+        st.markdown("---")
         st.subheader("🔒 Backup Sicuri Locali")
         st.warning("⚠️ **SICUREZZA MASSIMA**: Questi backup sono salvati SOLO in locale e NON sono visibili su GitHub!")
         st.info("💾 **LOCAZIONE**: ~/CPA_Backups_Sicuri/ (cartella esterna al progetto)")
@@ -512,7 +493,6 @@ elif selected == "⚙️ Impostazioni":
             if st.button("🔄 Ripristina da Backup Sicuro"):
                 secure_backups = list_secure_backups()
                 if secure_backups:
-                    # Mostra selezione backup
                     backup_options = [f"{b['filename']} ({b['category']})" for b in secure_backups[:5]]
                     selected_backup = st.selectbox("Seleziona backup da ripristinare:", backup_options)
                     
@@ -527,8 +507,9 @@ elif selected == "⚙️ Impostazioni":
                             st.error(f"❌ Ripristino fallito: {message}")
                 else:
                     st.warning("Nessun backup sicuro disponibile per il ripristino")
-    
-        # Import Manuale Database (per Collaboratori)
+        
+        # Import Manuale Database
+        st.markdown("---")
         st.subheader("📥 Import Manuale Database")
         st.info("🤝 **COLLABORAZIONE TEAM**: I collaboratori possono importare database esportati dal tuo PC per sincronizzare i dati.")
         st.warning("⚠️ **ATTENZIONE**: Importa solo file database che ti fidi completamente!")
@@ -543,16 +524,13 @@ elif selected == "⚙️ Impostazioni":
             )
             
             if uploaded_file is not None:
-                # Mostra informazioni sul file caricato
                 file_size = len(uploaded_file.getvalue())
                 file_size_mb = round(file_size / (1024 * 1024), 2)
                 st.write(f"📊 **File caricato:** {uploaded_file.name}")
                 st.write(f"💾 **Dimensione:** {file_size_mb} MB")
                 
-                # Pulsante per confermare l'import
                 if st.button("✅ Conferma Import Database", type="primary"):
                     try:
-                        # Crea backup del database corrente
                         current_db_path = db.db_path if hasattr(db, 'db_path') else "cpa_database.db"
                         backup_name = f"backup_prima_import_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                         
@@ -560,14 +538,11 @@ elif selected == "⚙️ Impostazioni":
                             shutil.copy2(current_db_path, f"{backup_name}")
                             st.success(f"✅ Backup database corrente: {backup_name}")
                         
-                        # Salva il file caricato come nuovo database
                         with open(current_db_path, "wb") as f:
                             f.write(uploaded_file.getvalue())
                         
                         st.success("✅ Database importato con successo!")
                         st.info("🔄 L'app si riavvierà automaticamente per applicare le modifiche...")
-                        
-                        # Riavvia l'app
                         st.rerun()
                         
                     except Exception as e:
@@ -586,25 +561,198 @@ elif selected == "⚙️ Impostazioni":
             st.write("• Backup automatico prima dell'import")
             st.write("• Database originale protetto")
     
-
-
-    # Informazioni database corrente
-    st.subheader("🗄️ Stato Database")
-    backup_manager = DatabaseBackupManager()
-    db_info = backup_manager.get_database_info()
+    # TAB 3: Supabase
+    with tab_supabase:
+        st.subheader("🚀 SUPABASE - Database Remoto Professionale")
+        st.info("🔒 **DATABASE PROFESSIONALE**: Sistema remoto enterprise-grade con backup automatici e sicurezza massima!")
+        
+        col_supabase1, col_supabase2 = st.columns(2)
+        
+        with col_supabase1:
+            if st.button("🔗 Test Connessione Supabase"):
+                try:
+                    from supabase_manager import show_supabase_status
+                    show_supabase_status()
+                except ImportError:
+                    st.warning("⚠️ **SUPABASE NON INSTALLATO**")
+                    st.info("📦 Installa le dipendenze:")
+                    st.code("pip install -r requirements_supabase.txt")
+                except Exception as e:
+                    st.error(f"❌ Errore test: {e}")
+        
+        with col_supabase2:
+            if st.button("📋 Configura Supabase"):
+                st.info("🔧 **CONFIGURAZIONE SUPABASE:**")
+                st.write("1. **Crea account** su [supabase.com](https://supabase.com)")
+                st.write("2. **Crea progetto** con nome 'cpa-dashboard'")
+                st.write("3. **Copia URL** e API Key dal dashboard")
+                st.write("4. **Imposta variabili ambiente:**")
+                st.code("""
+export SUPABASE_URL="https://your-project.supabase.co"
+export SUPABASE_ANON_KEY="your-anon-key"
+                """)
+                st.success("✅ Dopo la configurazione, riavvia l'app!")
+        
+        # Stato Supabase
+        try:
+            from supabase_manager import show_supabase_status
+            show_supabase_status()
+        except ImportError:
+            st.warning("⚠️ **SUPABASE**: Pacchetto non installato")
+        except Exception as e:
+            st.error(f"❌ **SUPABASE**: Errore {e}")
+        
+        # Istruzioni dettagliate
+        st.markdown("---")
+        st.subheader("📚 Guida Completa Supabase")
+        
+        with st.expander("🚀 **COME INIZIARE CON SUPABASE**", expanded=False):
+            st.write("""
+            **STEP 1: Account e Progetto**
+            - Vai su [supabase.com](https://supabase.com)
+            - Crea account con GitHub
+            - Crea nuovo progetto 'cpa-dashboard'
+            - Scegli regione Europa per performance ottimali
+            
+            **STEP 2: Configurazione**
+            - Copia URL progetto dal dashboard
+            - Copia anon key dalla sezione API
+            - Imposta variabili ambiente nel tuo sistema
+            
+            **STEP 3: Test e Validazione**
+            - Esegui test connessione
+            - Verifica operazioni CRUD
+            - Testa performance e sicurezza
+            """)
+        
+        with st.expander("🔒 **SICUREZZA E COMPLIANCE**", expanded=False):
+            st.write("""
+            **Caratteristiche di Sicurezza:**
+            - 🔐 Autenticazione JWT sicura
+            - 🛡️ Row Level Security (RLS) per isolamento dati
+            - 🔒 Encryption at rest automatico
+            - 🌐 SSL/TLS per tutte le connessioni
+            - 📋 Audit logs completi
+            
+            **Compliance:**
+            - ✅ GDPR compliant
+            - ✅ SOC 2 certificato
+            - ✅ ISO 27001 certificato
+            """)
+        
+        with st.expander("💰 **COSTI E PIANI**", expanded=False):
+            st.write("""
+            **Piano Gratuito (Perfetto per iniziare):**
+            - 💾 500MB database
+            - 🌐 2GB bandwidth/mese
+            - 📊 50,000 richieste/mese
+            - 🔐 50,000 utenti autenticati
+            
+            **Piano Pro ($25/mese):**
+            - 💾 8GB database
+            - 🌐 250GB bandwidth/mese
+            - 📊 500,000 richieste/mese
+            - 🚀 Supporto prioritario
+            """)
     
-    if db_info:
-        col_db1, col_db2 = st.columns(2)
-        with col_db1:
-            st.write(f"**Percorso:** {db_info['path']}")
-            st.write(f"**Dimensione:** {db_info['size'] / 1024:.1f} KB")
-        with col_db2:
-            st.write(f"**Clienti:** {db_info['statistics']['clienti_count']}")
-            st.write(f"**Incroci:** {db_info['statistics']['incroci_count']}")
-            if db_info['statistics']['last_client_update']:
-                st.write(f"**Ultimo aggiornamento:** {db_info['statistics']['last_client_update']}")
-    else:
-        st.error("❌ Impossibile ottenere informazioni sul database")
+    # TAB 4: Sistema
+    with tab_system:
+        st.subheader("ℹ️ Informazioni Sistema")
+        st.write("Configurazione e stato generale dell'applicazione")
+        
+        # Informazioni base
+        col_sys1, col_sys2 = st.columns(2)
+        
+        with col_sys1:
+            st.write(f"**📱 Versione:** 1.0.0")
+            st.write(f"**🗄️ Database:** SQLite")
+            st.write(f"**🎨 Framework:** Streamlit")
+            st.write(f"**🐍 Python:** {sys.version.split()[0]}")
+        
+        with col_sys2:
+            st.write(f"**📅 Data Creazione:** {datetime.now().strftime('%d/%m/%Y')}")
+            st.write(f"**🕒 Ultimo Aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+            st.write(f"**🟢 Stato:** Attivo")
+            st.write(f"**🌐 Ambiente:** {'Streamlit Cloud' if 'STREAMLIT_SERVER_PORT' in os.environ else 'Locale'}")
+        
+        # Esportazione dati
+        st.markdown("---")
+        st.subheader("📤 Esportazione Dati")
+    
+    df_clienti = db.ottieni_tutti_clienti()
+    
+    if not df_clienti.empty:
+        col_exp1, col_exp2 = st.columns(2)
+        
+        with col_exp1:
+            if st.button("📊 Esporta Tutti i Dati"):
+                csv_data = df_clienti.to_csv(index=False)
+                st.download_button(
+                    label="💾 Scarica CSV Completo",
+                    data=csv_data,
+                    file_name=f"clienti_cpa_completo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+        
+        with col_exp2:
+            if st.button("📈 Esporta Statistiche"):
+                stats = db.ottieni_statistiche()
+                stats_df = pd.DataFrame([
+                    ['Totale Clienti', stats['totale_clienti']],
+                    ['Broker Attivi', stats['broker_attivi']],
+                    ['Depositi Totali', f"€{stats['depositi_totali']:,.2f}"],
+                    ['CPA Attive', stats['cpa_attive']]
+                ], columns=['Metrica', 'Valore'])
+                
+                csv_stats = stats_df.to_csv(index=False)
+                st.download_button(
+                    label="💾 Scarica Statistiche",
+                    data=csv_stats,
+                    file_name=f"statistiche_cpa_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+        else:
+            st.warning("Nessun cliente presente per l'esportazione")
+        
+        # Logs e debugging
+        st.markdown("---")
+        st.subheader("📋 Logs e Debugging")
+        
+        col_log1, col_log2 = st.columns(2)
+        
+        with col_log1:
+            if st.button("📊 Mostra Logs Recenti"):
+                try:
+                    # Mostra ultimi log se disponibili
+                    log_file = "logs/cpa_dashboard.log"
+                    if os.path.exists(log_file):
+                        with open(log_file, 'r') as f:
+                            lines = f.readlines()
+                            recent_logs = lines[-20:]  # Ultime 20 righe
+                            st.text_area("📋 Ultimi Logs:", value=''.join(recent_logs), height=200)
+                    else:
+                        st.info("File di log non trovato")
+                except Exception as e:
+                    st.error(f"Errore lettura logs: {e}")
+        
+        with col_log2:
+            if st.button("🧹 Pulisci Logs"):
+                try:
+                    log_file = "logs/cpa_dashboard.log"
+                    if os.path.exists(log_file):
+                        # Crea backup del log
+                        backup_log = f"logs/cpa_dashboard_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+                        shutil.copy2(log_file, backup_log)
+                        
+                        # Pulisci il log principale
+                        with open(log_file, 'w') as f:
+                            f.write(f"# Log pulito il {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+                        
+                        st.success(f"✅ Logs puliti! Backup salvato in: {backup_log}")
+                    else:
+                        st.info("File di log non trovato")
+                except Exception as e:
+                    st.error(f"Errore pulizia logs: {e}")
 
 # Sidebar con informazioni aggiuntive
 with st.sidebar:
