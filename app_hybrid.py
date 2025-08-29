@@ -327,21 +327,27 @@ def show_new_clients():
     """Gestione clienti nuovo schema"""
     st.subheader("👥 Gestione Clienti Base")
     
-    tab1, tab2 = st.tabs(["📋 Panoramica", "➕ Aggiungi Cliente"])
+    tab1, tab2 = st.tabs(["📋 Panoramica", "➕ Nuovo Cliente"])
     
     with tab1:
         show_new_dashboard()  # Riutilizza la dashboard
     
     with tab2:
         st.subheader("➕ Aggiungi Nuovo Cliente Base")
+        st.info("💡 **Flusso consigliato:** 1) Aggiungi cliente base → 2) Aggiungi account broker dalla panoramica")
         
         with st.form("add_base_client_form"):
-            nome_cliente = st.text_input("Nome Cliente *", key="nome_base")
-            email = st.text_input("Email *", key="email_base")
-            vps = st.text_input("VPS (opzionale)", key="vps_base")
-            note_cliente = st.text_area("Note Cliente (opzionale)", key="note_base")
+            col1, col2 = st.columns(2)
             
-            submitted = st.form_submit_button("➕ Aggiungi Cliente Base")
+            with col1:
+                nome_cliente = st.text_input("Nome Cliente *", key="nome_base")
+                email = st.text_input("Email *", key="email_base")
+            
+            with col2:
+                vps = st.text_input("VPS (opzionale)", key="vps_base")
+                note_cliente = st.text_area("Note Cliente (opzionale)", key="note_base")
+            
+            submitted = st.form_submit_button("➕ Crea Cliente Base")
             
             if submitted:
                 if not nome_cliente or not email:
@@ -358,10 +364,11 @@ def show_new_clients():
                 success, result = db_new.aggiungi_cliente_base(dati_cliente)
                 
                 if success:
-                    show_success_message(f"✅ Cliente base {nome_cliente} aggiunto con successo!")
+                    st.success(f"✅ Cliente base {nome_cliente} creato con successo!")
+                    st.info("🏦 Ora vai alla **Panoramica** e clicca **'+ Aggiungi Account Broker'** per aggiungere i suoi account!")
                     auto_backup()
                 else:
-                    show_error_message(f"❌ Errore aggiunta cliente: {result}")
+                    show_error_message(f"❌ Errore creazione cliente: {result}")
 
 def show_new_accounts():
     """Gestione account broker nuovo schema"""

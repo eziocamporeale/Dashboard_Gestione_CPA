@@ -155,6 +155,95 @@ def handle_add_broker_account():
             else:
                 show_error_message(f"❌ Errore aggiunta account: {result}")
 
+def show_add_account_form(cliente_id, nome_cliente):
+    """Mostra form per aggiungere account broker a un cliente specifico"""
+    st.subheader(f"🏦 Aggiungi Account Broker per {nome_cliente}")
+    
+    with st.form(f"add_account_form_{cliente_id}"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            broker = st.text_input("Broker *", key=f"broker_{cliente_id}")
+            piattaforma = st.selectbox("Piattaforma", ["MT4", "MT5", "cTrader", "WebTrader", "Mobile"], key=f"piattaforma_{cliente_id}")
+            numero_conto = st.text_input("Numero Conto *", key=f"conto_{cliente_id}")
+            password = st.text_input("Password *", type="password", key=f"password_{cliente_id}")
+        
+        with col2:
+            api_key = st.text_input("API Key (opzionale)", key=f"api_key_{cliente_id}")
+            secret_key = st.text_input("Secret Key (opzionale)", key=f"secret_key_{cliente_id}")
+            ip_address = st.text_input("IP Address (opzionale)", key=f"ip_{cliente_id}")
+            volume_posizione = st.number_input("Volume Posizione", min_value=0.0, value=0.0, step=0.01, key=f"volume_{cliente_id}")
+            ruolo = st.selectbox("Ruolo", ["User", "Admin", "Manager"], key=f"ruolo_{cliente_id}")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            submitted = st.form_submit_button("🏦 Aggiungi Account")
+        
+        with col2:
+            if st.form_submit_button("❌ Annulla"):
+                st.session_state.adding_account_for = None
+                st.session_state.adding_account_name = None
+                st.rerun()
+        
+        with col3:
+            if st.form_submit_button("🏦 + Altro Account"):
+                # Salva account corrente e prepara per il prossimo
+                if broker and numero_conto and password:
+                    dati_account = {
+                        'cliente_base_id': cliente_id,
+                        'broker': broker,
+                        'piattaforma': piattaforma,
+                        'numero_conto': numero_conto,
+                        'password': password,
+                        'api_key': api_key,
+                        'secret_key': secret_key,
+                        'ip_address': ip_address,
+                        'volume_posizione': volume_posizione,
+                        'ruolo': ruolo
+                    }
+                    
+                    success, result = db.aggiungi_account_broker(dati_account)
+                    
+                    if success:
+                        st.success(f"✅ Account {broker} - {numero_conto} aggiunto! Aggiungi il prossimo...")
+                        # Mantieni il form aperto per il prossimo account
+                        st.session_state.adding_account_for = cliente_id
+                        st.session_state.adding_account_name = nome_cliente
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Errore aggiunta account: {result}")
+        
+        if submitted:
+            if not broker or not numero_conto or not password:
+                show_error_message("❌ Broker, numero conto e password sono obbligatori!")
+                return
+            
+            dati_account = {
+                'cliente_base_id': cliente_id,
+                'broker': broker,
+                'piattaforma': piattaforma,
+                'numero_conto': numero_conto,
+                'password': password,
+                'api_key': api_key,
+                'secret_key': secret_key,
+                'ip_address': ip_address,
+                'volume_posizione': volume_posizione,
+                'ruolo': ruolo
+            }
+            
+            success, result = db.aggiungi_account_broker(dati_account)
+            
+            if success:
+                show_success_message(f"✅ Account broker {broker} - {numero_conto} aggiunto con successo!")
+                # Chiudi il form
+                st.session_state.adding_account_for = None
+                st.session_state.adding_account_name = None
+                # Backup automatico
+                auto_backup()
+            else:
+                show_error_message(f"❌ Errore aggiunta account: {result}")
+
 # ===== VISUALIZZAZIONE DATI =====
 
 def show_clients_overview():
@@ -204,6 +293,11 @@ def show_clients_overview():
                         st.write(account_info)
                 else:
                     st.write("Nessun account broker presente")
+                
+                # Pulsante per aggiungere account broker
+                if st.button(f"🏦 + Aggiungi Account Broker", key=f"add_account_{cliente['id']}"):
+                    st.session_state.adding_account_for = cliente['id']
+                    st.session_state.adding_account_name = cliente['nome_cliente']
             
             with col2:
                 # Azioni rapide
@@ -216,6 +310,10 @@ def show_clients_overview():
                             show_success_message(f"✅ Cliente {cliente['nome_cliente']} eliminato!")
                         else:
                             show_error_message("❌ Errore eliminazione cliente")
+    
+    # Form per aggiungere account broker se richiesto
+    if hasattr(st.session_state, 'adding_account_for'):
+        show_add_account_form(st.session_state.adding_account_for, st.session_state.adding_account_name)
 
 def show_broker_accounts():
     """Mostra tutti gli account broker"""
@@ -314,13 +412,49 @@ def main():
     elif page == "👥 Gestione Clienti":
         st.header("👥 Gestione Clienti Base")
         
-        tab1, tab2 = st.tabs(["📋 Panoramica", "➕ Aggiungi Cliente"])
+        tab1, tab2 = st.tabs(["📋 Panoramica", "➕ Nuovo Cliente"])
         
         with tab1:
             show_clients_overview()
         
         with tab2:
-            handle_add_base_client()
+            st.subheader("➕ Aggiungi Nuovo Cliente Base")
+            st.info("💡 **Flusso consigliato:** 1) Aggiungi cliente base → 2) Aggiungi account broker dalla panoramica")
+            
+            with st.form("add_base_client_form"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    nome_cliente = st.text_input("Nome Cliente *", key="nome_base")
+                    email = st.text_input("Email *", key="email_base")
+                
+                with col2:
+                    vps = st.text_input("VPS (opzionale)", key="vps_base")
+                    note_cliente = st.text_area("Note Cliente (opzionale)", key="note_base")
+                
+                submitted = st.form_submit_button("➕ Crea Cliente Base")
+                
+                if submitted:
+                    if not nome_cliente or not email:
+                        show_error_message("❌ Nome e email sono obbligatori!")
+                        return
+                    
+                    dati_cliente = {
+                        'nome_cliente': nome_cliente,
+                        'email': email,
+                        'vps': vps,
+                        'note_cliente': note_cliente
+                    }
+                    
+                    success, result = db.aggiungi_cliente_base(dati_cliente)
+                    
+                    if success:
+                        st.success(f"✅ Cliente base {nome_cliente} creato con successo!")
+                        st.info("🏦 Ora vai alla **Panoramica** e clicca **'+ Aggiungi Account Broker'** per aggiungere i suoi account!")
+                        # Backup automatico
+                        auto_backup()
+                    else:
+                        show_error_message(f"❌ Errore creazione cliente: {result}")
             
     elif page == "🏦 Gestione Account":
         st.header("🏦 Gestione Account Broker")
