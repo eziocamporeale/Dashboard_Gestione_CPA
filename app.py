@@ -46,6 +46,48 @@ def init_components():
 db = init_database()
 components = init_components()
 
+# Creazione automatica tabelle se non esistono
+def create_database_tables():
+    """Crea le tabelle del database se non esistono"""
+    try:
+        import sqlite3
+        from pathlib import Path
+        
+        # Leggi lo script SQL di inizializzazione
+        sql_file = Path("database/init_database.sql")
+        if sql_file.exists():
+            with open(sql_file, 'r') as f:
+                sql_script = f.read()
+            
+            # Esegui lo script SQL
+            conn = sqlite3.connect("cpa_database.db")
+            cursor = conn.cursor()
+            
+            # Esegui ogni comando SQL separatamente
+            for command in sql_script.split(';'):
+                command = command.strip()
+                if command and not command.startswith('--'):
+                    try:
+                        cursor.execute(command)
+                    except sqlite3.OperationalError as e:
+                        # Ignora errori di tabelle già esistenti
+                        if "already exists" not in str(e):
+                            logging.warning(f"SQL warning: {e}")
+            
+            conn.commit()
+            conn.close()
+            logging.info("✅ Tabelle database create/verificate con successo")
+            return True
+        else:
+            logging.warning("⚠️ Script SQL di inizializzazione non trovato")
+            return False
+    except Exception as e:
+        logging.error(f"❌ Errore creazione tabelle: {e}")
+        return False
+
+# Crea le tabelle all'avvio
+create_database_tables()
+
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
     st.session_state.editing_client = None
