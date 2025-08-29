@@ -4,6 +4,14 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 from streamlit_option_menu import option_menu
+import logging
+
+# Configurazione logging per Streamlit Cloud
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 # Import diretti dei componenti
 from auth_standalone import require_auth, show_user_info, login_form
