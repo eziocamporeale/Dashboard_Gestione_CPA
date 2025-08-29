@@ -373,7 +373,7 @@ elif selected == "⚙️ Impostazioni":
     st.subheader("💾 Gestione Backup")
     st.info("⚠️ **IMPORTANTE**: I backup vengono creati automaticamente dopo ogni operazione critica per prevenire la perdita di dati.")
     
-    col_backup1, col_backup2 = st.columns(2)
+    col_backup1, col_backup2, col_backup3 = st.columns(3)
     
     with col_backup1:
         if st.button("🔄 Crea Backup Manuale"):
@@ -398,6 +398,26 @@ elif selected == "⚙️ Impostazioni":
             else:
                 st.warning("Nessun backup disponibile")
     
+    with col_backup3:
+        if st.button("💾 Download Backup Completo"):
+            try:
+                # Crea backup istantaneo
+                backup_manager = DatabaseBackupManager()
+                success, backup_path = backup_manager.create_backup("download_istantaneo")
+                if success:
+                    # Prepara il file per il download
+                    with open(backup_path, "rb") as file:
+                        st.download_button(
+                            label="📥 Scarica Database Completo",
+                            data=file.read(),
+                            file_name=f"cpa_database_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db",
+                            mime="application/octet-stream"
+                        )
+                    st.success("✅ Backup pronto per il download!")
+                else:
+                    st.error(f"❌ Errore creazione backup: {backup_path}")
+            except Exception as e:
+                st.error(f"❌ Errore durante download: {e}")
     # Gestione Sincronizzazione Database
     st.subheader("🔄 Sincronizzazione Database")
     st.info("💾 **PERSISTENZA DATI**: La sincronizzazione mantiene i tuoi dati permanenti anche dopo riavvii di Streamlit Cloud.")
