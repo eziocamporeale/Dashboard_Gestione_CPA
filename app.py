@@ -418,36 +418,59 @@ def handle_edit_client(cliente_data):
     st.rerun()
 
 def handle_delete_client(cliente_id):
-    """Gestisce l'eliminazione di un cliente - VERSIONE SEMPLIFICATA PER TEST"""
+    """Gestisce l'eliminazione di un cliente - VERSIONE COMPLETA CON CHIAVI SEMPLICI"""
     st.write(f"🔍 **FUNZIONE CHIAMATA:** handle_delete_client con ID {cliente_id}")
     
-    # Test 1: Pulsante senza chiave
-    st.write("🧪 **TEST 1: Pulsante senza chiave**")
-    if st.button("🧪 CLICK SENZA CHIAVI"):
-        st.write("✅ PULSANTE SENZA CHIAVI FUNZIONA!")
-        st.rerun()
+    # Verifica permessi
+    if not st.session_state.get('authenticated', False):
+        st.error("🔒 Accesso richiesto per eliminare clienti")
+        return
     
-    # Test 2: Pulsante con chiave semplice
-    st.write("🧪 **TEST 2: Pulsante con chiave semplice**")
-    if st.button("🧪 TEST CHIAVE", key="test_chiave"):
-        st.write("✅ PULSANTE CHIAVE FUNZIONA!")
-        st.rerun()
+    # Gestisci lo stato di conferma per questo cliente
+    delete_key = f"delete_confirm_{cliente_id}"
+    if delete_key not in st.session_state:
+        st.session_state[delete_key] = False
     
-    # Test 3: Pulsante elimina semplice
-    st.write("🧪 **TEST 3: Pulsante elimina semplice**")
-    if st.button(f"🗑️ TEST ELIMINA {cliente_id}", key="test_elimina"):
-        st.write("✅ PULSANTE TEST ELIMINA FUNZIONA!")
-        st.rerun()
+    # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
+    if not st.session_state[delete_key]:
+        st.write(f"🔍 **Stato conferma:** {st.session_state[delete_key]}")
+        
+        # Pulsante elimina con chiave SEMPLICE
+        if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=f"elimina_semplice_{cliente_id}"):
+            st.write("✅ PULSANTE ELIMINA CLICCATO!")
+            st.session_state[delete_key] = True
+            st.rerun()
     
-    # Test 4: Pulsante elimina originale
-    st.write("🗑️ **TEST 4: Pulsante elimina originale**")
-    if st.button(f"🗑️ Elimina Cliente {cliente_id}", key=f"elimina_{cliente_id}"):
-        st.write("✅ PULSANTE ELIMINA ORIGINALE FUNZIONA!")
-        st.write("🔍 Ora dovrebbe mostrare la conferma...")
-        st.rerun()
-    
-    # Se arriviamo qui, nessun pulsante è stato cliccato
-    st.write("ℹ️ **Nessun pulsante cliccato ancora**")
+    # Se è richiesta la conferma, mostra i pulsanti di conferma
+    else:
+        st.write(f"🔍 **Conferma eliminazione per cliente {cliente_id}**")
+        
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button(f"✅ Conferma Eliminazione", key=f"conferma_{cliente_id}"):
+                # Elimina il cliente dal database
+                try:
+                    cliente_id_int = int(cliente_id)
+                    success = db.elimina_cliente(cliente_id_int)
+                    
+                    if success:
+                        st.success(f"✅ Cliente {cliente_id_int} eliminato con successo!")
+                        # Reset dello stato
+                        st.session_state[delete_key] = False
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Errore nell'eliminazione del cliente {cliente_id_int}")
+                        st.session_state[delete_key] = False
+                except Exception as e:
+                    st.error(f"❌ Errore: {e}")
+                    st.session_state[delete_key] = False
+        
+        with col2:
+            if st.button(f"❌ Annulla", key=f"annulla_{cliente_id}"):
+                st.session_state[delete_key] = False
+                st.rerun()
+        
+        st.warning(f"⚠️ Sei sicuro di voler eliminare il cliente {cliente_id}?")
 
 def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
