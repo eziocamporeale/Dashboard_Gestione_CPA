@@ -168,7 +168,13 @@ def sync_all_data_to_supabase():
         # Ottieni tutti i clienti dal database locale
         clienti_locali = db.ottieni_tutti_clienti()
         
-        if not clienti_locali:
+        # Converti DataFrame in lista se necessario
+        if hasattr(clienti_locali, 'empty'):
+            if clienti_locali.empty:
+                return False, "❌ Nessun cliente presente nel database locale"
+            # Converti DataFrame in lista di dizionari
+            clienti_locali = clienti_locali.to_dict('records')
+        elif not clienti_locali:
             return False, "❌ Nessun cliente presente nel database locale"
         
         # Contatori per statistiche
@@ -191,12 +197,12 @@ def sync_all_data_to_supabase():
             try:
                 # Prepara dati per Supabase
                 supabase_data = {
-                    'nome_cliente': cliente.get('nome_cliente', ''),
-                    'email': cliente.get('email', f"cliente_{i}@local.com"),
-                    'broker': cliente.get('broker', ''),
-                    'piattaforma': cliente.get('piattaforma', ''),
-                    'numero_conto': cliente.get('numero_conto', ''),
-                    'volume_posizione': cliente.get('volume_posizione', 0.0)
+                    'nome_cliente': str(cliente.get('nome_cliente', '')),
+                    'email': str(cliente.get('email', f"cliente_{i}@local.com")),
+                    'broker': str(cliente.get('broker', '')),
+                    'piattaforma': str(cliente.get('piattaforma', '')),
+                    'numero_conto': str(cliente.get('numero_conto', '')),
+                    'volume_posizione': float(cliente.get('volume_posizione', 0.0))
                 }
                 
                 # Verifica se il cliente esiste già in Supabase (per email)
@@ -227,7 +233,8 @@ def sync_all_data_to_supabase():
                         
             except Exception as e:
                 errori += 1
-                st.error(f"❌ Errore sincronizzazione cliente {cliente.get('nome_cliente', 'N/A')}: {e}")
+                nome_cliente = cliente.get('nome_cliente', 'N/A') if hasattr(cliente, 'get') else str(cliente)
+                st.error(f"❌ Errore sincronizzazione cliente {nome_cliente}: {e}")
         
         # Nascondi progress bar
         progress_bar.empty()
