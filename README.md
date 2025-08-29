@@ -1,183 +1,112 @@
-# 🚀 Dashboard Gestione CPA Broker
+# 📊 Dashboard Gestione CPA
 
-Dashboard web per la gestione completa delle CPA (Cost Per Acquisition) dei broker, sviluppata con Streamlit.
+## 🏠 App Principale
+**`app.py`** - Dashboard CPA completa e funzionante con schema originale.
 
-## ✨ Caratteristiche Principali
+## 🚀 Progetti e Versioni
 
-- **🔐 Sistema di Autenticazione** - Login sicuro con ruoli e permessi
-- **👥 Gestione Clienti** - CRUD completo per clienti e broker
-- **🔄 Gestione Incroci** - Sistema avanzato per incroci e CPA
-- **📊 Dashboard Analitica** - Grafici e statistiche in tempo reale
-- **📱 Interfaccia Responsiva** - Design moderno e intuitivo
-- **🗄️ Database SQLite** - Archiviazione locale sicura
+### 📦 Cartella `progetti/`
+Contiene tutte le versioni alternative e sperimentali:
 
-## 🛠️ Tecnologie Utilizzate
+#### 🎯 **App Unificata** (`progetti/app_unified/`)
+- **Versione più avanzata** con schema raggruppato
+- **Sistema broker predefiniti** con menu a tendina
+- **Form semplificato** per account (solo conto, password, server)
+- **Database manager unificato** e ottimizzato
+- **Interfaccia moderna** e intuitiva
 
-- **Frontend**: Streamlit 1.32.0+
-- **Backend**: Python 3.9+
-- **Database**: SQLite3
-- **Grafici**: Plotly
-- **Gestione Dati**: Pandas
+#### 📊 **App Grouped** (`progetti/app_grouped/`)
+- Versione con schema raggruppato (clienti base + account broker)
+- Sperimentale, alcune funzionalità potrebbero non essere complete
 
-## 🚀 Deploy su Streamlit Cloud
+#### 🔄 **App Hybrid** (`progetti/app_hybrid/`)
+- Versione ibrida che supporta entrambi gli schemi
+- Transizione graduale tra schema originale e raggruppato
 
-### Prerequisiti
-- Account Streamlit Cloud
-- Repository GitHub pubblico
-- Python 3.9+
+#### ☁️ **Supabase Integration** (`progetti/supabase_integration/`)
+- Integrazione con database PostgreSQL remoto
+- Sincronizzazione dati locali ↔ Supabase
 
-### Passi per il Deploy
+## 🚀 Avvio Rapido
 
-1. **Fork/Clone** questo repository su GitHub
-2. **Vai su** [share.streamlit.io](https://share.streamlit.io)
-3. **Connetti** il tuo repository GitHub
-4. **Configura** il deploy:
-   - **Main file path**: `app.py`
-   - **Python version**: 3.9
-5. **Clicca Deploy**
-
-### Configurazione Post-Deploy
-
-1. **Vai su** la tua app deployata
-2. **Configura** le credenziali utente in `.streamlit/secrets.toml`
-3. **Riavvia** l'app per applicare le modifiche
-
-## 🔧 Configurazione Locale
-
-### Installazione
-
+### 🏠 App Principale (Consigliata)
 ```bash
-# Clone del repository
-git clone <your-repo-url>
-cd Dashboard_Gestione_CPA
-
-# Creazione ambiente virtuale
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# oppure
-.venv\Scripts\activate     # Windows
-
-# Installazione dipendenze
-pip install -r requirements.txt
-```
-
-### Configurazione Database
-
-```bash
-# Inizializzazione database
-python -c "from database.database import DatabaseManager; DatabaseManager().init_database()"
-
-# Inserimento dati di esempio (opzionale)
-python sample_data.py
-```
-
-### Avvio Locale
-
-```bash
-# Avvio dell'applicazione
 streamlit run app.py
-
-# Oppure con configurazioni personalizzate
-streamlit run app.py --server.port 8501 --server.headless true
 ```
 
-## 🔐 Credenziali di Default
+### 🎯 App Unificata (Versione Avanzata)
+```bash
+cd progetti/app_unified
+streamlit run app.py --server.port 8503
+```
 
-**Admin:**
-- Username: `admin`
-- Password: `admin123`
+### 📊 App Grouped
+```bash
+cd progetti/app_grouped
+streamlit run app_grouped.py
+```
 
-**Utente Standard:**
-- Username: `ezio`
-- Password: `password123`
+### 🔄 App Hybrid
+```bash
+cd progetti/app_hybrid
+streamlit run app_hybrid.py
+```
 
-**Visualizzatore:**
-- Username: `user`
-- Password: `user123`
+## 📋 Funzionalità Principali
 
-## 📁 Struttura del Progetto
+### 🏠 App Principale (`app.py`)
+- ✅ **Gestione Clienti** completa
+- ✅ **Gestione Incroci** CPA
+- ✅ **Statistiche** e grafici
+- ✅ **Sistema di backup** locale
+- ✅ **Interfaccia** testata e stabile
+
+### 🎯 App Unificata (`progetti/app_unified/`)
+- ✅ **Schema Raggruppato** - clienti base + account broker
+- ✅ **Broker Predefiniti** - sistema standardizzato
+- ✅ **Form Semplificato** - solo dati essenziali
+- ✅ **Database Manager** unificato e ottimizzato
+- ✅ **Interfaccia Moderna** - design pulito e intuitivo
+
+## 🎯 Raccomandazioni
+
+### 🥇 **Per Uso Produzione:**
+- **`app.py`** - App principale, stabile e completa
+
+### 🥈 **Per Sviluppo e Test:**
+- **`progetti/app_unified/`** - Versione avanzata con nuove funzionalità
+
+### 🥉 **Per Sperimentazione:**
+- **`progetti/app_hybrid/`** - Confronto tra schemi
+- **`progetti/app_grouped/`** - Schema raggruppato base
+
+## 🔧 Struttura Progetto
 
 ```
 Dashboard_Gestione_CPA/
-├── app.py                 # App principale Streamlit
-├── components/            # Componenti UI riutilizzabili
-│   ├── auth.py           # Sistema di autenticazione
-│   ├── charts.py         # Grafici e visualizzazioni
-│   ├── client_form.py    # Form per clienti
-│   ├── client_table.py   # Tabella clienti
-│   └── incroci_tab.py   # Gestione incroci
-├── config/               # Configurazioni
-│   └── users.py         # Utenti e permessi
-├── database/            # Gestione database
-│   ├── database.py      # Manager database principale
-│   └── incroci_manager.py # Manager incroci
-├── utils/               # Utility e helper
-├── .streamlit/          # Configurazioni Streamlit
-├── requirements.txt     # Dipendenze Python
-└── README.md           # Questo file
+├── app.py                    # 🏠 APP PRINCIPALE (stabile)
+├── README.md                 # 📋 Questo file
+├── requirements.txt          # 📦 Dipendenze
+├── database/                 # 🗄️ Database originale
+├── components/               # 🧩 Componenti originali
+├── utils/                    # 🔧 Utility originali
+└── progetti/                 # 📦 Progetti alternativi
+    ├── app_unified/          # 🎯 Versione avanzata
+    ├── app_grouped/          # 📊 Schema raggruppato
+    ├── app_hybrid/           # 🔄 Versione ibrida
+    └── supabase_integration/ # ☁️ Integrazione Supabase
 ```
 
-## 🔒 Sicurezza
+## 🚨 Importante
 
-- **Autenticazione** basata su sessioni Streamlit
-- **Ruoli e permessi** per diverse funzionalità
-- **Validazione input** per prevenire SQL injection
-- **Gestione errori** sicura senza esposizione di dati sensibili
-
-## 📊 Funzionalità Principali
-
-### Gestione Clienti
-- ✅ Creazione nuovi clienti
-- ✅ Modifica dati esistenti
-- ✅ Eliminazione sicura
-- ✅ Ricerca e filtri avanzati
-- ✅ Esportazione dati CSV
-
-### Gestione Incroci
-- ✅ Creazione incroci CPA
-- ✅ Monitoraggio performance
-- ✅ Chiusura automatica
-- ✅ Storico completo
-
-### Dashboard Analitica
-- ✅ Statistiche in tempo reale
-- ✅ Grafici interattivi
-- ✅ Metriche KPI
-- ✅ Report personalizzabili
-
-## 🐛 Risoluzione Problemi
-
-### Problemi Comuni
-
-1. **App non si avvia**: Verifica Python 3.9+ e dipendenze
-2. **Database vuoto**: Esegui `init_database()` e `sample_data.py`
-3. **Errori di autenticazione**: Verifica credenziali in `config/users.py`
-4. **Problemi di performance**: Controlla dimensioni database e ottimizzazioni
-
-### Log e Debug
-
-- **Log locali**: `logs/` directory
-- **Console browser**: F12 per errori JavaScript
-- **Streamlit logs**: Terminal dove avvii l'app
-
-## 🤝 Contributi
-
-1. **Fork** il progetto
-2. **Crea** un branch per la feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** le modifiche (`git commit -m 'Add AmazingFeature'`)
-4. **Push** al branch (`git push origin feature/AmazingFeature`)
-5. **Apri** una Pull Request
-
-## 📄 Licenza
-
-Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
+- **`app.py`** è l'app principale e **NON viene mai modificata**
+- Tutti i progetti alternativi sono in **`progetti/`**
+- Ogni progetto ha il suo **README** e **configurazione**
+- **Zero rischio** per l'app principale funzionante
 
 ## 📞 Supporto
 
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **Documentazione**: [Wiki del progetto](https://github.com/your-repo/wiki)
-- **Email**: support@your-domain.com
-
----
-
-**Sviluppato con ❤️ per la gestione professionale delle CPA Broker**
+Per domande o problemi:
+1. **App Principale** → Controlla questo README
+2. **Progetti Alternativi** → Controlla README specifico in `progetti/nome_progetto/`
+3. **Bug o Errori** → Controlla logs e configurazione
