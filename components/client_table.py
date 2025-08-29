@@ -185,26 +185,19 @@ class ClientTable:
                 col_btn1, col_btn2, col_btn3 = st.columns(3)
                 
                 with col_btn1:
-                    # Chiave unica con timestamp per modifica
-                    import time
-                    timestamp = int(time.time() * 1000)  # Millisecondi per unicità
-                    unique_edit_key = f"edit_btn_{cliente_dettagli['id']}_{timestamp}_{id(st.session_state)}"
-                    if st.button("✏️ Modifica", key=unique_edit_key, help="Modifica cliente"):
+                    # Chiave semplice per modifica
+                    if st.button("✏️ Modifica", key=f"edit_simple_{cliente_dettagli['id']}", help="Modifica cliente"):
                         if on_edit:
                             on_edit(cliente_dettagli)
                 
                 with col_btn2:
                     # Chiave unica con timestamp per eliminazione
-                    timestamp = int(time.time() * 1000)  # Millisecondi per unicità
-                    unique_delete_key = f"delete_btn_{cliente_dettagli['id']}_{timestamp}_{id(st.session_state)}"
-                    if st.button("🗑️ Elimina", key=unique_delete_key, type="secondary", help="Elimina cliente"):
+                    if st.button("🗑️ Elimina", key=f"delete_simple_{cliente_dettagli['id']}", type="secondary", help="Elimina cliente"):
                         if on_delete:
                             on_delete(cliente_dettagli['id'])
                 
                 with col_btn3:
                     # Chiave unica con timestamp per copia
-                    timestamp = int(time.time() * 1000)  # Millisecondi per unicità
-                    unique_copy_key = f"copy_btn_{cliente_dettagli['id']}_{timestamp}_{id(st.session_state)}"
-                    if st.button("📋 Copia Dati", key=unique_copy_key, help="Copia dati"):
+                    if st.button("📋 Copia Dati", key=f"copy_simple_{cliente_dettagli['id']}", help="Copia dati"):
                         # Copia i dati negli appunti (simulato)
                         st.success("Dati copiati negli appunti!")
