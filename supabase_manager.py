@@ -16,8 +16,21 @@ class SupabaseManager:
     """Gestore Supabase per database remoto professionale"""
     
     def __init__(self):
+        # Prova prima le variabili ambiente locali
         self.supabase_url = os.getenv('SUPABASE_URL')
         self.supabase_key = os.getenv('SUPABASE_KEY')
+        
+        # Se non disponibili, prova i secrets di Streamlit Cloud
+        if not self.supabase_url or not self.supabase_key:
+            try:
+                import streamlit as st
+                if hasattr(st, 'secrets') and 'supabase' in st.secrets:
+                    self.supabase_url = st.secrets.supabase.url
+                    self.supabase_key = st.secrets.supabase.anon_key
+                    logger.info("✅ Configurazione da Streamlit Cloud secrets")
+            except ImportError:
+                pass
+        
         self.is_configured = bool(self.supabase_url and self.supabase_key)
         
         if self.is_configured:
