@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS incroci_bonus (
 -- Tabella broker
 CREATE TABLE IF NOT EXISTS broker (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT UNIQUE NOT NULL,
+    nome_broker TEXT UNIQUE NOT NULL,
     descrizione TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS broker (
 -- Tabella piattaforme
 CREATE TABLE IF NOT EXISTS piattaforme (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT UNIQUE NOT NULL,
+    nome_piattaforma TEXT UNIQUE NOT NULL,
     descrizione TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -82,14 +82,14 @@ CREATE TABLE IF NOT EXISTS campi_aggiuntivi (
 );
 
 -- Inserimento dati di base (NON sensibili)
-INSERT OR IGNORE INTO broker (nome, descrizione) VALUES 
+INSERT OR IGNORE INTO broker (nome_broker, descrizione) VALUES 
 ('Ultima Markets', 'Broker CFD'),
 ('FXCM', 'Forex e CFD'),
 ('IG Markets', 'Trading online'),
 ('eToro', 'Social trading'),
 ('Plus500', 'Trading CFD');
 
-INSERT OR IGNORE INTO piattaforme (nome, descrizione) VALUES 
+INSERT OR IGNORE INTO piattaforme (nome_piattaforma, descrizione) VALUES 
 ('MT4', 'MetaTrader 4'),
 ('MT5', 'MetaTrader 5'),
 ('cTrader', 'cTrader Platform'),
