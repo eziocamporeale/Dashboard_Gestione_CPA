@@ -6,3 +6,9 @@ python-dotenv>=1.0.0
 pathlib2>=2.3.7
 psutil>=5.9.6
 setuptools>=65.0.0
+
+# 🚀 SUPABASE - Database Remoto Professionale
+supabase>=2.0.0
+psycopg2-binary>=2.9.0
+asyncpg>=0.28.0
+structlog>=23.0.0
