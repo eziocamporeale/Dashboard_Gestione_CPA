@@ -195,10 +195,10 @@ try:
         st.stop()
     print("✅ Componenti inizializzati correttamente")
     
-    # Crea le tabelle del database UNA SOLA VOLTA
-    print("🔧 Creazione tabelle database...")
-    create_database_tables()
-    print("✅ Tabelle database create/verificate")
+    # DISABILITATO: Non creiamo tabelle SQLite perché usiamo solo Supabase
+    # print("🔧 Creazione tabelle database...")
+    # create_database_tables()
+    # print("✅ Tabelle database create/verificate")
     
 except Exception as e:
     print(f"❌ Errore inizializzazione: {e}")
