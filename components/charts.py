@@ -107,31 +107,47 @@ class Charts:
         # Tabella riassuntiva
         st.subheader("📋 Riepilogo Dati")
         
-        # Statistiche per broker
-        stats_broker = df_clienti.groupby('broker').agg({
-            'id': 'count',
-            'deposito': ['sum', 'mean', 'min', 'max']
-        }).round(2)
+        # Statistiche per broker - gestisci valori None
+        if 'deposito' in df_clienti.columns:
+            # Filtra solo i clienti con deposito valido per le statistiche
+            df_depositi_validi_stats = df_clienti[df_clienti['deposito'].notna() & (df_clienti['deposito'] > 0)]
+            
+            if not df_depositi_validi_stats.empty:
+                stats_broker = df_depositi_validi_stats.groupby('broker').agg({
+                    'id': 'count',
+                    'deposito': ['sum', 'mean', 'min', 'max']
+                }).round(2)
+                
+                stats_broker.columns = ['Numero Clienti', 'Depositi Totali', 'Deposito Medio', 'Deposito Min', 'Deposito Max']
+                stats_broker = stats_broker.sort_values('Numero Clienti', ascending=False)
+                
+                st.write("**Statistiche per Broker (solo clienti con deposito):**")
+                st.dataframe(stats_broker, width='stretch')
+            else:
+                st.info("Nessun cliente con deposito valido per le statistiche")
+        else:
+            st.info("Colonna 'deposito' non disponibile per le statistiche")
         
-        stats_broker.columns = ['Numero Clienti', 'Depositi Totali', 'Deposito Medio', 'Deposito Min', 'Deposito Max']
-        stats_broker = stats_broker.sort_values('Numero Clienti', ascending=False)
-        
-        st.write("**Statistiche per Broker:**")
-        st.dataframe(stats_broker, width='stretch')
-        
-        # Grafico a torta per i depositi
-        st.write("**Distribuzione Depositi per Broker**")
-        
-        depositi_broker = df_clienti.groupby('broker')['deposito'].sum()
-        
-        fig_depositi_pie = px.pie(
-            values=depositi_broker.values,
-            names=depositi_broker.index,
-            title="Distribuzione Depositi per Broker",
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-        fig_depositi_pie.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_depositi_pie, width='stretch')
+        # Grafico a torta per i depositi - gestisci valori None
+        if 'deposito' in df_clienti.columns:
+            # Filtra solo i clienti con deposito valido
+            df_depositi_validi_pie = df_clienti[df_clienti['deposito'].notna() & (df_clienti['deposito'] > 0)]
+            
+            if not df_depositi_validi_pie.empty:
+                depositi_broker = df_depositi_validi_pie.groupby('broker')['deposito'].sum()
+                
+                fig_depositi_pie = px.pie(
+                    values=depositi_broker.values,
+                    names=depositi_broker.index,
+                    title="Distribuzione Depositi per Broker (solo clienti con deposito)",
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig_depositi_pie.update_traces(textposition='inside', textinfo='percent+label')
+                st.plotly_chart(fig_depositi_pie, width='stretch')
+            else:
+                st.info("Nessun cliente con deposito valido per il grafico a torta")
+        else:
+            st.info("Colonna 'deposito' non disponibile per il grafico a torta")
         
         # Grafico a barre per piattaforme
         st.write("**Distribuzione per Piattaforma e Broker**")
@@ -153,27 +169,36 @@ class Charts:
         # Grafico per range di depositi
         st.write("**Distribuzione per Range di Depositi**")
         
-        # Crea range di depositi
-        df_clienti['range_deposito'] = pd.cut(
-            df_clienti['deposito'],
-            bins=[0, 1000, 5000, 10000, 50000, float('inf')],
-            labels=['0-1K', '1K-5K', '5K-10K', '10K-50K', '50K+']
-        )
-        
-        range_depositi = df_clienti['range_deposito'].value_counts().sort_index()
-        
-        fig_range = px.bar(
-            x=range_depositi.index,
-            y=range_depositi.values,
-            title="Distribuzione per Range di Depositi",
-            color=range_depositi.values,
-            color_continuous_scale='viridis'
-        )
-        fig_range.update_layout(
-            xaxis_title="Range Depositi (€)",
-            yaxis_title="Numero Clienti"
-        )
-        st.plotly_chart(fig_range, width='stretch')
+        # Crea range di depositi - gestisci valori None
+        if 'deposito' in df_clienti.columns:
+            # Filtra solo i clienti con deposito valido (non None e > 0)
+            df_depositi_validi = df_clienti[df_clienti['deposito'].notna() & (df_clienti['deposito'] > 0)].copy()
+            
+            if not df_depositi_validi.empty:
+                df_depositi_validi['range_deposito'] = pd.cut(
+                    df_depositi_validi['deposito'],
+                    bins=[0, 1000, 5000, 10000, 50000, float('inf')],
+                    labels=['0-1K', '1K-5K', '5K-10K', '10K-50K', '50K+']
+                )
+                
+                range_depositi = df_depositi_validi['range_deposito'].value_counts().sort_index()
+                
+                fig_range = px.bar(
+                    x=range_depositi.index,
+                    y=range_depositi.values,
+                    title="Distribuzione per Range di Depositi",
+                    color=range_depositi.values,
+                    color_continuous_scale='viridis'
+                )
+                fig_range.update_layout(
+                    xaxis_title="Range Depositi (€)",
+                    yaxis_title="Numero Clienti"
+                )
+                st.plotly_chart(fig_range, width='stretch')
+            else:
+                st.info("Nessun cliente con deposito valido per il grafico dei range")
+        else:
+            st.info("Colonna 'deposito' non disponibile per il grafico dei range")
         
         # Grafico per VPS
         st.write("**Utilizzo VPS**")
