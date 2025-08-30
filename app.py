@@ -296,7 +296,7 @@ def manage_brokers():
             st.success("Lista broker ripristinata!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-29 21:45
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:05 - FUNZIONI BROKER SPOSTATE
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
