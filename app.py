@@ -528,10 +528,16 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                 supabase_data = {
                     'nome_cliente': dati_cliente['nome_cliente'],
                     'email': dati_cliente['email'],
+                    'password_email': dati_cliente.get('password_email', ''),
                     'broker': dati_cliente['broker'],
+                    'data_registrazione': dati_cliente.get('data_registrazione').isoformat() if dati_cliente.get('data_registrazione') and hasattr(dati_cliente.get('data_registrazione'), 'isoformat') else str(dati_cliente.get('data_registrazione', '')),
+                    'deposito': dati_cliente.get('deposito', 0.0),
                     'piattaforma': dati_cliente.get('piattaforma', ''),
                     'numero_conto': dati_cliente.get('numero_conto', ''),
-                    'volume_posizione': dati_cliente.get('deposito', 0.0)
+                    'password_conto': dati_cliente.get('password_conto', ''),
+                    'vps_ip': dati_cliente.get('vps_ip', ''),
+                    'vps_username': dati_cliente.get('vps_username', ''),
+                    'vps_password': dati_cliente.get('vps_password', '')
                 }
                 
                 # Salva in Supabase
@@ -620,10 +626,16 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                 supabase_data = {
                     'nome_cliente': dati_cliente['nome_cliente'],
                     'email': dati_cliente['email'],
+                    'password_email': dati_cliente.get('password_email', ''),
                     'broker': dati_cliente['broker'],
+                    'data_registrazione': dati_cliente.get('data_registrazione').isoformat() if dati_cliente.get('data_registrazione') and hasattr(dati_cliente.get('data_registrazione'), 'isoformat') else str(dati_cliente.get('data_registrazione', '')),
+                    'deposito': dati_cliente.get('deposito', 0.0),
                     'piattaforma': dati_cliente.get('piattaforma', ''),
                     'numero_conto': dati_cliente.get('numero_conto', ''),
-                    'volume_posizione': dati_cliente.get('deposito', 0.0)
+                    'password_conto': dati_cliente.get('password_conto', ''),
+                    'vps_ip': dati_cliente.get('vps_ip', ''),
+                    'vps_username': dati_cliente.get('vps_username', ''),
+                    'vps_password': dati_cliente.get('vps_password', '')
                 }
                 
                 # Aggiorna in Supabase (cerca per email per matching)
