@@ -236,14 +236,21 @@ class Charts:
         
         with col_exp2:
             if st.button("📈 Esporta Statistiche"):
-                # Crea un dataframe con le statistiche
+                # Crea un dataframe con le statistiche - gestisci valori None
+                if 'deposito' in df_clienti.columns:
+                    depositi_totali = df_clienti['deposito'].sum() if df_clienti['deposito'].notna().any() else 0
+                    cpa_attive = len(df_clienti[df_clienti['deposito'].notna() & (df_clienti['deposito'] > 0)])
+                else:
+                    depositi_totali = 0
+                    cpa_attive = 0
+                
                 stats_df = pd.DataFrame({
                     'Metrica': ['Totale Clienti', 'Broker Attivi', 'Depositi Totali', 'CPA Attive'],
                     'Valore': [
                         len(df_clienti),
                         df_clienti['broker'].nunique(),
-                        f"€{df_clienti['deposito'].sum():,.2f}",
-                        len(df_clienti[df_clienti['deposito'] > 0])
+                        f"€{depositi_totali:,.2f}",
+                        cpa_attive
                     ]
                 })
                 
@@ -257,14 +264,23 @@ class Charts:
         
         with col_exp3:
             if st.button("🔍 Esporta per Broker"):
-                # Raggruppa per broker
-                broker_stats = df_clienti.groupby('broker').agg({
-                    'id': 'count',
-                    'deposito': ['sum', 'mean']
-                }).round(2)
-                
-                broker_stats.columns = ['Numero Clienti', 'Depositi Totali', 'Deposito Medio']
-                broker_stats = broker_stats.reset_index()
+                # Raggruppa per broker - gestisci valori None
+                if 'deposito' in df_clienti.columns:
+                    # Filtra solo i clienti con deposito valido
+                    df_depositi_validi_export = df_clienti[df_clienti['deposito'].notna() & (df_clienti['deposito'] > 0)]
+                    
+                    if not df_depositi_validi_export.empty:
+                        broker_stats = df_depositi_validi_export.groupby('broker').agg({
+                            'id': 'count',
+                            'deposito': ['sum', 'mean']
+                        }).round(2)
+                        
+                        broker_stats.columns = ['Numero Clienti', 'Depositi Totali', 'Deposito Medio']
+                        broker_stats = broker_stats.reset_index()
+                    else:
+                        broker_stats = pd.DataFrame(columns=['Broker', 'Numero Clienti', 'Depositi Totali', 'Deposito Medio'])
+                else:
+                    broker_stats = pd.DataFrame(columns=['Broker', 'Numero Clienti', 'Depositi Totali', 'Deposito Medio'])
                 
                 csv_broker = broker_stats.to_csv(index=False)
                 st.download_button(
