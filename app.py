@@ -6,9 +6,6 @@ import plotly.express as px
 from streamlit_option_menu import option_menu
 import logging
 
-# 🔄 FORZA REDEPLOY STREAMLIT CLOUD - VERSIONE STABILE VPS 1.0.0
-# Questo commento forza Streamlit Cloud a usare la versione corretta del codice
-
 # Aggiungi il percorso della directory corrente al path di Python
 import tempfile
 import shutil
