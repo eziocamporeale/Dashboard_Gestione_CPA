@@ -292,7 +292,7 @@ class ClientTable:
                     st.write(f"**Email:** {cliente_dettagli['email']}")
                     st.write(f"**Broker:** {cliente_dettagli['broker']}")
                     st.write(f"**Data Registrazione:** {cliente_dettagli['data_registrazione']}")
-                    st.write(f"**Deposito:** €{cliente_dettagli['deposito']:,.2f}")
+                    st.write(f"**Deposito:** €{cliente_dettagli.get('deposito', 0):,.2f}" if cliente_dettagli.get('deposito') is not None else "**Deposito:** Non specificato")
                 
                 with col_det2:
                     st.write(f"**Piattaforma:** {cliente_dettagli['piattaforma']}")

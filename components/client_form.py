@@ -70,7 +70,7 @@ class ClientForm:
                     "Deposito (€) *", 
                     min_value=0.0, 
                     step=0.01,
-                    value=float(dati_cliente.get('deposito', 0.0)) if dati_cliente else 0.0,
+                    value=float(dati_cliente.get('deposito', 0.0) or 0.0) if dati_cliente else 0.0,
                     help="Importo del deposito iniziale"
                 )
                 
@@ -175,7 +175,7 @@ class ClientForm:
                         'password_email': password_email,
                         'broker': broker,
                         'data_registrazione': data_registrazione,
-                        'deposito': deposito,
+                        'deposito': deposito,  # Campo per il deposito del cliente
                         'piattaforma': piattaforma,
                         'numero_conto': numero_conto,
                         'password_conto': password_conto,

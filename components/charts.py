@@ -79,18 +79,23 @@ class Charts:
             df_clienti['mese'] = df_clienti['data_registrazione'].dt.strftime('%Y-%m')
             registrazioni_mensili = df_clienti.groupby('mese').size().reset_index(name='count')
             
-            fig_trend = px.line(
-                x=registrazioni_mensili['mese'],
-                y=registrazioni_mensili['count'],
-                title="Registrazioni Mensili",
-                markers=True
-            )
-            fig_trend.update_layout(
-                xaxis_title="Mese",
-                yaxis_title="Numero Registrazioni",
-                xaxis_tickangle=-45
-            )
-            st.plotly_chart(fig_trend, width='stretch')
+            # Crea grafico con dati puliti
+            if not registrazioni_mensili.empty:
+                fig_trend = px.line(
+                    data_frame=registrazioni_mensili,
+                    x='mese',
+                    y='count',
+                    title="Registrazioni Mensili",
+                    markers=True
+                )
+                fig_trend.update_layout(
+                    xaxis_title="Mese",
+                    yaxis_title="Numero Registrazioni",
+                    xaxis_tickangle=-45
+                )
+                st.plotly_chart(fig_trend, width='stretch')
+            else:
+                st.info("Nessun dato di registrazione disponibile per il grafico")
     
     def render_summary_charts(self, df_clienti):
         """Rende i grafici per la sezione riepilogo"""
