@@ -886,29 +886,6 @@ elif selected == "⚙️ Impostazioni":
         st.write("• **Aggiornamento:** Lista aggiornata automaticamente")
         st.write("• **Compatibilità:** Supporta tutti i broker principali")
         st.write("• **Personalizzazione:** Possibile aggiungere broker personalizzati")
-                    else:
-                        st.info("File di log non trovato")
-                except Exception as e:
-                    st.error(f"Errore lettura logs: {e}")
-        
-        with col_log2:
-            if st.button("🧹 Pulisci Logs"):
-                try:
-                    log_file = "logs/cpa_dashboard.log"
-                    if os.path.exists(log_file):
-                        # Crea backup del log
-                        backup_log = f"logs/cpa_dashboard_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-                        shutil.copy2(log_file, backup_log)
-                        
-                        # Pulisci il log principale
-                        with open(log_file, 'w') as f:
-                            f.write(f"# Log pulito il {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
-                        
-                        st.success(f"✅ Logs puliti! Backup salvato in: {backup_log}")
-                    else:
-                        st.info("File di log non trovato")
-                except Exception as e:
-                    st.error(f"Errore pulizia logs: {e}")
 
 # Funzione di test rimossa - non più necessaria
 
