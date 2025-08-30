@@ -515,8 +515,8 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
     success, result = db.aggiungi_cliente(dati_cliente, campi_aggiuntivi)
     
     if success:
-        # Backup automatico dopo aggiunta cliente
-        auto_backup()
+        # DISABILITATO: Backup automatico SQLite non più necessario con Supabase
+        # auto_backup()
         
         # SINCRONIZZAZIONE AUTOMATICA CON SUPABASE
         try:
@@ -607,8 +607,8 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     success = db.modifica_cliente(cliente_id, dati_cliente, campi_aggiuntivi)
     
     if success:
-        # Backup automatico dopo modifica cliente
-        auto_backup()
+        # DISABILITATO: Backup automatico SQLite non più necessario con Supabase
+        # auto_backup()
         
         # SINCRONIZZAZIONE AUTOMATICA CON SUPABASE
         try:
@@ -843,7 +843,8 @@ elif selected == "⚙️ Impostazioni":
         
         with col_backup1:
             if st.button("🔄 Crea Backup Manuale"):
-                success, message = auto_backup()
+                # DISABILITATO: Backup automatico SQLite non più necessario con Supabase
+                # success, message = auto_backup()
                 if success:
                     st.success(f"✅ Backup creato: {message}")
                 else:
