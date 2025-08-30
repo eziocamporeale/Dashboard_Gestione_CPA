@@ -345,7 +345,7 @@ def manage_brokers():
                 st.error("Errore nel salvataggio!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:22 - LOOP INFINITO create_database_tables RISOLTO
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:23 - ORDINE FUNZIONI CORRETTO
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
