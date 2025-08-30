@@ -7,7 +7,7 @@ import streamlit as st
 
 # Credenziali utenti (username: password)
 USERS = {
-    "admin": "admin123",
+    "admin": "Vtmarkets12!",
     "ezio": "password123", 
     "user": "user123"
 }
