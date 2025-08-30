@@ -110,3 +110,4 @@ Per domande o problemi:
 1. **App Principale** → Controlla questo README
 2. **Progetti Alternativi** → Controlla README specifico in `progetti/nome_progetto/`
 3. **Bug o Errori** → Controlla logs e configurazione
+# Forza deploy Streamlit Cloud
