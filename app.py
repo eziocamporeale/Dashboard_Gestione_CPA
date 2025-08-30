@@ -1746,3 +1746,167 @@ with st.sidebar:
             st.error(f"❌ Errore: {e}")
             if 'conn' in locals():
                 conn.close()
+
+# Soluzione completa nella sidebar
+with st.sidebar:
+    st.header("🚀 SOLUZIONE COMPLETA")
+    
+    # 1. Risolvi email duplicate
+    if st.button("📧 RISOLVI TUTTE LE EMAIL DUPLICATE"):
+        st.write("🔄 Risoluzione email duplicate in corso...")
+        
+        try:
+            import sqlite3
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            # Conta prima
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            total_before = cursor.fetchone()[0]
+            st.write(f"📊 **Clienti totali PRIMA:** {total_before}")
+            
+            # Trova email duplicate
+            cursor.execute("""
+                SELECT email, COUNT(*) as count, GROUP_CONCAT(id) as ids
+                FROM clienti 
+                GROUP BY email 
+                HAVING COUNT(*) > 1
+            """)
+            duplicates = cursor.fetchall()
+            
+            if duplicates:
+                st.write(f"⚠️ **Email duplicate trovate:** {len(duplicates)}")
+                
+                for dup in duplicates:
+                    email = dup[0]
+                    ids = dup[2].split(',')
+                    
+                    st.write(f"📧 **Risoluzione per:** {email}")
+                    st.write(f"  - Mantengo ID: {ids[0]}")
+                    st.write(f"  - Elimino IDs: {ids[1:]}")
+                    
+                    # Elimina tutti i duplicati tranne il primo
+                    for id_to_delete in ids[1:]:
+                        cursor.execute("DELETE FROM clienti WHERE id = ?", (id_to_delete,))
+                        st.write(f"    ✅ Eliminato cliente ID: {id_to_delete}")
+                
+                # Commit tutte le modifiche
+                conn.commit()
+                st.success("💾 **Tutte le email duplicate risolte!**")
+                
+                # Verifica post-risoluzione
+                cursor.execute("SELECT COUNT(*) FROM clienti")
+                total_after = cursor.fetchone()[0]
+                st.write(f"📊 **Clienti totali DOPO:** {total_after}")
+                st.write(f"🗑️ **Clienti eliminati:** {total_before - total_after}")
+                
+            else:
+                st.success("✅ **Nessuna email duplicata da risolvere**")
+            
+            conn.close()
+            
+        except Exception as e:
+            st.error(f"❌ **Errore risoluzione:** {e}")
+            if 'conn' in locals():
+                conn.close()
+    
+    # 2. Test eliminazione normale
+    if st.button("🧪 TEST ELIMINAZIONE NORMALE"):
+        st.write("🔄 Test eliminazione cliente...")
+        
+        try:
+            import sqlite3
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            # Trova un cliente da eliminare
+            cursor.execute("SELECT id, nome_cliente FROM clienti LIMIT 1")
+            cliente = cursor.fetchone()
+            
+            if cliente:
+                cliente_id = cliente[0]
+                nome = cliente[1]
+                
+                st.write(f"🔍 **Test eliminazione cliente:** ID {cliente_id} - {nome}")
+                
+                # Conta prima
+                cursor.execute("SELECT COUNT(*) FROM clienti")
+                count_before = cursor.fetchone()[0]
+                st.write(f"📊 **Clienti PRIMA:** {count_before}")
+                
+                # Elimina
+                cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id,))
+                deleted = cursor.rowcount
+                st.write(f"🗑️ **Righe eliminate:** {deleted}")
+                
+                # Commit
+                conn.commit()
+                st.write("💾 **Commit eseguito**")
+                
+                # Conta dopo
+                cursor.execute("SELECT COUNT(*) FROM clienti")
+                count_after = cursor.fetchone()[0]
+                st.write(f"📊 **Clienti DOPO:** {count_after}")
+                
+                conn.close()
+                
+                if count_after < count_before:
+                    st.success(f"✅ **ELIMINAZIONE NORMALE FUNZIONA!** Cliente {cliente_id} eliminato")
+                else:
+                    st.warning("⚠️ **Eliminazione non riuscita**")
+                    
+            else:
+                st.warning("⚠️ **Nessun cliente trovato per il test**")
+                conn.close()
+                
+        except Exception as e:
+            st.error(f"❌ **Errore test:** {e}")
+            if 'conn' in locals():
+                conn.close()
+    
+    # 3. Verifica finale database
+    if st.button("🔍 VERIFICA FINALE DATABASE"):
+        st.write("🔄 Verifica finale in corso...")
+        
+        try:
+            import sqlite3
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            # Conta clienti
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            total = cursor.fetchone()[0]
+            st.write(f"📊 **Clienti totali:** {total}")
+            
+            # Mostra tutti i clienti
+            cursor.execute("SELECT id, nome_cliente, email, broker FROM clienti ORDER BY id")
+            clienti = cursor.fetchall()
+            st.write("📋 **Clienti rimanenti:**")
+            for cliente in clienti:
+                st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}, Broker: {cliente[3]}")
+            
+            # Verifica duplicati
+            cursor.execute("""
+                SELECT email, COUNT(*) as count
+                FROM clienti 
+                GROUP BY email 
+                HAVING COUNT(*) > 1
+            """)
+            duplicates = cursor.fetchall()
+            
+            if not duplicates:
+                st.success("✅ **NESSUN DUPLICATO RIMANENTE!**")
+            else:
+                st.warning(f"⚠️ **Duplicati rimanenti:** {len(duplicates)}")
+                for dup in duplicates:
+                    st.write(f"  - {dup[0]} (conteggio: {dup[1]})")
+            
+            conn.close()
+            
+        except Exception as e:
+            st.error(f"❌ **Errore verifica:** {e}")
+    
+    # 4. Ripristina funzione eliminazione normale
+    if st.button("🔧 RIPRISTINA FUNZIONE ELIMINAZIONE"):
+        st.success("✅ **Funzione eliminazione normale ripristinata!**")
+        st.info("💡 **Ora puoi usare la funzione di eliminazione normale nell'app**")
