@@ -19,6 +19,14 @@ class IncrociTab:
         """Inizializza il tab incroci"""
         self.incroci_manager = incroci_manager
         self.database_manager = database_manager
+        
+        # Aggiungi SupabaseManager per i clienti
+        try:
+            from supabase_manager import SupabaseManager
+            self.supabase_manager = SupabaseManager()
+        except Exception as e:
+            st.error(f"❌ Errore inizializzazione SupabaseManager: {e}")
+            self.supabase_manager = None
     
     def render(self):
         """Rende il tab completo degli incroci"""
@@ -157,14 +165,16 @@ class IncrociTab:
                     st.write(f"Cliente: {incrocio['cliente_long']}")
                     st.write(f"Broker: {incrocio['broker_long']}")
                     st.write(f"Conto: {incrocio['conto_long']}")
-                    st.write(f"Volume: {incrocio['volume_long']:,.0f}")
+                    volume_long = incrocio.get('volume_long', 0) or 0
+                    st.write(f"Volume: {volume_long:,.0f}")
                 
                 with col2:
                     st.write("**Account Short:**")
                     st.write(f"Cliente: {incrocio['cliente_short']}")
                     st.write(f"Broker: {incrocio['broker_short']}")
                     st.write(f"Conto: {incrocio['conto_short']}")
-                    st.write(f"Volume: {incrocio['volume_short']:,.0f}")
+                    volume_short = incrocio.get('volume_short', 0) or 0
+                    st.write(f"Volume: {volume_short:,.0f}")
                 
                 with col3:
                     st.write("**Dettagli:**")
@@ -172,7 +182,8 @@ class IncrociTab:
                     st.write(f"Apertura: {incrocio['data_apertura']}")
                     if pd.notna(incrocio['data_chiusura']):
                         st.write(f"Chiusura: {incrocio['data_chiusura']}")
-                    st.write(f"Bonus: ${incrocio['totale_bonus']:,.0f}")
+                    bonus_totale = incrocio.get('totale_bonus', 0) or 0
+                    st.write(f"Bonus: ${bonus_totale:,.0f}")
                 
                 # Azioni
                 col_azioni1, col_azioni2, col_azioni3, col_azioni4 = st.columns(4)
@@ -234,11 +245,11 @@ class IncrociTab:
                         st.session_state.long_broker = cliente_info['broker']
                         st.session_state.long_conto = cliente_info['numero_conto']
                 
-                broker_long_input = st.text_input("Broker Long", value=st.session_state.get('long_broker', ''), key="long_broker", disabled=True)
+                broker_long_input = st.text_input("Broker Long", value=st.session_state.get('long_broker', ''), key="long_broker_input", disabled=True)
                 piattaforma_long = st.selectbox("Piattaforma Long", ["MT4", "MT5", "cTrader", "Altro"], index=0, key="long_piattaforma")
             
             with col_long2:
-                conto_long_input = st.text_input("Numero Conto Long", value=st.session_state.get('long_conto', ''), key="long_conto", disabled=True)
+                conto_long_input = st.text_input("Numero Conto Long", value=st.session_state.get('long_conto', ''), key="long_conto_input", disabled=True)
                 volume_long = st.number_input("Volume Long", min_value=0.01, value=volume_trading, step=0.01, key="long_volume")
             
             st.divider()
@@ -262,11 +273,11 @@ class IncrociTab:
                         st.session_state.short_broker = cliente_info['broker']
                         st.session_state.short_conto = cliente_info['numero_conto']
                 
-                broker_short_input = st.text_input("Broker Short", value=st.session_state.get('short_broker', ''), key="short_broker", disabled=True)
+                broker_short_input = st.text_input("Broker Short", value=st.session_state.get('short_broker', ''), key="short_broker_input", disabled=True)
                 piattaforma_short = st.selectbox("Piattaforma Short", ["MT4", "MT5", "cTrader", "Altro"], index=0, key="short_piattaforma")
             
             with col_short2:
-                conto_short_input = st.text_input("Numero Conto Short", value=st.session_state.get('short_conto', ''), key="short_conto", disabled=True)
+                conto_short_input = st.text_input("Numero Conto Short", value=st.session_state.get('short_conto', ''), key="short_conto_input", disabled=True)
                 volume_short = st.number_input("Volume Short", min_value=0.01, value=volume_trading, step=0.01, key="short_volume")
             
             st.divider()
@@ -402,15 +413,26 @@ class IncrociTab:
             st.info("Inserisci un termine di ricerca per iniziare")
     
     def get_clienti_options(self) -> List[tuple]:
-        """Ottiene la lista dei clienti per i selectbox"""
+        """Ottiene la lista dei clienti per i selectbox da Supabase"""
         try:
-            clienti_df = self.database_manager.ottieni_tutti_clienti()
-            if not clienti_df.empty:
-                options = [(f"{row['nome_cliente']} ({row['broker']})", row['id']) for _, row in clienti_df.iterrows()]
-                return options
+            if self.supabase_manager:
+                # Usa Supabase per i clienti
+                clienti = self.supabase_manager.get_clienti()
+                if clienti:
+                    options = [(f"{cliente['nome_cliente']} ({cliente['broker']})", cliente['id']) for cliente in clienti]
+                    return options
+                else:
+                    st.warning("⚠️ Nessun cliente trovato in Supabase. Aggiungi prima alcuni clienti!")
+                    return []
             else:
-                st.warning("⚠️ Nessun cliente trovato nel database. Aggiungi prima alcuni clienti!")
-                return []
+                # Fallback al database locale se Supabase non è disponibile
+                clienti_df = self.database_manager.ottieni_tutti_clienti()
+                if not clienti_df.empty:
+                    options = [(f"{row['nome_cliente']} ({row['broker']})", row['id']) for _, row in clienti_df.iterrows()]
+                    return options
+                else:
+                    st.warning("⚠️ Nessun cliente trovato nel database. Aggiungi prima alcuni clienti!")
+                    return []
         except Exception as e:
             st.error(f"❌ Errore nel caricamento clienti: {e}")
             return []
@@ -444,13 +466,22 @@ class IncrociTab:
 
     
     def get_cliente_info(self, cliente_id: int) -> Dict:
-        """Ottiene le informazioni di un cliente specifico"""
+        """Ottiene le informazioni di un cliente specifico da Supabase"""
         try:
-            clienti_df = self.database_manager.ottieni_tutti_clienti()
-            cliente = clienti_df[clienti_df['id'] == cliente_id]
-            if not cliente.empty:
-                return cliente.iloc[0].to_dict()
-            return {}
+            if self.supabase_manager:
+                # Usa Supabase per le info cliente
+                clienti = self.supabase_manager.get_clienti()
+                for cliente in clienti:
+                    if str(cliente['id']) == str(cliente_id):
+                        return cliente
+                return {}
+            else:
+                # Fallback al database locale se Supabase non è disponibile
+                clienti_df = self.database_manager.ottieni_tutti_clienti()
+                cliente = clienti_df[clienti_df['id'] == cliente_id]
+                if not cliente.empty:
+                    return cliente.iloc[0].to_dict()
+                return {}
         except Exception as e:
             logging.error(f"Errore recupero info cliente: {e}")
             return {}

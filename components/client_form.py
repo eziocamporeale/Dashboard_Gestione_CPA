@@ -61,7 +61,7 @@ class ClientForm:
                 
                 data_registrazione = st.date_input(
                     "Data Registrazione *", 
-                    value=datetime.strptime(dati_cliente.get('data_registrazione', datetime.now().date()), '%Y-%m-%d').date() if dati_cliente and dati_cliente.get('data_registrazione') else datetime.now().date(),
+                    value=datetime.fromisoformat(dati_cliente.get('data_registrazione', datetime.now().isoformat())).date() if dati_cliente and dati_cliente.get('data_registrazione') else datetime.now().date(),
                     help="Data di registrazione del cliente"
                 )
             

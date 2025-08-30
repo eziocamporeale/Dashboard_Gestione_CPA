@@ -117,7 +117,7 @@ def init_components(db):
             'client_form': ClientForm(),
             'client_table': ClientTable(),
             'charts': Charts(),
-            'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
+            'incroci_tab': IncrociTab(IncrociManager(), db)
         }
         
         print("✅ Componenti inizializzati correttamente")
@@ -441,7 +441,7 @@ def sync_all_data_to_supabase():
                     'broker': str(cliente.get('broker', '')),
                     'piattaforma': str(cliente.get('piattaforma', '')),
                     'numero_conto': str(cliente.get('numero_conto', '')),
-                    'volume_posizione': float(cliente.get('volume_posizione', 0.0))
+                    'volume_posizione': float(cliente.get('deposito', 0.0))
                 }
                 
                 # Log dati preparati
@@ -531,7 +531,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                     'broker': dati_cliente['broker'],
                     'piattaforma': dati_cliente.get('piattaforma', ''),
                     'numero_conto': dati_cliente.get('numero_conto', ''),
-                    'volume_posizione': dati_cliente.get('volume_posizione', 0.0)
+                    'volume_posizione': dati_cliente.get('deposito', 0.0)
                 }
                 
                 # Salva in Supabase
@@ -560,54 +560,46 @@ def handle_edit_client(cliente_data):
     # RIMOSSO st.rerun() per fermare il loop
 
 def handle_delete_client(cliente_id):
-    """Gestisce l'eliminazione di un cliente - VERSIONE SENZA RERUN"""
-    st.write(f"🔍 **TEST ELIMINAZIONE:** Cliente ID {cliente_id}")
-    
-    # Test 1: Verifica autenticazione
-    if not st.session_state.get('authenticated', False):
-        st.error("🔒 Accesso richiesto per eliminare clienti")
-        return
-    
-    st.write("✅ **Autenticazione OK**")
-    
-    # Test 2: Verifica database
+    """Gestisce l'eliminazione di un cliente da Supabase"""
     try:
-        clienti_prima = db.ottieni_tutti_clienti()
-        st.write(f"📊 **Clienti nel database PRIMA:** {len(clienti_prima)}")
-    except Exception as e:
-        st.error(f"❌ **Errore database:** {e}")
-        return
-    
-    # Test 3: Pulsante elimina semplice
-    if st.button(f"🗑️ TEST ELIMINA {cliente_id}", key=f"test_elimina_{cliente_id}"):
-        st.write("✅ **PULSANTE CLICCATO!**")
+        # Inizializza success
+        success = False
         
+        # Elimina da Supabase
         try:
-            cliente_id_int = int(cliente_id)
-            st.write(f"🔍 **Tentativo eliminazione cliente {cliente_id_int}**")
+            from supabase_manager import SupabaseManager
+            supabase_manager = SupabaseManager()
             
-            success = db.elimina_cliente(cliente_id_int)
+            # Cerca il cliente in Supabase per ID
+            clienti_supabase = supabase_manager.get_clienti()
+            cliente_supabase = None
             
-            if success:
-                st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_id_int} eliminato")
+            for c in clienti_supabase:
+                if str(c.get('id')) == cliente_id:  # Confronta ID come stringa
+                    cliente_supabase = c
+                    break
+            
+            if cliente_supabase:
+                # Elimina da Supabase
+                success, message = supabase_manager.delete_cliente(cliente_supabase['id'])
                 
-                # Verifica post-eliminazione
-                clienti_dopo = db.ottieni_tutti_clienti()
-                st.write(f"📊 **Clienti nel database DOPO:** {len(clienti_dopo)}")
-                
-                # RIMOSSO st.rerun() per fermare il loop
+                if success:
+                    st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_supabase['nome_cliente']} eliminato da Supabase")
+                else:
+                    st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente {cliente_supabase['nome_cliente']} non eliminato: {message}")
             else:
-                st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente {cliente_id_int} non eliminato")
+                st.error(f"❌ **CLIENTE NON TROVATO IN SUPABASE!** ID: {cliente_id}")
+                success = False
                 
         except Exception as e:
-            st.error(f"❌ **Errore durante eliminazione:** {e}")
-    
-    # Test 4: Pulsante conferma (se necessario)
-    if st.button(f"✅ CONFERMA ELIMINAZIONE {cliente_id}", key=f"test_conferma_{cliente_id}"):
-        st.write("✅ **CONFERMA CLICCATO!**")
-        # RIMOSSO st.rerun() per fermare il loop
-    
-    st.write("ℹ️ **Test completato - Nessun pulsante cliccato**")
+            st.error(f"❌ **Errore eliminazione da Supabase:** {e}")
+            success = False
+        
+        return success
+        
+    except Exception as e:
+        st.error(f"❌ **Errore durante eliminazione:** {e}")
+        return False
 
 def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     """Gestisce l'aggiornamento di un cliente esistente"""
@@ -631,7 +623,7 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                     'broker': dati_cliente['broker'],
                     'piattaforma': dati_cliente.get('piattaforma', ''),
                     'numero_conto': dati_cliente.get('numero_conto', ''),
-                    'volume_posizione': dati_cliente.get('volume_posizione', 0.0)
+                    'volume_posizione': dati_cliente.get('deposito', 0.0)
                 }
                 
                 # Aggiorna in Supabase (cerca per email per matching)
@@ -670,9 +662,10 @@ if selected == "🏠 Dashboard":
     st.header("Dashboard Principale")
     st.write("Benvenuto nella dashboard per la gestione delle CPA dei broker")
     
-    # Ottieni dati dal database
-    df_clienti = db.ottieni_tutti_clienti()
-    stats = db.ottieni_statistiche()
+    # Ottieni dati da Supabase tramite ClientTable
+    client_table = components['client_table']
+    df_clienti = client_table.get_clienti()
+    stats = client_table.get_statistiche_clienti()
     
     # Statistiche rapide
     col1, col2, col3, col4 = st.columns(4)
@@ -699,8 +692,8 @@ elif selected == "👥 Gestione Clienti":
     st.header("Gestione Clienti CPA")
     st.write("Gestisci i clienti e le loro informazioni")
     
-    # Ottieni dati dal database
-    df_clienti = db.ottieni_tutti_clienti()
+    # Ottieni dati da Supabase tramite ClientTable
+    df_clienti = components['client_table'].get_clienti()
     
     # Se stiamo modificando un cliente
     if st.session_state.editing_client:
@@ -738,7 +731,6 @@ elif selected == "👥 Gestione Clienti":
             st.subheader("📋 Clienti Esistenti")
             
             components['client_table'].render_table(
-                df_clienti,
                 on_edit=handle_edit_client,
                 on_delete=handle_delete_client
             )
@@ -753,8 +745,8 @@ elif selected == "📈 Riepilogo":
     st.header("Riepilogo Dati")
     st.write("Visualizza i dati in formato tabellare e grafico")
     
-    # Ottieni dati dal database
-    df_clienti = db.ottieni_tutti_clienti()
+    # Ottieni dati da Supabase tramite ClientTable
+    df_clienti = components['client_table'].get_clienti()
     
     if not df_clienti.empty:
         # Grafici riassuntivi
