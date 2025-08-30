@@ -99,14 +99,12 @@ st.set_page_config(
 )
 
 # Inizializzazione del database
-@st.cache_resource
 def init_database():
     """Inizializza il database"""
     return DatabaseManager()
 
 # Inizializzazione dei componenti
-@st.cache_resource
-def init_components():
+def init_components(db):
     """Inizializza i componenti"""
     try:
         print("🔧 Inizializzazione componenti...")
@@ -116,11 +114,11 @@ def init_components():
             raise Exception("Uno o più componenti non sono disponibili")
         
         components_dict = {
-        'client_form': ClientForm(),
-        'client_table': ClientTable(),
-        'charts': Charts(),
-        'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
-    }
+            'client_form': ClientForm(),
+            'client_table': ClientTable(),
+            'charts': Charts(),
+            'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
+        }
         
         print("✅ Componenti inizializzati correttamente")
         return components_dict
@@ -137,7 +135,7 @@ try:
     print("✅ Database inizializzato correttamente")
     
     print("🔧 Inizializzazione componenti...")
-    components = init_components()
+    components = init_components(db)
     if components is None:
         st.error("❌ Impossibile inizializzare i componenti. Controlla i log per dettagli.")
         st.stop()
@@ -342,7 +340,7 @@ def manage_brokers():
                 st.error("Errore nel salvataggio!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:15 - IMPORTS RIORGANIZZATI PER RISOLVERE ERRORI
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:18 - LOOP DI INIZIALIZZAZIONE RISOLTO
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
