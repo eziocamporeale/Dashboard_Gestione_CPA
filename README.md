@@ -26,7 +26,3 @@ Dashboard per la gestione di clienti CPA con integrazione Supabase.
 ## 🔒 Sicurezza
 
 Il sistema include un audit di sicurezza automatico integrato.
-
----
-
-**🔄 FORZA REDEPLOY STREAMLIT CLOUD - VERSIONE STABILE VPS 1.0.0**
