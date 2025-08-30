@@ -770,8 +770,8 @@ elif selected == "⚙️ Impostazioni":
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
     # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_brokers = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker"
+    tab_supabase, tab_system, tab_brokers, tab_security = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker", "🔒 Sicurezza"
     ])
     
     # TAB 1: Supabase
@@ -886,6 +886,19 @@ elif selected == "⚙️ Impostazioni":
         st.write("• **Aggiornamento:** Lista aggiornata automaticamente")
         st.write("• **Compatibilità:** Supporta tutti i broker principali")
         st.write("• **Personalizzazione:** Possibile aggiungere broker personalizzati")
+    
+    # TAB 4: Sicurezza
+    with tab_security:
+        try:
+            from components.security_tab import SecurityTab
+            security_tab = SecurityTab()
+            security_tab.render()
+        except ImportError:
+            st.error("❌ **COMPONENTE SICUREZZA NON DISPONIBILE**")
+            st.info("💡 Installa le dipendenze: `pip install gitpython`")
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento componente sicurezza:** {e}")
+            st.info("🔧 Controlla che il file `components/security_tab.py` sia presente")
 
 # Funzione di test rimossa - non più necessaria
 
