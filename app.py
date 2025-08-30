@@ -1694,3 +1694,55 @@ with st.sidebar:
     st.header("🧪 Test Super Semplice")
     if st.button("🔧 Test Super Semplice"):
         test_super_simple()
+
+# Test ultra-semplice nella sidebar principale
+with st.sidebar:
+    st.header("🚨 TEST ULTRA-SEMPLICE")
+    
+    # Test 1: Pulsante base senza logica
+    if st.button("🔘 CLICK ME"):
+        st.write("🎉 FUNZIONA!")
+    
+    # Test 2: Input semplice
+    test_input = st.text_input("Scrivi qualcosa:", value="test")
+    st.write(f"Hai scritto: {test_input}")
+    
+    # Test 3: Eliminazione diretta senza funzioni
+    if st.button("🗑️ ELIMINA ID 30 DIRETTAMENTE"):
+        st.write("🔄 Tentativo eliminazione...")
+        
+        try:
+            import sqlite3
+            conn = sqlite3.connect('cpa_database.db')
+            cursor = conn.cursor()
+            
+            # Conta prima
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            count_before = cursor.fetchone()[0]
+            st.write(f"📊 Clienti PRIMA: {count_before}")
+            
+            # Elimina ID 30
+            cursor.execute("DELETE FROM clienti WHERE id = 30")
+            deleted = cursor.rowcount
+            st.write(f"🗑️ Righe eliminate: {deleted}")
+            
+            # Commit
+            conn.commit()
+            st.write("💾 Commit eseguito")
+            
+            # Conta dopo
+            cursor.execute("SELECT COUNT(*) FROM clienti")
+            count_after = cursor.fetchone()[0]
+            st.write(f"📊 Clienti DOPO: {count_after}")
+            
+            conn.close()
+            
+            if count_after < count_before:
+                st.success("✅ ELIMINAZIONE RIUSCITA!")
+            else:
+                st.warning("⚠️ Nessun cliente eliminato")
+                
+        except Exception as e:
+            st.error(f"❌ Errore: {e}")
+            if 'conn' in locals():
+                conn.close()
