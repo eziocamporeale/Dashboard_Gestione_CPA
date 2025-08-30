@@ -141,6 +141,11 @@ try:
         st.stop()
     print("✅ Componenti inizializzati correttamente")
     
+    # Crea le tabelle del database UNA SOLA VOLTA
+    print("🔧 Creazione tabelle database...")
+    create_database_tables()
+    print("✅ Tabelle database create/verificate")
+    
 except Exception as e:
     print(f"❌ Errore inizializzazione: {e}")
     st.error(f"Errore inizializzazione: {e}")
@@ -200,8 +205,8 @@ def create_database_tables():
         logging.error(f"❌ Errore creazione tabelle: {e}")
         return False
 
-# Crea le tabelle all'avvio
-create_database_tables()
+# NON chiamare create_database_tables() qui - causa loop infinito!
+# create_database_tables()
 
 # Funzioni per gestire i broker popolari
 def get_broker_suggestions():
@@ -340,7 +345,7 @@ def manage_brokers():
                 st.error("Errore nel salvataggio!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:18 - LOOP DI INIZIALIZZAZIONE RISOLTO
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:22 - LOOP INFINITO create_database_tables RISOLTO
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
