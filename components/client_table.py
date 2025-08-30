@@ -1,14 +1,115 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from supabase_manager import SupabaseManager
 
 class ClientTable:
     def __init__(self):
-        """Inizializza la tabella dei clienti"""
-        pass
+        """Inizializza la tabella dei clienti con Supabase"""
+        try:
+            self.supabase = SupabaseManager()
+            st.session_state.supabase_available = True
+        except Exception as e:
+            st.error(f"❌ Errore inizializzazione Supabase: {e}")
+            st.session_state.supabase_available = False
     
-    def render_table(self, df_clienti, on_edit=None, on_delete=None):
+    def get_clienti(self):
+        """Recupera tutti i clienti da Supabase"""
+        try:
+            if not st.session_state.get('supabase_available', False):
+                return pd.DataFrame()
+            
+            clienti = self.supabase.get_clienti()
+            if not clienti:
+                return pd.DataFrame()
+            
+            # Converti in DataFrame
+            df = pd.DataFrame(clienti)
+            
+            # Rinomina le colonne per compatibilità
+            if 'data_registrazione' not in df.columns and 'created_at' in df.columns:
+                df['data_registrazione'] = df['created_at']
+            
+            if 'deposito' not in df.columns and 'volume_posizione' in df.columns:
+                df['deposito'] = df['volume_posizione']
+            
+            if 'piattaforma' not in df.columns:
+                df['piattaforma'] = 'MT5'  # Default
+            
+            if 'vps_ip' not in df.columns:
+                df['vps_ip'] = ''  # Default
+            
+            return df
+            
+        except Exception as e:
+            st.error(f"❌ Errore recupero clienti: {e}")
+            return pd.DataFrame()
+    
+    def get_statistiche_clienti(self):
+        """Calcola le statistiche dei clienti da Supabase"""
+        try:
+            if not st.session_state.get('supabase_available', False):
+                return {
+                    'totale_clienti': 0,
+                    'broker_attivi': 0,
+                    'depositi_totali': 0,
+                    'cpa_attive': 0
+                }
+            
+            clienti = self.supabase.get_clienti()
+            if not clienti:
+                return {
+                    'totale_clienti': 0,
+                    'broker_attivi': 0,
+                    'depositi_totali': 0,
+                    'cpa_attive': 0
+                }
+            
+            # Converti in DataFrame per calcoli
+            df = pd.DataFrame(clienti)
+            
+            # Calcola statistiche
+            totale_clienti = len(df)
+            broker_attivi = df['broker'].nunique() if 'broker' in df.columns else 0
+            
+            # Gestisci depositi/volume_posizione
+            if 'deposito' in df.columns:
+                depositi_totali = df['deposito'].sum()
+            elif 'volume_posizione' in df.columns:
+                depositi_totali = df['volume_posizione'].sum()
+            else:
+                depositi_totali = 0
+            
+            # CPA attive (clienti con deposito > 0)
+            if 'deposito' in df.columns:
+                cpa_attive = len(df[df['deposito'] > 0])
+            elif 'volume_posizione' in df.columns:
+                cpa_attive = len(df[df['volume_posizione'] > 0])
+            else:
+                cpa_attive = 0
+            
+            return {
+                'totale_clienti': totale_clienti,
+                'broker_attivi': broker_attivi,
+                'depositi_totali': depositi_totali,
+                'cpa_attive': cpa_attive
+            }
+            
+        except Exception as e:
+            st.error(f"❌ Errore calcolo statistiche: {e}")
+            return {
+                'totale_clienti': 0,
+                'broker_attivi': 0,
+                'depositi_totali': 0,
+                'cpa_attive': 0
+            }
+    
+    def render_table(self, df_clienti=None, on_edit=None, on_delete=None):
         """Rende la tabella dei clienti con opzioni di modifica ed eliminazione"""
+        
+        # Se non viene passato df_clienti, lo recupera da Supabase
+        if df_clienti is None:
+            df_clienti = self.get_clienti()
         
         if df_clienti.empty:
             st.info("Nessun cliente presente nel database. Aggiungi il primo cliente!")
@@ -22,7 +123,7 @@ class ClientTable:
             df_display['data_registrazione'] = pd.to_datetime(df_display['data_registrazione']).dt.strftime('%d/%m/%Y')
         
         if 'deposito' in df_display.columns:
-            df_display['deposito'] = df_display['deposito'].apply(lambda x: f"€{x:,.2f}")
+            df_display['deposito'] = df_display['deposito'].apply(lambda x: f"€{x:,.2f}" if pd.notna(x) and x != 0 else "€0.00")
         
         if 'data_creazione' in df_display.columns:
             df_display['data_creazione'] = pd.to_datetime(df_display['data_creazione']).dt.strftime('%d/%m/%Y %H:%M')
@@ -54,6 +155,36 @@ class ClientTable:
         }
         
         df_display = df_display.rename(columns=mapping_colonne)
+        
+        # Gestione conferma eliminazione cliente (come negli incroci)
+        if st.session_state.get('mostra_conferma_eliminazione_cliente', False) and st.session_state.get('cliente_da_eliminare'):
+            cliente_id = st.session_state.cliente_da_eliminare
+            st.warning(f"⚠️ **Attenzione**: Stai per eliminare il cliente ID {cliente_id}")
+            st.info("Questa azione è irreversibile e eliminerà tutti i dati del cliente")
+            
+            col_confirm1, col_confirm2 = st.columns(2)
+            
+            with col_confirm1:
+                if st.button("❌ Conferma Eliminazione", key="confirm_elimina_cliente_finale", type="primary"):
+                    st.info(f"🔄 Eliminazione cliente {cliente_id} in corso...")
+                    
+                    # Chiama la funzione di eliminazione
+                    if on_delete:
+                        on_delete(cliente_id)
+                        
+                        # Reset dello stato
+                        st.session_state.mostra_conferma_eliminazione_cliente = False
+                        st.session_state.cliente_da_eliminare = None
+                        
+                        st.success("✅ **Eliminazione completata!** Clicca '🔄 Aggiorna' per vedere i cambiamenti.")
+                        st.rerun()
+            
+            with col_confirm2:
+                if st.button("🔙 Annulla", key="cancel_elimina_cliente_finale"):
+                    # Reset dello stato
+                    st.session_state.mostra_conferma_eliminazione_cliente = False
+                    st.session_state.cliente_da_eliminare = None
+                    st.rerun()
         
         # Filtri per la tabella
         st.subheader("🔍 Filtri")
@@ -189,12 +320,16 @@ class ClientTable:
                     if st.button("✏️ Modifica", key=f"edit_simple_{cliente_dettagli['id']}", help="Modifica cliente"):
                         if on_edit:
                             on_edit(cliente_dettagli)
+                            st.rerun()  # Forza il refresh immediato
                 
                 with col_btn2:
                     # Chiave unica con timestamp per eliminazione
                     if st.button("🗑️ Elimina", key=f"delete_simple_{cliente_dettagli['id']}", type="secondary", help="Elimina cliente"):
                         if on_delete:
-                            on_delete(cliente_dettagli['id'])
+                            # Invece di chiamare direttamente, impostiamo lo stato come negli incroci
+                            st.session_state.cliente_da_eliminare = cliente_dettagli['id']
+                            st.session_state.mostra_conferma_eliminazione_cliente = True
+                            st.rerun()
                 
                 with col_btn3:
                     # Chiave unica con timestamp per copia
