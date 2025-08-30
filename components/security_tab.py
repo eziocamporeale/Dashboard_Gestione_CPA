@@ -207,26 +207,34 @@ class SecurityTab:
         # Configurazioni generali
         st.write("**🔧 Configurazioni Generali:**")
         
+        # Inizializza session state se non esiste
+        if 'security_notifications' not in st.session_state:
+            st.session_state.security_notifications = True
+        if 'auto_save_reports' not in st.session_state:
+            st.session_state.auto_save_reports = True
+        if 'audit_detail_level' not in st.session_state:
+            st.session_state.audit_detail_level = "Standard"
+        
         # Notifiche
         enable_notifications = st.checkbox(
             "🔔 Abilita notifiche per audit scaduti",
-            value=st.session_state.get('security_notifications', True),
-            key="security_notifications"
+            value=st.session_state.security_notifications,
+            key="security_notifications_checkbox"
         )
         
         # Salvataggio automatico report
         auto_save_reports = st.checkbox(
             "💾 Salva automaticamente i report di sicurezza",
-            value=st.session_state.get('auto_save_reports', True),
-            key="auto_save_reports"
+            value=st.session_state.auto_save_reports,
+            key="auto_save_reports_checkbox"
         )
         
         # Livello di dettaglio audit
         audit_detail_level = st.selectbox(
             "📊 Livello di dettaglio audit:",
             options=["Base", "Standard", "Dettagliato"],
-            index=1,
-            key="audit_detail_level"
+            index=["Base", "Standard", "Dettagliato"].index(st.session_state.audit_detail_level),
+            key="audit_detail_level_select"
         )
         
         # Salva impostazioni
@@ -235,6 +243,7 @@ class SecurityTab:
             st.session_state.auto_save_reports = auto_save_reports
             st.session_state.audit_detail_level = audit_detail_level
             st.success("✅ Impostazioni salvate!")
+            st.rerun()
         
         # Informazioni sistema
         st.markdown("---")
