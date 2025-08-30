@@ -224,8 +224,8 @@ def get_broker_suggestions():
     
     # Lista predefinita se non ci sono broker nel database
     return [
-        "Ultima Markets", "Puprime", "Axi", "AvaTrade", "Plus500",
-        "eToro", "IG", "Saxo Bank", "Interactive Brokers", "TD Ameritrade"
+        "Ultima Markets", "Puprime", "Axi", "AvaTrade", "Global Prime",
+        "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"
     ]
 
 def save_broker_list(broker_list):
