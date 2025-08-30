@@ -75,10 +75,9 @@ class Charts:
         if 'data_registrazione' in df_clienti.columns:
             df_clienti['data_registrazione'] = pd.to_datetime(df_clienti['data_registrazione'])
             
-            # Raggruppa per mese
-            df_clienti['mese'] = df_clienti['data_registrazione'].dt.to_period('M')
+            # Raggruppa per mese (evita warning timezone)
+            df_clienti['mese'] = df_clienti['data_registrazione'].dt.strftime('%Y-%m')
             registrazioni_mensili = df_clienti.groupby('mese').size().reset_index(name='count')
-            registrazioni_mensili['mese'] = registrazioni_mensili['mese'].astype(str)
             
             fig_trend = px.line(
                 x=registrazioni_mensili['mese'],
