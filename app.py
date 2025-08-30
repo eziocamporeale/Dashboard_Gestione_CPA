@@ -128,29 +128,6 @@ def init_components(db):
         st.error(f"Errore inizializzazione componenti: {e}")
         return None
 
-# Inizializzazione
-try:
-    print("🔧 Inizializzazione database...")
-    db = init_database()
-    print("✅ Database inizializzato correttamente")
-    
-    print("🔧 Inizializzazione componenti...")
-    components = init_components(db)
-    if components is None:
-        st.error("❌ Impossibile inizializzare i componenti. Controlla i log per dettagli.")
-        st.stop()
-    print("✅ Componenti inizializzati correttamente")
-    
-    # Crea le tabelle del database UNA SOLA VOLTA
-    print("🔧 Creazione tabelle database...")
-    create_database_tables()
-    print("✅ Tabelle database create/verificate")
-    
-except Exception as e:
-    print(f"❌ Errore inizializzazione: {e}")
-    st.error(f"Errore inizializzazione: {e}")
-    st.stop()
-
 # Creazione automatica tabelle se non esistono
 def create_database_tables():
     """Crea le tabelle del database se non esistono"""
@@ -204,6 +181,31 @@ def create_database_tables():
     except Exception as e:
         logging.error(f"❌ Errore creazione tabelle: {e}")
         return False
+
+# Inizializzazione
+try:
+    print("🔧 Inizializzazione database...")
+    db = init_database()
+    print("✅ Database inizializzato correttamente")
+    
+    print("🔧 Inizializzazione componenti...")
+    components = init_components(db)
+    if components is None:
+        st.error("❌ Impossibile inizializzare i componenti. Controlla i log per dettagli.")
+        st.stop()
+    print("✅ Componenti inizializzati correttamente")
+    
+    # Crea le tabelle del database UNA SOLA VOLTA
+    print("🔧 Creazione tabelle database...")
+    create_database_tables()
+    print("✅ Tabelle database create/verificate")
+    
+except Exception as e:
+    print(f"❌ Errore inizializzazione: {e}")
+    st.error(f"Errore inizializzazione: {e}")
+    st.stop()
+
+
 
 # NON chiamare create_database_tables() qui - causa loop infinito!
 # create_database_tables()
@@ -345,7 +347,7 @@ def manage_brokers():
                 st.error("Errore nel salvataggio!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:23 - ORDINE FUNZIONI CORRETTO
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:24 - FUNZIONE create_database_tables SPOSTATA PRIMA DELL'INIZIALIZZAZIONE
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
