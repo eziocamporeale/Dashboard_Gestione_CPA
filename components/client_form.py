@@ -36,7 +36,7 @@ class ClientForm:
                 )
                 
                 # Campo broker con menu a tendina e possibilità di aggiungerne di nuovi
-                broker_options = ["FXPro", "Pepperstone", "IC Markets", "XM", "FBS", "Exness", "RoboForex", "Vantage", "AvaTrade", "Plus500", "eToro", "IG", "Saxo Bank", "Interactive Brokers", "OANDA", "Dukascopy", "Swissquote", "DEGIRO", "Binance", "Coinbase", "Altro"]
+                broker_options = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"]
                 
                 # Se è una modifica e il broker non è nella lista, aggiungilo
                 if dati_cliente and dati_cliente.get('broker') and dati_cliente.get('broker') not in broker_options:
@@ -45,7 +45,7 @@ class ClientForm:
                 broker_selection = st.selectbox(
                     "Broker *", 
                     options=broker_options,
-                    index=broker_options.index(dati_cliente.get('broker', 'FXPro')) if dati_cliente and dati_cliente.get('broker') in broker_options else 0,
+                    index=broker_options.index(dati_cliente.get('broker', 'Ultima Markets')) if dati_cliente and dati_cliente.get('broker') in broker_options else 0,
                     help="Seleziona il broker o scegli 'Altro' per inserirne uno nuovo"
                 )
                 
