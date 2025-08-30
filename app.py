@@ -799,11 +799,11 @@ elif selected == "⚙️ Impostazioni":
                 with col_stats3:
                     st.metric("🌐 Status", "Online")
                 
-                # Informazioni connessione
+                # Informazioni connessione (SICURE)
                 st.markdown("---")
-                st.subheader("🔗 Informazioni Connessione")
-                st.write(f"**🌐 URL:** `{supabase_manager.supabase_url}`")
-                st.write(f"**🔑 API Key:** `{supabase_manager.supabase_key[:20]}...`")
+                st.subheader("🔗 Stato Connessione")
+                st.write(f"**🌐 Status:** Connesso a Supabase")
+                st.write(f"**🔒 Sicurezza:** Configurazione protetta")
                 st.write(f"**📅 Ultimo aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
                 
             else:
