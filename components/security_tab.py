@@ -28,7 +28,10 @@ class SecurityTab:
     def __init__(self):
         self.auditor = None
         self.last_audit = None
-        self.audit_schedule_days = 7  # Default: audit ogni 7 giorni
+        
+        # Inizializza session state se non esiste
+        if 'audit_schedule_days' not in st.session_state:
+            st.session_state.audit_schedule_days = 7  # Default: audit ogni 7 giorni
         
         # Inizializza auditor se disponibile
         if SECURITY_AUDITOR_AVAILABLE:
@@ -112,7 +115,7 @@ class SecurityTab:
                 options=[1, 3, 7, 14, 30],
                 index=2,  # Default: 7 giorni
                 format_func=lambda x: f"Ogni {x} {'giorno' if x == 1 else 'giorni'}",
-                key="audit_schedule_days"
+                key="audit_schedule_select"
             )
         
         with col_sched2:
@@ -120,6 +123,7 @@ class SecurityTab:
                 self.audit_schedule_days = new_schedule
                 st.session_state.audit_schedule_days = new_schedule
                 st.success(f"✅ Audit programmati ogni {new_schedule} {'giorno' if new_schedule == 1 else 'giorni'}")
+                st.rerun()
         
         # Stato audit automatici
         st.markdown("---")
@@ -128,7 +132,7 @@ class SecurityTab:
         if 'last_audit_date' in st.session_state:
             last_audit = st.session_state.last_audit_date
             days_since = (datetime.now() - last_audit).days
-            next_audit = last_audit + timedelta(days=self.audit_schedule_days)
+            next_audit = last_audit + timedelta(days=st.session_state.audit_schedule_days)
             
             col_status1, col_status2, col_status3 = st.columns(3)
             
@@ -258,7 +262,7 @@ class SecurityTab:
         last_audit = st.session_state.last_audit_date
         days_since = (datetime.now() - last_audit).days
         
-        if days_since >= self.audit_schedule_days:
+        if days_since >= st.session_state.audit_schedule_days:
             st.warning(f"⚠️ **AUDIT AUTOMATICO SCADUTO!** Ultimo audit: {days_since} giorni fa")
             
             if st.button("🔍 Esegui Audit Automatico", type="secondary"):
