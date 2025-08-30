@@ -28,11 +28,19 @@ venv.bak/
 ENV/
 env/
 
-# Database files (con dati sensibili)
+# Database files (con dati sensibili) - CRITICO!
 *.db
 *.sqlite
 *.sqlite3
 cpa_database.db
+cpa_database_backup_*.db
+
+# Cartelle con database e backup - CRITICO!
+backups/
+database_sync/
+data/
+CPA_Backups_Sicuri/
+secure_backups/
 
 # Script SQL di inizializzazione (NON sensibili)
 !database/*.sql
