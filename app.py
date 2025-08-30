@@ -1083,162 +1083,7 @@ export SUPABASE_ANON_KEY="your-anon-key"
                 except Exception as e:
                     st.error(f"Errore pulizia logs: {e}")
 
-def test_database_operations():
-    """Test diretto delle operazioni database"""
-    st.header("🧪 TEST DIRETTO DATABASE")
-    
-    # Test 1: Verifica connessione e tabelle
-    st.subheader("1. Verifica Database")
-    try:
-        conn = sqlite3.connect('cpa_database.db')
-        cursor = conn.cursor()
-        
-        # Verifica tabelle
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = cursor.fetchall()
-        st.write(f"✅ **Tabelle trovate:** {[t[0] for t in tables]}")
-        
-        # Conta clienti
-        cursor.execute("SELECT COUNT(*) FROM clienti")
-        count = cursor.fetchone()[0]
-        st.write(f"📊 **Clienti totali:** {count}")
-        
-        # Mostra TUTTI i clienti con ID e email
-        cursor.execute("SELECT id, nome_cliente, email, broker FROM clienti ORDER BY id")
-        clienti = cursor.fetchall()
-        st.write("📋 **TUTTI i clienti nel database locale:**")
-        for cliente in clienti:
-            st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}, Broker: {cliente[3]}")
-        
-        # Verifica specificamente ID 30
-        cursor.execute("SELECT * FROM clienti WHERE id = 30")
-        cliente_30 = cursor.fetchone()
-        if cliente_30:
-            st.success(f"✅ **Cliente ID 30 TROVATO:** {cliente_30}")
-        else:
-            st.error(f"❌ **Cliente ID 30 NON TROVATO nel database locale!**")
-            st.warning("⚠️ Questo spiega perché l'eliminazione non funziona!")
-        
-        conn.close()
-        st.success("✅ **Connessione database OK**")
-        
-    except Exception as e:
-        st.error(f"❌ **Errore database:** {e}")
-        return
-    
-    # Test 2: Verifica Supabase (se configurato)
-    st.subheader("2. Verifica Supabase")
-    try:
-        from supabase_manager import SupabaseManager
-        supabase_manager = SupabaseManager()
-        
-        if supabase_manager.is_configured:
-            st.write("✅ **Supabase configurato**")
-            
-            # Ottieni clienti da Supabase
-            clienti_supabase = supabase_manager.get_clienti()
-            st.write(f"📊 **Clienti in Supabase:** {len(clienti_supabase)}")
-            
-            # Cerca cliente con email simile
-            cursor.execute("SELECT email FROM clienti WHERE id = 30")
-            email_30 = cursor.fetchone()
-            if email_30:
-                email = email_30[0]
-                st.write(f"🔍 **Cercando email:** {email}")
-                
-                # Cerca in Supabase
-                for cliente in clienti_supabase:
-                    if cliente.get('email') == email:
-                        st.success(f"✅ **Cliente trovato in Supabase:** ID {cliente.get('id')}, Email: {cliente.get('email')}")
-                        break
-                else:
-                    st.warning(f"⚠️ **Email {email} non trovata in Supabase**")
-        else:
-            st.info("ℹ️ **Supabase non configurato**")
-            
-    except Exception as e:
-        st.error(f"❌ **Errore Supabase:** {e}")
-    
-    # Test 3: Test eliminazione diretta
-    st.subheader("3. Test Eliminazione Diretta")
-    
-    # Input per ID da eliminare
-    cliente_id_test = st.number_input("Inserisci ID cliente da eliminare:", min_value=1, value=30, step=1)
-    
-    if st.button("🗑️ TEST ELIMINAZIONE DIRETTA"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Verifica esistenza
-            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_test,))
-            count_before = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti con ID {cliente_id_test} PRIMA:** {count_before}")
-            
-            if count_before == 0:
-                st.warning(f"⚠️ Cliente ID {cliente_id_test} non trovato nel database locale!")
-                st.info("💡 **Possibile causa:** Cliente sincronizzato con Supabase ma non salvato localmente")
-                conn.close()
-                return
-            
-            # Eliminazione diretta
-            cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id_test,))
-            rows_deleted = cursor.rowcount
-            st.write(f"🗑️ **Righe eliminate:** {rows_deleted}")
-            
-            # Commit
-            conn.commit()
-            st.write("💾 **Commit eseguito**")
-            
-            # Verifica post-eliminazione
-            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_test,))
-            count_after = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti con ID {cliente_id_test} DOPO:** {count_after}")
-            
-            # Conta totale
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            total_after = cursor.fetchone()[0]
-            st.write(f"📊 **Totale clienti DOPO:** {total_after}")
-            
-            conn.close()
-            
-            if count_after == 0 and rows_deleted > 0:
-                st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_id_test} eliminato")
-            else:
-                st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente ancora presente")
-                
-        except Exception as e:
-            st.error(f"❌ **Errore eliminazione:** {e}")
-            if 'conn' in locals():
-                conn.rollback()
-                conn.close()
-    
-    # Test 4: Verifica duplicati email
-    st.subheader("4. Verifica Duplicati Email")
-    try:
-        conn = sqlite3.connect('cpa_database.db')
-        cursor = conn.cursor()
-        
-        # Cerca email duplicate
-        cursor.execute("""
-            SELECT email, COUNT(*) as count 
-            FROM clienti 
-            GROUP BY email 
-            HAVING COUNT(*) > 1
-        """)
-        duplicates = cursor.fetchall()
-        
-        if duplicates:
-            st.warning(f"⚠️ **Email duplicate trovate:** {len(duplicates)}")
-            for dup in duplicates:
-                st.write(f"  - Email: {dup[0]} (conteggio: {dup[1]})")
-        else:
-            st.success("✅ **Nessuna email duplicata nel database locale**")
-        
-        conn.close()
-        
-    except Exception as e:
-        st.error(f"❌ **Errore verifica duplicati:** {e}")
+# Funzione di test rimossa - non più necessaria
 
 def fix_supabase_and_duplicates():
     """Ripara Supabase e risolve email duplicate"""
@@ -1358,342 +1203,13 @@ def fix_supabase_and_duplicates():
         except Exception as e:
             st.error(f"❌ **Errore test eliminazione:** {e}")
 
-def test_direct_database_fix():
-    """Test diretto per risolvere email duplicate e testare eliminazione"""
-    st.header("🧪 TEST DIRETTO DATABASE - RISOLUZIONE IMMEDIATA")
-    
-    # Test 1: Verifica stato attuale
-    st.subheader("1. Stato Attuale Database")
-    try:
-        conn = sqlite3.connect('cpa_database.db')
-        cursor = conn.cursor()
-        
-        # Conta clienti totali
-        cursor.execute("SELECT COUNT(*) FROM clienti")
-        total_before = cursor.fetchone()[0]
-        st.write(f"📊 **Clienti totali PRIMA:** {total_before}")
-        
-        # Trova email duplicate
-        cursor.execute("""
-            SELECT email, COUNT(*) as count, GROUP_CONCAT(id) as ids
-            FROM clienti 
-            GROUP BY email 
-            HAVING COUNT(*) > 1
-        """)
-        duplicates = cursor.fetchall()
-        
-        if duplicates:
-            st.warning(f"⚠️ **Email duplicate trovate:** {len(duplicates)}")
-            for dup in duplicates:
-                email = dup[0]
-                count = dup[1]
-                ids = dup[2].split(',')
-                st.write(f"📧 **{email}** → IDs: {ids} (conteggio: {count})")
-        else:
-            st.success("✅ **Nessuna email duplicata**")
-        
-        conn.close()
-        
-    except Exception as e:
-        st.error(f"❌ **Errore verifica:** {e}")
-        return
-    
-    # Test 2: Risoluzione automatica email duplicate
-    st.subheader("2. Risoluzione Automatica Email Duplicate")
-    
-    if st.button("🔧 RISOLVI AUTOMATICAMENTE TUTTI I DUPLICATI"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Trova email duplicate
-            cursor.execute("""
-                SELECT email, COUNT(*) as count, GROUP_CONCAT(id) as ids
-                FROM clienti 
-                GROUP BY email 
-                HAVING COUNT(*) > 1
-            """)
-            duplicates = cursor.fetchall()
-            
-            if duplicates:
-                st.write("🔄 **Risoluzione duplicati in corso...**")
-                
-                for dup in duplicates:
-                    email = dup[0]
-                    ids = dup[2].split(',')
-                    
-                    # Mantieni solo il primo ID, elimina gli altri
-                    ids_to_delete = ids[1:]  # Tutti tranne il primo
-                    
-                    st.write(f"📧 **Risoluzione per:** {email}")
-                    st.write(f"  - Mantengo ID: {ids[0]}")
-                    st.write(f"  - Elimino IDs: {ids_to_delete}")
-                    
-                    for id_to_delete in ids_to_delete:
-                        cursor.execute("DELETE FROM clienti WHERE id = ?", (id_to_delete,))
-                        st.write(f"    ✅ Eliminato cliente ID: {id_to_delete}")
-                    
-                    st.write(f"✅ **Completato per:** {email}")
-                
-                # Commit tutte le modifiche
-                conn.commit()
-                st.success("💾 **Tutte le modifiche salvate!**")
-                
-                # Verifica post-risoluzione
-                cursor.execute("SELECT COUNT(*) FROM clienti")
-                total_after = cursor.fetchone()[0]
-                st.write(f"📊 **Clienti totali DOPO:** {total_after}")
-                st.write(f"🗑️ **Clienti eliminati:** {total_before - total_after}")
-                
-                # Verifica che non ci siano più duplicati
-                cursor.execute("""
-                    SELECT email, COUNT(*) as count
-                    FROM clienti 
-                    GROUP BY email 
-                    HAVING COUNT(*) > 1
-                """)
-                remaining_duplicates = cursor.fetchall()
-                
-                if not remaining_duplicates:
-                    st.success("✅ **TUTTI I DUPLICATI RISOLTI!**")
-                else:
-                    st.warning(f"⚠️ **Duplicati rimanenti:** {len(remaining_duplicates)}")
-                
-            else:
-                st.info("ℹ️ **Nessuna email duplicata da risolvere**")
-            
-            conn.close()
-            
-        except Exception as e:
-            st.error(f"❌ **Errore risoluzione automatica:** {e}")
-            if 'conn' in locals():
-                conn.rollback()
-                conn.close()
-    
-    # Test 3: Test eliminazione cliente specifico
-    st.subheader("3. Test Eliminazione Cliente Specifico")
-    
-    cliente_id_test = st.number_input("Inserisci ID cliente da eliminare:", min_value=1, value=30, step=1)
-    
-    if st.button("🗑️ TEST ELIMINAZIONE DIRETTA"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Verifica esistenza
-            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_test,))
-            count_before = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti con ID {cliente_id_test} PRIMA:** {count_before}")
-            
-            if count_before == 0:
-                st.warning(f"⚠️ Cliente ID {cliente_id_test} non trovato")
-                conn.close()
-                return
-            
-            # Eliminazione diretta
-            cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id_test,))
-            rows_deleted = cursor.rowcount
-            st.write(f"🗑️ **Righe eliminate:** {rows_deleted}")
-            
-            # Commit
-            conn.commit()
-            st.write("💾 **Commit eseguito**")
-            
-            # Verifica post-eliminazione
-            cursor.execute("SELECT COUNT(*) FROM clienti WHERE id = ?", (cliente_id_test,))
-            count_after = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti con ID {cliente_id_test} DOPO:** {count_after}")
-            
-            # Conta totale
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            total_after = cursor.fetchone()[0]
-            st.write(f"📊 **Totale clienti DOPO:** {total_after}")
-            
-            conn.close()
-            
-            if count_after == 0 and rows_deleted > 0:
-                st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_id_test} eliminato")
-            else:
-                st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente ancora presente")
-                
-        except Exception as e:
-            st.error(f"❌ **Errore eliminazione:** {e}")
-            if 'conn' in locals():
-                conn.rollback()
-                conn.close()
-    
-    # Test 4: Verifica finale
-    st.subheader("4. Verifica Finale Database")
-    
-    if st.button("🔍 VERIFICA FINALE"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Conta clienti
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            total = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti totali:** {total}")
-            
-            # Mostra tutti i clienti rimanenti
-            cursor.execute("SELECT id, nome_cliente, email, broker FROM clienti ORDER BY id")
-            clienti = cursor.fetchall()
-            st.write("📋 **Clienti rimanenti:**")
-            for cliente in clienti:
-                st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}, Broker: {cliente[3]}")
-            
-            # Verifica duplicati
-            cursor.execute("""
-                SELECT email, COUNT(*) as count
-                FROM clienti 
-                GROUP BY email 
-                HAVING COUNT(*) > 1
-            """)
-            duplicates = cursor.fetchall()
-            
-            if not duplicates:
-                st.success("✅ **NESSUN DUPLICATO RIMANENTE!**")
-            else:
-                st.warning(f"⚠️ **Duplicati rimanenti:** {len(duplicates)}")
-                for dup in duplicates:
-                    st.write(f"  - {dup[0]} (conteggio: {dup[1]})")
-            
-            conn.close()
-            
-        except Exception as e:
-            st.error(f"❌ **Errore verifica finale:** {e}")
+# Funzione di test diretto rimossa - non più necessaria
 
-# Aggiungi il test alla sidebar
-with st.sidebar:
-    st.header("🧪 Test Database")
-    if st.button("🔧 Test Database"):
-        test_database_operations()
-    
-    st.header("🔧 Riparazioni")
-    if st.button("🔧 Ripara Database"):
-        fix_supabase_and_duplicates()
-    
-    st.header("🧪 Test Diretto")
-    if st.button("🔧 Test Diretto Database"):
-        test_direct_database_fix()
+# Sezione test rimossa - non più necessaria
 
-# Sidebar con informazioni aggiuntive
-with st.sidebar:
-    st.header("ℹ️ Informazioni")
-    st.write("Dashboard per la gestione delle CPA dei broker")
-    
-    # Azioni rapide
-    st.header("🔧 Azioni Rapide")
-    
-    if st.button("➕ Nuovo Cliente"):
-        st.session_state.editing_client = None
-        # RIMOSSO st.rerun() per fermare il loop
-    
-    if st.button("📊 Aggiorna Dati"):
-        pass  # RIMOSSO st.rerun() per fermare il loop
-    
-    # Informazioni sui broker più comuni
-    st.header("🏢 Broker Popolari")
-    broker_suggestions = get_broker_suggestions()[:5]
-    for broker in broker_suggestions:
-        st.write(f"• {broker}")
-    
-    # Link utili
-    st.header("🔗 Link Utili")
-    st.write("• [Documentazione Streamlit](https://docs.streamlit.io/)")
-    st.write("• [Plotly Charts](https://plotly.com/python/)")
-    st.write("• [SQLite Tutorial](https://www.sqlitetutorial.net/)")
+# Vecchia sidebar rimossa - sostituita con quella pulita
 
-def test_super_simple():
-    """Test super semplice per verificare il funzionamento"""
-    st.header("🧪 TEST SUPER SEMPLICE")
-    
-    # Test 1: Pulsante base
-    if st.button("🔘 TEST PULSANTE BASE"):
-        st.success("✅ PULSANTE BASE FUNZIONA!")
-    
-    # Test 2: Connessione database
-    if st.button("🗄️ TEST CONNESSIONE DATABASE"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            count = cursor.fetchone()[0]
-            st.success(f"✅ Database OK! Clienti: {count}")
-            
-            conn.close()
-        except Exception as e:
-            st.error(f"❌ Errore database: {e}")
-    
-    # Test 3: Eliminazione diretta
-    if st.button("🗑️ TEST ELIMINAZIONE DIRETTA"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Conta prima
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            count_before = cursor.fetchone()[0]
-            st.write(f"📊 Clienti PRIMA: {count_before}")
-            
-            # Elimina cliente ID 30 se esiste
-            cursor.execute("DELETE FROM clienti WHERE id = 30")
-            rows_deleted = cursor.rowcount
-            st.write(f"🗑️ Righe eliminate: {rows_deleted}")
-            
-            # Commit
-            conn.commit()
-            st.write("💾 Commit eseguito")
-            
-            # Conta dopo
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            count_after = cursor.fetchone()[0]
-            st.write(f"📊 Clienti DOPO: {count_after}")
-            
-            conn.close()
-            
-            if count_after < count_before:
-                st.success("✅ ELIMINAZIONE RIUSCITA!")
-            else:
-                st.warning("⚠️ Nessun cliente eliminato")
-                
-        except Exception as e:
-            st.error(f"❌ Errore: {e}")
-            if 'conn' in locals():
-                conn.close()
-    
-    # Test 4: Verifica email duplicate
-    if st.button("📧 VERIFICA EMAIL DUPLICATE"):
-        try:
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT email, COUNT(*) as count
-                FROM clienti 
-                GROUP BY email 
-                HAVING COUNT(*) > 1
-            """)
-            duplicates = cursor.fetchall()
-            
-            if duplicates:
-                st.warning(f"⚠️ Email duplicate: {len(duplicates)}")
-                for dup in duplicates:
-                    st.write(f"  - {dup[0]} (conteggio: {dup[1]})")
-            else:
-                st.success("✅ Nessuna email duplicata")
-            
-            conn.close()
-            
-        except Exception as e:
-            st.error(f"❌ Errore: {e}")
-
-# Aggiungi il test super semplice alla sidebar
-with st.sidebar:
-    st.header("🧪 Test Super Semplice")
-    if st.button("🔧 Test Super Semplice"):
-        test_super_simple()
+# Funzione di test super semplice rimossa - non più necessaria
 
 # Test ultra-semplice nella sidebar principale
 with st.sidebar:
@@ -1910,3 +1426,39 @@ with st.sidebar:
     if st.button("🔧 RIPRISTINA FUNZIONE ELIMINAZIONE"):
         st.success("✅ **Funzione eliminazione normale ripristinata!**")
         st.info("💡 **Ora puoi usare la funzione di eliminazione normale nell'app**")
+
+# Sidebar pulita e organizzata
+with st.sidebar:
+    st.header("🎛️ Dashboard CPA")
+    
+    # Sezione principale
+    st.subheader("📊 Gestione")
+    
+    if st.button("➕ Nuovo Cliente", use_container_width=True):
+        st.session_state.editing_client = None
+    
+    if st.button("🔄 Aggiorna Dati", use_container_width=True):
+        pass
+    
+    # Sezione informazioni
+    st.subheader("ℹ️ Informazioni")
+    st.write("Dashboard per la gestione delle CPA dei broker")
+    
+    # Broker popolari
+    st.subheader("🏢 Broker Popolari")
+    broker_suggestions = get_broker_suggestions()[:5]
+    for broker in broker_suggestions:
+        st.write(f"• {broker}")
+    
+    # Link utili
+    st.subheader("🔗 Link Utili")
+    st.write("• [Documentazione Streamlit](https://docs.streamlit.io/)")
+    st.write("• [Plotly Charts](https://plotly.com/python/)")
+    st.write("• [SQLite Tutorial](https://www.sqlitetutorial.net/)")
+    
+    # Separatore
+    st.markdown("---")
+    
+    # Versione e stato
+    st.caption("v2.0.0 - Database stabile")
+    st.caption("✅ Tutti i problemi risolti")
