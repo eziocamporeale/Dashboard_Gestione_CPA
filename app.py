@@ -6,18 +6,18 @@ import plotly.express as px
 from streamlit_option_menu import option_menu
 import logging
 
-# Configurazione logging per Streamlit Cloud
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
+# 🔄 FORZA REDEPLOY STREAMLIT CLOUD - VERSIONE STABILE VPS 1.0.0
+# Questo commento forza Streamlit Cloud a usare la versione corretta del codice
 
-# Import standard Python
+# Aggiungi il percorso della directory corrente al path di Python
 import tempfile
 import shutil
 import os
 import sys
+
+# Aggiungi il percorso della directory corrente al path di Python
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
 try:
