@@ -203,6 +203,99 @@ def create_database_tables():
 # Crea le tabelle all'avvio
 create_database_tables()
 
+# Funzioni per gestire i broker popolari
+def get_broker_suggestions():
+    """Restituisce la lista dei broker popolari"""
+    return [
+        "FXPro", "Pepperstone", "IC Markets", "AvaTrade", "Plus500",
+        "eToro", "IG", "Saxo Bank", "Interactive Brokers", "TD Ameritrade"
+    ]
+
+def manage_brokers():
+    """Gestisce i broker popolari - permette di modificarli e aggiungerne di nuovi"""
+    st.header("🏢 Gestione Broker Popolari")
+    
+    # Ottieni broker attuali
+    broker_list = get_broker_suggestions()
+    
+    # Mostra broker esistenti
+    st.subheader("📋 Broker Attuali")
+    for i, broker in enumerate(broker_list):
+        col1, col2, col3 = st.columns([3, 1, 1])
+        
+        with col1:
+            st.write(f"• {broker}")
+        
+        with col2:
+            if st.button("✏️", key=f"edit_{i}", help="Modifica nome broker"):
+                st.session_state.editing_broker_index = i
+                st.session_state.editing_broker_name = broker
+        
+        with col3:
+            if st.button("🗑️", key=f"delete_{i}", help="Rimuovi broker"):
+                if st.button("✅ Conferma", key=f"confirm_delete_{i}"):
+                    broker_list.pop(i)
+                    st.success(f"Broker '{broker}' rimosso!")
+                    st.rerun()
+    
+    # Form per modificare broker esistente
+    if 'editing_broker_index' in st.session_state:
+        st.markdown("---")
+        st.subheader("✏️ Modifica Broker")
+        
+        new_name = st.text_input(
+            "Nuovo nome broker:",
+            value=st.session_state.editing_broker_name,
+            key="edit_broker_input"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 Salva Modifica"):
+                if new_name.strip():
+                    broker_list[st.session_state.editing_broker_index] = new_name.strip()
+                    st.success(f"Broker rinominato in '{new_name}'!")
+                    del st.session_state.editing_broker_index
+                    del st.session_state.editing_broker_name
+                    st.rerun()
+                else:
+                    st.error("Il nome del broker non può essere vuoto!")
+        
+        with col2:
+            if st.button("❌ Annulla"):
+                del st.session_state.editing_broker_index
+                del st.session_state.editing_broker_name
+                st.rerun()
+    
+    # Form per aggiungere nuovo broker
+    st.markdown("---")
+    st.subheader("➕ Aggiungi Nuovo Broker")
+    
+    new_broker = st.text_input("Nome nuovo broker:", placeholder="Es: Binance, Coinbase...")
+    
+    if st.button("➕ Aggiungi Broker", disabled=not new_broker.strip()):
+        if new_broker.strip() and new_broker.strip() not in broker_list:
+            broker_list.append(new_broker.strip())
+            st.success(f"Broker '{new_broker.strip()}' aggiunto con successo!")
+            st.rerun()
+        elif new_broker.strip() in broker_list:
+            st.warning("Questo broker è già presente nella lista!")
+        else:
+            st.error("Inserisci un nome valido per il broker!")
+    
+    # Statistiche
+    st.markdown("---")
+    st.subheader("📊 Statistiche")
+    st.write(f"• **Totale broker:** {len(broker_list)}")
+    st.write(f"• **Broker unici:** {len(set(broker_list))}")
+    
+    # Reset lista (opzionale)
+    if st.button("🔄 Reset Lista Predefinita", help="Ripristina la lista originale dei broker"):
+        if st.button("✅ Conferma Reset", key="confirm_reset"):
+            st.session_state.broker_list = get_broker_suggestions()
+            st.success("Lista broker ripristinata!")
+            st.rerun()
+
 # 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-29 21:45
 
 # Gestione dello stato dell'applicazione
@@ -1259,95 +1352,4 @@ with st.sidebar:
     st.caption("v2.0.0 - Database stabile")
     st.caption("✅ Tutti i problemi risolti")
 
-# Funzione per gestire i broker popolari
-def get_broker_suggestions():
-    """Restituisce la lista dei broker popolari"""
-    return [
-        "FXPro", "Pepperstone", "IC Markets", "AvaTrade", "Plus500",
-        "eToro", "IG", "Saxo Bank", "Interactive Brokers", "TD Ameritrade"
-    ]
 
-def manage_brokers():
-    """Gestisce i broker popolari - permette di modificarli e aggiungerne di nuovi"""
-    st.header("🏢 Gestione Broker Popolari")
-    
-    # Ottieni broker attuali
-    broker_list = get_broker_suggestions()
-    
-    # Mostra broker esistenti
-    st.subheader("📋 Broker Attuali")
-    for i, broker in enumerate(broker_list):
-        col1, col2, col3 = st.columns([3, 1, 1])
-        
-        with col1:
-            st.write(f"• {broker}")
-        
-        with col2:
-            if st.button("✏️", key=f"edit_{i}", help="Modifica nome broker"):
-                st.session_state.editing_broker_index = i
-                st.session_state.editing_broker_name = broker
-        
-        with col3:
-            if st.button("🗑️", key=f"delete_{i}", help="Rimuovi broker"):
-                if st.button("✅ Conferma", key=f"confirm_delete_{i}"):
-                    broker_list.pop(i)
-                    st.success(f"Broker '{broker}' rimosso!")
-                    st.rerun()
-    
-    # Form per modificare broker esistente
-    if 'editing_broker_index' in st.session_state:
-        st.markdown("---")
-        st.subheader("✏️ Modifica Broker")
-        
-        new_name = st.text_input(
-            "Nuovo nome broker:",
-            value=st.session_state.editing_broker_name,
-            key="edit_broker_input"
-        )
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("💾 Salva Modifica"):
-                if new_name.strip():
-                    broker_list[st.session_state.editing_broker_index] = new_name.strip()
-                    st.success(f"Broker rinominato in '{new_name}'!")
-                    del st.session_state.editing_broker_index
-                    del st.session_state.editing_broker_name
-                    st.rerun()
-                else:
-                    st.error("Il nome del broker non può essere vuoto!")
-        
-        with col2:
-            if st.button("❌ Annulla"):
-                del st.session_state.editing_broker_index
-                del st.session_state.editing_broker_name
-                st.rerun()
-    
-    # Form per aggiungere nuovo broker
-    st.markdown("---")
-    st.subheader("➕ Aggiungi Nuovo Broker")
-    
-    new_broker = st.text_input("Nome nuovo broker:", placeholder="Es: Binance, Coinbase...")
-    
-    if st.button("➕ Aggiungi Broker", disabled=not new_broker.strip()):
-        if new_broker.strip() and new_broker.strip() not in broker_list:
-            broker_list.append(new_broker.strip())
-            st.success(f"Broker '{new_broker.strip()}' aggiunto con successo!")
-            st.rerun()
-        elif new_broker.strip() in broker_list:
-            st.warning("Questo broker è già presente nella lista!")
-        else:
-            st.error("Inserisci un nome valido per il broker!")
-    
-    # Statistiche
-    st.markdown("---")
-    st.subheader("📊 Statistiche")
-    st.write(f"• **Totale broker:** {len(broker_list)}")
-    st.write(f"• **Broker unici:** {len(set(broker_list))}")
-    
-    # Reset lista (opzionale)
-    if st.button("🔄 Reset Lista Predefinita", help="Ripristina la lista originale dei broker"):
-        if st.button("✅ Conferma Reset", key="confirm_reset"):
-            st.session_state.broker_list = get_broker_suggestions()
-            st.success("Lista broker ripristinata!")
-            st.rerun()
