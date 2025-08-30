@@ -131,11 +131,11 @@ def init_components():
 # Inizializzazione
 try:
     print("🔧 Inizializzazione database...")
-db = init_database()
+    db = init_database()
     print("✅ Database inizializzato correttamente")
     
     print("🔧 Inizializzazione componenti...")
-components = init_components()
+    components = init_components()
     if components is None:
         st.error("❌ Impossibile inizializzare i componenti. Controlla i log per dettagli.")
         st.stop()
@@ -395,7 +395,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                 
                 if supabase_success:
                     st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE e SUPABASE!")
-    else:
+                else:
                     st.warning(f"⚠️ Cliente salvato in LOCALE ma errore SUPABASE: {supabase_message}")
             else:
                 st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE (Supabase non configurato)")
@@ -412,7 +412,7 @@ def handle_edit_client(cliente_data):
     if hasattr(cliente_data, 'to_dict'):
         st.session_state.editing_client = cliente_data.to_dict()
     else:
-    st.session_state.editing_client = cliente_data
+        st.session_state.editing_client = cliente_data
     # RIMOSSO st.rerun() per fermare il loop
 
 def handle_delete_client(cliente_id):
@@ -444,7 +444,7 @@ def handle_delete_client(cliente_id):
             
             success = db.elimina_cliente(cliente_id_int)
             
-        if success:
+            if success:
                 st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_id_int} eliminato")
                 
                 # Verifica post-eliminazione
@@ -452,7 +452,7 @@ def handle_delete_client(cliente_id):
                 st.write(f"📊 **Clienti nel database DOPO:** {len(clienti_dopo)}")
                 
                 # RIMOSSO st.rerun() per fermare il loop
-        else:
+            else:
                 st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente {cliente_id_int} non eliminato")
                 
         except Exception as e:
@@ -583,10 +583,10 @@ elif selected == "👥 Gestione Clienti":
     else:
         # Form per aggiungere nuovo cliente (collassato di default)
         with st.expander("➕ Aggiungi Nuovo Cliente", expanded=False):
-        success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
-        
-        if success:
-            handle_save_client(dati_cliente, campi_aggiuntivi)
+            success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
+            
+            if success:
+                handle_save_client(dati_cliente, campi_aggiuntivi)
         
         # Tabella dei clienti esistenti (sempre visibile)
         if not df_clienti.empty:
