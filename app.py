@@ -29,21 +29,21 @@ except Exception as e:
     st.error(f"Errore import Charts: {e}")
 
 try:
-    from components.client_form import ClientForm
+from components.client_form import ClientForm
     print("✅ ClientForm importato correttamente")
 except Exception as e:
     print(f"❌ Errore import ClientForm: {e}")
     st.error(f"Errore import ClientForm: {e}")
 
 try:
-    from components.client_table import ClientTable
+from components.client_table import ClientTable
     print("✅ ClientTable importato correttamente")
 except Exception as e:
     print(f"❌ Errore import ClientTable: {e}")
     st.error(f"Errore import ClientTable: {e}")
 
 try:
-    from components.incroci_tab import IncrociTab
+from components.incroci_tab import IncrociTab
     print("✅ IncrociTab importato correttamente")
 except Exception as e:
     print(f"❌ Errore import IncrociTab: {e}")
@@ -64,7 +64,7 @@ except Exception as e:
     st.error(f"Errore import IncrociManager: {e}")
 
 try:
-    from utils.helpers import *
+from utils.helpers import *
     print("✅ utils.helpers importato correttamente")
 except Exception as e:
     print(f"❌ Errore import utils.helpers: {e}")
@@ -114,11 +114,11 @@ def init_components():
             raise Exception("Uno o più componenti non sono disponibili")
         
         components_dict = {
-            'client_form': ClientForm(),
-            'client_table': ClientTable(),
-            'charts': Charts(),
-            'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
-        }
+        'client_form': ClientForm(),
+        'client_table': ClientTable(),
+        'charts': Charts(),
+        'incroci_tab': IncrociTab(IncrociManager(db.db_path), db)
+    }
         
         print("✅ Componenti inizializzati correttamente")
         return components_dict
@@ -131,11 +131,11 @@ def init_components():
 # Inizializzazione
 try:
     print("🔧 Inizializzazione database...")
-    db = init_database()
+db = init_database()
     print("✅ Database inizializzato correttamente")
     
     print("🔧 Inizializzazione componenti...")
-    components = init_components()
+components = init_components()
     if components is None:
         st.error("❌ Impossibile inizializzare i componenti. Controlla i log per dettagli.")
         st.stop()
@@ -395,7 +395,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                 
                 if supabase_success:
                     st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE e SUPABASE!")
-                else:
+    else:
                     st.warning(f"⚠️ Cliente salvato in LOCALE ma errore SUPABASE: {supabase_message}")
             else:
                 st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE (Supabase non configurato)")
@@ -412,7 +412,7 @@ def handle_edit_client(cliente_data):
     if hasattr(cliente_data, 'to_dict'):
         st.session_state.editing_client = cliente_data.to_dict()
     else:
-        st.session_state.editing_client = cliente_data
+    st.session_state.editing_client = cliente_data
     # RIMOSSO st.rerun() per fermare il loop
 
 def handle_delete_client(cliente_id):
@@ -444,7 +444,7 @@ def handle_delete_client(cliente_id):
             
             success = db.elimina_cliente(cliente_id_int)
             
-            if success:
+        if success:
                 st.success(f"✅ **ELIMINAZIONE RIUSCITA!** Cliente {cliente_id_int} eliminato")
                 
                 # Verifica post-eliminazione
@@ -452,7 +452,7 @@ def handle_delete_client(cliente_id):
                 st.write(f"📊 **Clienti nel database DOPO:** {len(clienti_dopo)}")
                 
                 # RIMOSSO st.rerun() per fermare il loop
-            else:
+        else:
                 st.error(f"❌ **ELIMINAZIONE FALLITA!** Cliente {cliente_id_int} non eliminato")
                 
         except Exception as e:
@@ -583,7 +583,7 @@ elif selected == "👥 Gestione Clienti":
     else:
         # Form per aggiungere nuovo cliente (collassato di default)
         with st.expander("➕ Aggiungi Nuovo Cliente", expanded=False):
-            success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
+        success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form()
         
         if success:
             handle_save_client(dati_cliente, campi_aggiuntivi)
@@ -1003,8 +1003,8 @@ export SUPABASE_ANON_KEY="your-anon-key"
             st.write(f"**🕒 Ultimo Aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
             st.write(f"**🟢 Stato:** Attivo")
             st.write(f"**🌐 Ambiente:** {'Streamlit Cloud' if 'STREAMLIT_SERVER_PORT' in os.environ else 'Locale'}")
-        
-        # Esportazione dati
+    
+    # Esportazione dati
         st.markdown("---")
         st.subheader("📤 Esportazione Dati")
     
@@ -1211,221 +1211,9 @@ def fix_supabase_and_duplicates():
 
 # Funzione di test super semplice rimossa - non più necessaria
 
-# Test ultra-semplice nella sidebar principale
-with st.sidebar:
-    st.header("🚨 TEST ULTRA-SEMPLICE")
-    
-    # Test 1: Pulsante base senza logica
-    if st.button("🔘 CLICK ME"):
-        st.write("🎉 FUNZIONA!")
-    
-    # Test 2: Input semplice
-    test_input = st.text_input("Scrivi qualcosa:", value="test")
-    st.write(f"Hai scritto: {test_input}")
-    
-    # Test 3: Eliminazione diretta senza funzioni
-    if st.button("🗑️ ELIMINA ID 30 DIRETTAMENTE"):
-        st.write("🔄 Tentativo eliminazione...")
-        
-        try:
-            import sqlite3
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Conta prima
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            count_before = cursor.fetchone()[0]
-            st.write(f"📊 Clienti PRIMA: {count_before}")
-            
-            # Elimina ID 30
-            cursor.execute("DELETE FROM clienti WHERE id = 30")
-            deleted = cursor.rowcount
-            st.write(f"🗑️ Righe eliminate: {deleted}")
-            
-            # Commit
-            conn.commit()
-            st.write("💾 Commit eseguito")
-            
-            # Conta dopo
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            count_after = cursor.fetchone()[0]
-            st.write(f"📊 Clienti DOPO: {count_after}")
-            
-            conn.close()
-            
-            if count_after < count_before:
-                st.success("✅ ELIMINAZIONE RIUSCITA!")
-            else:
-                st.warning("⚠️ Nessun cliente eliminato")
-                
-        except Exception as e:
-            st.error(f"❌ Errore: {e}")
-            if 'conn' in locals():
-                conn.close()
+# Sezione test ultra-semplice rimossa - non più necessaria
 
-# Soluzione completa nella sidebar
-with st.sidebar:
-    st.header("🚀 SOLUZIONE COMPLETA")
-    
-    # 1. Risolvi email duplicate
-    if st.button("📧 RISOLVI TUTTE LE EMAIL DUPLICATE"):
-        st.write("🔄 Risoluzione email duplicate in corso...")
-        
-        try:
-            import sqlite3
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Conta prima
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            total_before = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti totali PRIMA:** {total_before}")
-            
-            # Trova email duplicate
-            cursor.execute("""
-                SELECT email, COUNT(*) as count, GROUP_CONCAT(id) as ids
-                FROM clienti 
-                GROUP BY email 
-                HAVING COUNT(*) > 1
-            """)
-            duplicates = cursor.fetchall()
-            
-            if duplicates:
-                st.write(f"⚠️ **Email duplicate trovate:** {len(duplicates)}")
-                
-                for dup in duplicates:
-                    email = dup[0]
-                    ids = dup[2].split(',')
-                    
-                    st.write(f"📧 **Risoluzione per:** {email}")
-                    st.write(f"  - Mantengo ID: {ids[0]}")
-                    st.write(f"  - Elimino IDs: {ids[1:]}")
-                    
-                    # Elimina tutti i duplicati tranne il primo
-                    for id_to_delete in ids[1:]:
-                        cursor.execute("DELETE FROM clienti WHERE id = ?", (id_to_delete,))
-                        st.write(f"    ✅ Eliminato cliente ID: {id_to_delete}")
-                
-                # Commit tutte le modifiche
-                conn.commit()
-                st.success("💾 **Tutte le email duplicate risolte!**")
-                
-                # Verifica post-risoluzione
-                cursor.execute("SELECT COUNT(*) FROM clienti")
-                total_after = cursor.fetchone()[0]
-                st.write(f"📊 **Clienti totali DOPO:** {total_after}")
-                st.write(f"🗑️ **Clienti eliminati:** {total_before - total_after}")
-                
-            else:
-                st.success("✅ **Nessuna email duplicata da risolvere**")
-            
-            conn.close()
-            
-        except Exception as e:
-            st.error(f"❌ **Errore risoluzione:** {e}")
-            if 'conn' in locals():
-                conn.close()
-    
-    # 2. Test eliminazione normale
-    if st.button("🧪 TEST ELIMINAZIONE NORMALE"):
-        st.write("🔄 Test eliminazione cliente...")
-        
-        try:
-            import sqlite3
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Trova un cliente da eliminare
-            cursor.execute("SELECT id, nome_cliente FROM clienti LIMIT 1")
-            cliente = cursor.fetchone()
-            
-            if cliente:
-                cliente_id = cliente[0]
-                nome = cliente[1]
-                
-                st.write(f"🔍 **Test eliminazione cliente:** ID {cliente_id} - {nome}")
-                
-                # Conta prima
-                cursor.execute("SELECT COUNT(*) FROM clienti")
-                count_before = cursor.fetchone()[0]
-                st.write(f"📊 **Clienti PRIMA:** {count_before}")
-                
-                # Elimina
-                cursor.execute("DELETE FROM clienti WHERE id = ?", (cliente_id,))
-                deleted = cursor.rowcount
-                st.write(f"🗑️ **Righe eliminate:** {deleted}")
-                
-                # Commit
-                conn.commit()
-                st.write("💾 **Commit eseguito**")
-                
-                # Conta dopo
-                cursor.execute("SELECT COUNT(*) FROM clienti")
-                count_after = cursor.fetchone()[0]
-                st.write(f"📊 **Clienti DOPO:** {count_after}")
-                
-                conn.close()
-                
-                if count_after < count_before:
-                    st.success(f"✅ **ELIMINAZIONE NORMALE FUNZIONA!** Cliente {cliente_id} eliminato")
-                else:
-                    st.warning("⚠️ **Eliminazione non riuscita**")
-                    
-            else:
-                st.warning("⚠️ **Nessun cliente trovato per il test**")
-                conn.close()
-                
-        except Exception as e:
-            st.error(f"❌ **Errore test:** {e}")
-            if 'conn' in locals():
-                conn.close()
-    
-    # 3. Verifica finale database
-    if st.button("🔍 VERIFICA FINALE DATABASE"):
-        st.write("🔄 Verifica finale in corso...")
-        
-        try:
-            import sqlite3
-            conn = sqlite3.connect('cpa_database.db')
-            cursor = conn.cursor()
-            
-            # Conta clienti
-            cursor.execute("SELECT COUNT(*) FROM clienti")
-            total = cursor.fetchone()[0]
-            st.write(f"📊 **Clienti totali:** {total}")
-            
-            # Mostra tutti i clienti
-            cursor.execute("SELECT id, nome_cliente, email, broker FROM clienti ORDER BY id")
-            clienti = cursor.fetchall()
-            st.write("📋 **Clienti rimanenti:**")
-            for cliente in clienti:
-                st.write(f"  - ID: {cliente[0]}, Nome: {cliente[1]}, Email: {cliente[2]}, Broker: {cliente[3]}")
-            
-            # Verifica duplicati
-            cursor.execute("""
-                SELECT email, COUNT(*) as count
-                FROM clienti 
-                GROUP BY email 
-                HAVING COUNT(*) > 1
-            """)
-            duplicates = cursor.fetchall()
-            
-            if not duplicates:
-                st.success("✅ **NESSUN DUPLICATO RIMANENTE!**")
-            else:
-                st.warning(f"⚠️ **Duplicati rimanenti:** {len(duplicates)}")
-                for dup in duplicates:
-                    st.write(f"  - {dup[0]} (conteggio: {dup[1]})")
-            
-            conn.close()
-            
-        except Exception as e:
-            st.error(f"❌ **Errore verifica:** {e}")
-    
-    # 4. Ripristina funzione eliminazione normale
-    if st.button("🔧 RIPRISTINA FUNZIONE ELIMINAZIONE"):
-        st.success("✅ **Funzione eliminazione normale ripristinata!**")
-        st.info("💡 **Ora puoi usare la funzione di eliminazione normale nell'app**")
+# Sezione soluzione completa rimossa - non più necessaria
 
 # Sidebar pulita e organizzata
 with st.sidebar:
