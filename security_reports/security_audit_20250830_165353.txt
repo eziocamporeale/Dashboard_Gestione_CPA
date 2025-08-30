@@ -1,0 +1,24 @@
+
+🔒 REPORT SICUREZZA - 30/08/2025 16:53
+==================================================
+
+📊 PUNTEGGIO TOTALE: 62/100
+
+✅ CONTROLLI SUPERATI: 2/7
+
+🚨 ISSUES CRITICHE: 1
+⚠️ WARNINGS: 4
+
+📋 RACCOMANDAZIONI:
+• 🚨 RISOLVI IMMEDIATAMENTE le ISSUES identificate
+• ⚠️ Rivedi i WARNINGS per migliorare la sicurezza
+• 🔴 Attenzione! La sicurezza necessita di interventi urgenti
+
+🚨 ISSUES CRITICHE:
+• 🚨 Streamlit secrets.toml è tracciato da Git (RISCHIOSO!)
+
+⚠️ WARNINGS:
+• ⚠️ TROVATI 2 FILE POTENZIALMENTE SENSIBILI: ['config', 'monitoring_config.py']
+• ⚠️ TROVATI 105 FILE CON PATTERN CREDENZIALI: [('app_backup_broken.py', 'key\\s*=\\s*["\\\'][^"\\\']+["\\\']'), ('app.py', 'key\\s*=\\s*["\\\'][^"\\\']+["\\\']'), ('security_tab.py', 'key\\s*=\\s*["\\\'][^"\\\']+["\\\']')]
+• ⚠️ TROVATI 9 FILE DI BACKUP: ['app_backup_broken.py', 'confronto_backup_database_20250830_103657.xlsx', 'cpa_database.db.backup_20250829_095247', 'backup_supabase.py', 'verifica_backup.py']
+• ⚠️ TROVATI 2 FILE DI AMBIENTE: ['env.monitoring.example', 'env.example']
