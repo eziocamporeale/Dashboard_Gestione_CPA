@@ -1,4 +1,4 @@
-y#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Script di migrazione per convertire il database esistente
 dal vecchio schema al nuovo schema raggruppato

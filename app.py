@@ -205,11 +205,40 @@ create_database_tables()
 
 # Funzioni per gestire i broker popolari
 def get_broker_suggestions():
-    """Restituisce la lista dei broker popolari"""
+    """Restituisce la lista dei broker popolari dal database o dalla lista predefinita"""
+    try:
+        # Prova a ottenere broker dal database
+        if 'db' in globals() and db:
+            broker_db = db.ottieni_broker()
+            if broker_db and not broker_db.empty:
+                return broker_db['nome_broker'].tolist()
+    except:
+        pass
+    
+    # Lista predefinita se non ci sono broker nel database
     return [
-        "FXPro", "Pepperstone", "IC Markets", "AvaTrade", "Plus500",
+        "Ultima Markets", "Puprime", "Axi", "AvaTrade", "Plus500",
         "eToro", "IG", "Saxo Bank", "Interactive Brokers", "TD Ameritrade"
     ]
+
+def save_broker_list(broker_list):
+    """Salva la lista dei broker nel database"""
+    try:
+        if 'db' in globals() and db:
+            # Pulisci tabella broker esistente
+            db.esegui_query("DELETE FROM broker")
+            
+            # Inserisci nuovi broker
+            for broker in broker_list:
+                db.esegui_query(
+                    "INSERT INTO broker (nome_broker) VALUES (?)",
+                    (broker,)
+                )
+            return True
+    except Exception as e:
+        st.error(f"Errore salvataggio broker: {e}")
+        return False
+    return False
 
 def manage_brokers():
     """Gestisce i broker popolari - permette di modificarli e aggiungerne di nuovi"""
@@ -235,7 +264,10 @@ def manage_brokers():
             if st.button("🗑️", key=f"delete_{i}", help="Rimuovi broker"):
                 if st.button("✅ Conferma", key=f"confirm_delete_{i}"):
                     broker_list.pop(i)
-                    st.success(f"Broker '{broker}' rimosso!")
+                    if save_broker_list(broker_list):
+                        st.success(f"Broker '{broker}' rimosso e salvato!")
+                    else:
+                        st.error("Errore nel salvataggio!")
                     st.rerun()
     
     # Form per modificare broker esistente
@@ -254,7 +286,10 @@ def manage_brokers():
             if st.button("💾 Salva Modifica"):
                 if new_name.strip():
                     broker_list[st.session_state.editing_broker_index] = new_name.strip()
-                    st.success(f"Broker rinominato in '{new_name}'!")
+                    if save_broker_list(broker_list):
+                        st.success(f"Broker rinominato in '{new_name}' e salvato!")
+                    else:
+                        st.error("Errore nel salvataggio!")
                     del st.session_state.editing_broker_index
                     del st.session_state.editing_broker_name
                     st.rerun()
@@ -276,7 +311,10 @@ def manage_brokers():
     if st.button("➕ Aggiungi Broker", disabled=not new_broker.strip()):
         if new_broker.strip() and new_broker.strip() not in broker_list:
             broker_list.append(new_broker.strip())
-            st.success(f"Broker '{new_broker.strip()}' aggiunto con successo!")
+            if save_broker_list(broker_list):
+                st.success(f"Broker '{new_broker.strip()}' aggiunto e salvato con successo!")
+            else:
+                st.error("Errore nel salvataggio!")
             st.rerun()
         elif new_broker.strip() in broker_list:
             st.warning("Questo broker è già presente nella lista!")
@@ -292,11 +330,17 @@ def manage_brokers():
     # Reset lista (opzionale)
     if st.button("🔄 Reset Lista Predefinita", help="Ripristina la lista originale dei broker"):
         if st.button("✅ Conferma Reset", key="confirm_reset"):
-            st.session_state.broker_list = get_broker_suggestions()
-            st.success("Lista broker ripristinata!")
+            default_list = [
+                "FXPro", "Pepperstone", "IC Markets", "AvaTrade", "Plus500",
+                "eToro", "IG", "Saxo Bank", "Interactive Brokers", "TD Ameritrade"
+            ]
+            if save_broker_list(default_list):
+                st.success("Lista broker ripristinata e salvata!")
+            else:
+                st.error("Errore nel salvataggio!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:05 - FUNZIONI BROKER SPOSTATE
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:10 - SISTEMA PERSISTENZA BROKER IMPLEMENTATO
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:

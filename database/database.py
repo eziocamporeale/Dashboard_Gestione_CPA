@@ -337,3 +337,43 @@ class DatabaseManager:
         except Exception as e:
             # In caso di errore, restituisci solo i predefiniti
             return self.ottieni_broker_predefiniti()
+
+    def ottieni_broker(self):
+        """Restituisce i broker dalla tabella broker del database"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT nome_broker FROM broker ORDER BY nome_broker")
+            broker_db = [row[0] for row in cursor.fetchall()]
+            
+            conn.close()
+            
+            if broker_db:
+                return pd.DataFrame({'nome_broker': broker_db})
+            else:
+                return pd.DataFrame()
+                
+        except Exception as e:
+            return pd.DataFrame()
+
+    def esegui_query(self, query, params=None):
+        """Esegue una query SQL generica"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            
+            conn.commit()
+            conn.close()
+            return True
+            
+        except Exception as e:
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
+            return False
