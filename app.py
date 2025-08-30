@@ -13,6 +13,12 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+# Import standard Python
+import tempfile
+import shutil
+import os
+import sys
+
 # Import diretti dei componenti con gestione errori
 try:
     from auth_standalone import require_auth, show_user_info, login_form
@@ -83,10 +89,6 @@ try:
 except Exception as e:
     print(f"❌ Errore import utils.secure_backup: {e}")
     st.error(f"Errore import utils.secure_backup: {e}")
-import tempfile
-import shutil
-import os
-import sys
 
 # Configurazione pagina
 st.set_page_config(
@@ -340,7 +342,7 @@ def manage_brokers():
                 st.error("Errore nel salvataggio!")
             st.rerun()
 
-# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:10 - SISTEMA PERSISTENZA BROKER IMPLEMENTATO
+# 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:15 - IMPORTS RIORGANIZZATI PER RISOLVERE ERRORI
 
 # Gestione dello stato dell'applicazione
 if 'editing_client' not in st.session_state:
