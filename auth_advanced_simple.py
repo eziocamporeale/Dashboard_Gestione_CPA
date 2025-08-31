@@ -123,6 +123,11 @@ def login_form():
         if 'FormSubmitter:Login-Login' in st.session_state:
             logger.info(f"🔍 Form submitted: {st.session_state['FormSubmitter:Login-Login']}")
         
+        # DEBUG AGGIUNTIVO: Controlla tutti i valori di sessione
+        logger.info(f"🔍 DEBUG COMPLETO SESSION STATE:")
+        for key, value in st.session_state.items():
+            logger.info(f"   {key}: {value}")
+        
         # STESSA LOGICA DELLA DASHBOARD FINANZE - Se il login è stato completato, controlla lo stato
         if st.session_state.get('authentication_status'):
             if st.session_state['authentication_status']:
@@ -151,6 +156,13 @@ def login_form():
                 st.error('❌ Username o password non corretti')
                 logger.warning(f"❌ Login fallito")
                 return False
+        else:
+            # DEBUG: Se non c'è authentication_status, controlla se ci sono errori
+            logger.info(f"🔍 Nessun authentication_status trovato")
+            if 'FormSubmitter:Login-Login' in st.session_state:
+                logger.info(f"🔍 Form inviato ma autenticazione non completata")
+                # Potrebbe essere un problema di validazione
+                logger.info(f"🔍 Controlla se le credenziali sono corrette nel form")
         
         # Se non c'è ancora stato di autenticazione
         return False
