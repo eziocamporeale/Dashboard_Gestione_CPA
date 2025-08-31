@@ -18,11 +18,11 @@ sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
 try:
-    from auth_standalone import require_auth, show_user_info, login_form
-    print("✅ auth_standalone importato correttamente")
+    from auth_secure import require_auth, show_user_info, login_form
+    print("✅ auth_secure importato correttamente")
 except Exception as e:
-    print(f"❌ Errore import auth_standalone: {e}")
-    st.error(f"Errore import auth_standalone: {e}")
+    print(f"❌ Errore import auth_secure: {e}")
+    st.error(f"Errore import auth_secure: {e}")
 
 try:
     from components.charts import Charts
