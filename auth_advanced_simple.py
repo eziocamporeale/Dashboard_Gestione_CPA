@@ -106,40 +106,42 @@ def init_auth():
     logger.info("✅ Sistema di autenticazione inizializzato")
 
 def login_form():
-    """Mostra il form di login e gestisce l'autenticazione"""
+    """Mostra il form di login e gestisce l'autenticazione - STESSA LOGICA DELLA DASHBOARD FINANZE"""
     try:
         if not auth_system.authenticator:
             st.error("❌ Sistema di autenticazione non disponibile")
             return False
         
-        # Esegui il login con streamlit_authenticator
-        name, authentication_status, username = auth_system.authenticator.login('Login', 'main')
+        # STESSA LOGICA DELLA DASHBOARD FINANZE - Quando location='main', il metodo restituisce None
+        result = auth_system.authenticator.login(location='main', key='Login')
         
         # Debug: mostra lo stato corrente
-        logger.info(f"🔍 Login result - name: {name}, status: {authentication_status}, username: {username}")
+        logger.info(f"🔍 Login result: {result}")
+        logger.info(f"🔍 Session state auth_status: {st.session_state.get('authentication_status')}")
         
-        # Gestione stato autenticazione
-        if authentication_status is False:
-            st.error('❌ Username o password non corretti')
-            logger.warning(f"❌ Login fallito")
-            return False
-        elif authentication_status is None:
-            st.warning('⚠️ Inserisci username e password')
-            return False
-        elif authentication_status is True:
-            # Login riuscito
-            st.session_state.authenticated = True
-            st.session_state.username = username
-            st.session_state.user_info = auth_system.get_user_info(username)
-            
-            # Mostra messaggio di successo
-            st.success(f'✅ Benvenuto {name}!')
-            logger.info(f"✅ Login riuscito per utente: {username}")
-            
-            # Riavvia l'app per mostrare la dashboard
-            st.rerun()
-            return True
+        # STESSA LOGICA DELLA DASHBOARD FINANZE - Se il login è stato completato, controlla lo stato
+        if st.session_state.get('authentication_status'):
+            if st.session_state['authentication_status']:
+                # Login riuscito
+                username = st.session_state.get('username', '')
+                name = st.session_state.get('name', '')
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.session_state.user_info = auth_system.get_user_info(username)
+                
+                # Mostra messaggio di successo
+                st.success(f'✅ Benvenuto {name}!')
+                logger.info(f"✅ Login riuscito per utente: {username}")
+                
+                # Riavvia l'app per mostrare la dashboard
+                st.rerun()
+                return True
+            else:
+                st.error('❌ Username o password non corretti')
+                logger.warning(f"❌ Login fallito")
+                return False
         
+        # Se non c'è ancora stato di autenticazione
         return False
         
     except Exception as e:
