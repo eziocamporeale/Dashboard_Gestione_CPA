@@ -148,7 +148,7 @@ def login_form():
     """Mostra il form di login"""
     try:
         if auth_system.authenticator:
-            name, authentication_status, username = auth_system.authenticator.login('Login', 'main')
+            name, authentication_status, username = auth_system.authenticator.login('Login', location='main')
             
             if authentication_status == False:
                 st.error('Username/password non corretti')
