@@ -28,6 +28,18 @@ venv.bak/
 ENV/
 env/
 
+# File di autenticazione con credenziali hardcoded - CRITICO!
+auth_standalone.py
+auth_backup.py
+*_backup.py
+auth_old.py
+auth_unsafe.py
+
+# File di configurazione con credenziali
+config_secret.py
+secrets.py
+credentials.py
+
 # Database files (con dati sensibili) - CRITICO!
 *.db
 *.sqlite
