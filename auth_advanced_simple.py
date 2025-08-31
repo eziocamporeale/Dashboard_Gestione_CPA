@@ -44,7 +44,7 @@ class SimpleAuthSystem:
             self.config = self.create_default_config()
     
     def create_default_config(self):
-        """Crea configurazione di default"""
+        """Crea configurazione di default - STESSA STRUTTURA DELLA DASHBOARD FINANZE"""
         return {
             'credentials': {
                 'usernames': {
@@ -59,9 +59,6 @@ class SimpleAuthSystem:
                 'expiry_days': 30,
                 'key': secrets.token_hex(16),
                 'name': 'cpa_dashboard_cookie'
-            },
-            'preauthorized': {
-                'emails': ['admin@cpadashboard.com']
             }
         }
     
@@ -118,6 +115,9 @@ def login_form():
         # Debug: mostra lo stato corrente
         logger.info(f"🔍 Login result: {result}")
         logger.info(f"🔍 Session state auth_status: {st.session_state.get('authentication_status')}")
+        logger.info(f"🔍 Session state username: {st.session_state.get('username')}")
+        logger.info(f"🔍 Session state name: {st.session_state.get('name')}")
+        logger.info(f"🔍 Session state keys: {list(st.session_state.keys())}")
         
         # STESSA LOGICA DELLA DASHBOARD FINANZE - Se il login è stato completato, controlla lo stato
         if st.session_state.get('authentication_status'):
