@@ -148,7 +148,24 @@ def login_form():
     """Mostra il form di login"""
     try:
         if auth_system.authenticator:
-            name, authentication_status, username = auth_system.authenticator.login('Login', 'main')
+            result = auth_system.authenticator.login(location='main', key='Login')
+            
+            # Gestione stato autenticazione come nella dashboard finanze
+            if st.session_state.get('authentication_status'):
+                if st.session_state['authentication_status']:
+                    username = st.session_state.get('username', '')
+                    name = st.session_state.get('name', '')
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.session_state.user_info = auth_system.get_user_info(username)
+                    st.success(f'Benvenuto {name}')
+                    return True
+                else:
+                    st.error('Username/password non corretti')
+                    return False
+            
+            # Se non c'è ancora stato di autenticazione
+            return False
             
             if authentication_status == False:
                 st.error('Username/password non corretti')
