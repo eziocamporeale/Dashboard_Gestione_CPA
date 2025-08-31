@@ -119,14 +119,25 @@ def login_form():
         logger.info(f"🔍 Session state name: {st.session_state.get('name')}")
         logger.info(f"🔍 Session state keys: {list(st.session_state.keys())}")
         
+        # Controlla se l'utente ha inserito credenziali
+        if 'FormSubmitter:Login-Login' in st.session_state:
+            logger.info(f"🔍 Form submitted: {st.session_state['FormSubmitter:Login-Login']}")
+        
         # STESSA LOGICA DELLA DASHBOARD FINANZE - Se il login è stato completato, controlla lo stato
         if st.session_state.get('authentication_status'):
             if st.session_state['authentication_status']:
                 # Login riuscito
                 username = st.session_state.get('username', '')
                 name = st.session_state.get('name', '')
+                
+                # Se username è vuoto, usa quello di default dalla configurazione
+                if not username:
+                    username = 'admin'
+                    name = 'Amministratore CPA Dashboard'
+                    st.session_state.username = username
+                    st.session_state.name = name
+                
                 st.session_state.authenticated = True
-                st.session_state.username = username
                 st.session_state.user_info = auth_system.get_user_info(username)
                 
                 # Mostra messaggio di successo
