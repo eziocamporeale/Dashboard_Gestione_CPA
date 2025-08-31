@@ -204,6 +204,38 @@ def _manual_credential_validation():
         logger.error(f"❌ Errore validazione manuale: {e}")
         return False
 
+def logout_user():
+    """Funzione dedicata per il logout completo"""
+    try:
+        username = st.session_state.get('username', 'Unknown')
+        logger.info(f"🔧 Logout completo richiesto per utente: {username}")
+        
+        # Lista di tutte le chiavi da rimuovere
+        keys_to_remove = [
+            'authenticated', 'username', 'name', 'user_info', 
+            'authentication_status', 'email', 'logout',
+            'FormSubmitter:Login-Login'
+        ]
+        
+        # Pulisci tutte le chiavi di sessione
+        for key in keys_to_remove:
+            if key in st.session_state:
+                del st.session_state[key]
+                logger.info(f"🔧 Rimossa chiave: {key}")
+        
+        # Pulisci anche altre chiavi che potrebbero essere presenti
+        for key in list(st.session_state.keys()):
+            if key.startswith('FormSubmitter:') or key in ['editing_client', 'supabase_available', 'roles', 'show_charts']:
+                del st.session_state[key]
+                logger.info(f"🔧 Rimossa chiave aggiuntiva: {key}")
+        
+        logger.info(f"✅ Logout completo completato per {username}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Errore durante logout: {e}")
+        return False
+
 def require_auth():
     """Richiede autenticazione per accedere alla pagina"""
     if not st.session_state.get('authenticated', False):
@@ -223,10 +255,11 @@ def show_user_info():
         st.sidebar.info(f"**Email:** {user_info.get('email', 'N/A')}")
         
         if st.sidebar.button("🚪 **Logout**"):
-            st.session_state.authenticated = False
-            st.session_state.username = None
-            st.session_state.user_info = None
-            st.rerun()
+            if logout_user():
+                st.success(f"✅ Logout completato! Arrivederci {username}!")
+                st.rerun()
+            else:
+                st.error("❌ Errore durante il logout")
 
 def get_current_user():
     """Ottiene l'utente corrente"""
