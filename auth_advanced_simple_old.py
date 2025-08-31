@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-🔐 SISTEMA DI AUTENTICAZIONE AVANZATO CORRETTO - Dashboard Gestione CPA
-Versione pulita e funzionante basata su streamlit_authenticator
+🔐 SISTEMA DI AUTENTICAZIONE AVANZATO SEMPLIFICATO - Dashboard Gestione CPA
+Versione semplificata che funziona con streamlit_authenticator 0.4.2
 """
 
 import streamlit as st
@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SimpleAuthSystem:
-    """Sistema di autenticazione semplificato e funzionante"""
+    """Sistema di autenticazione semplificato"""
     
     def __init__(self):
         """Inizializza il sistema di autenticazione"""
@@ -89,11 +89,50 @@ class SimpleAuthSystem:
             logger.error(f"❌ Errore inizializzazione authenticator: {e}")
             self.authenticator = None
     
+    def authenticate_user(self, username: str, password: str) -> Tuple[bool, str]:
+        """Autentica un utente"""
+        try:
+            if username in self.config['credentials']['usernames']:
+                stored_password = self.config['credentials']['usernames'][username]['password']
+                if stauth.Hasher([password]).verify(stored_password):
+                    return True, "Autenticazione riuscita"
+                else:
+                    return False, "Password non corretta"
+            else:
+                return False, "Utente non trovato"
+        except Exception as e:
+            logger.error(f"❌ Errore autenticazione: {e}")
+            return False, f"Errore autenticazione: {e}"
+    
     def get_user_info(self, username: str) -> Optional[Dict]:
         """Ottiene informazioni su un utente"""
         if username in self.config['credentials']['usernames']:
             return self.config['credentials']['usernames'][username]
         return None
+    
+    def create_user(self, username: str, email: str, password: str, full_name: str) -> Tuple[bool, str]:
+        """Crea un nuovo utente"""
+        try:
+            if username in self.config['credentials']['usernames']:
+                return False, "Username già esistente"
+            
+            # Hash della password
+            hashed_password = stauth.Hasher([password]).generate()[0]
+            
+            # Crea utente
+            self.config['credentials']['usernames'][username] = {
+                'email': email,
+                'name': full_name,
+                'password': hashed_password
+            }
+            
+            self.save_config()
+            self.init_authenticator()
+            return True, "Utente creato con successo"
+            
+        except Exception as e:
+            logger.error(f"❌ Errore creazione utente: {e}")
+            return False, f"Errore creazione: {e}"
 
 # Istanza globale del sistema di autenticazione
 auth_system = SimpleAuthSystem()
@@ -106,42 +145,44 @@ def init_auth():
     logger.info("✅ Sistema di autenticazione inizializzato")
 
 def login_form():
-    """Mostra il form di login e gestisce l'autenticazione"""
+    """Mostra il form di login"""
     try:
-        if not auth_system.authenticator:
+        if auth_system.authenticator:
+            result = auth_system.authenticator.login(location='main', key='Login')
+            
+            # Gestione stato autenticazione come nella dashboard finanze
+            if st.session_state.get('authentication_status'):
+                if st.session_state['authentication_status']:
+                    username = st.session_state.get('username', '')
+                    name = st.session_state.get('name', '')
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.session_state.user_info = auth_system.get_user_info(username)
+                    st.success(f'Benvenuto {name}')
+                    return True
+                else:
+                    st.error('Username/password non corretti')
+                    return False
+            
+            # Se non c'è ancora stato di autenticazione
+            return False
+            
+            if authentication_status == False:
+                st.error('Username/password non corretti')
+                return False
+            elif authentication_status == None:
+                st.warning('Inserisci username e password')
+                return False
+            elif authentication_status:
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.session_state.user_info = auth_system.get_user_info(username)
+                st.success(f'Benvenuto {name}')
+                return True
+        else:
             st.error("❌ Sistema di autenticazione non disponibile")
             return False
-        
-        # Esegui il login con streamlit_authenticator
-        name, authentication_status, username = auth_system.authenticator.login('Login', 'main')
-        
-        # Debug: mostra lo stato corrente
-        logger.info(f"🔍 Login result - name: {name}, status: {authentication_status}, username: {username}")
-        
-        # Gestione stato autenticazione
-        if authentication_status is False:
-            st.error('❌ Username o password non corretti')
-            logger.warning(f"❌ Login fallito")
-            return False
-        elif authentication_status is None:
-            st.warning('⚠️ Inserisci username e password')
-            return False
-        elif authentication_status is True:
-            # Login riuscito
-            st.session_state.authenticated = True
-            st.session_state.username = username
-            st.session_state.user_info = auth_system.get_user_info(username)
             
-            # Mostra messaggio di successo
-            st.success(f'✅ Benvenuto {name}!')
-            logger.info(f"✅ Login riuscito per utente: {username}")
-            
-            # Riavvia l'app per mostrare la dashboard
-            st.rerun()
-            return True
-        
-        return False
-        
     except Exception as e:
         logger.error(f"❌ Errore login form: {e}")
         st.error(f"Errore login: {e}")
