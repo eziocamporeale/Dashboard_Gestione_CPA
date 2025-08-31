@@ -18,11 +18,11 @@ sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
 try:
-    from auth_secure import require_auth, show_user_info, login_form
-    print("✅ auth_secure importato correttamente")
+    from auth_advanced_simple import require_auth, show_user_info, login_form, init_auth
+    print("✅ auth_advanced_simple importato correttamente")
 except Exception as e:
-    print(f"❌ Errore import auth_secure: {e}")
-    st.error(f"Errore import auth_secure: {e}")
+    print(f"❌ Errore import auth_advanced_simple: {e}")
+    st.error(f"Errore import auth_advanced_simple: {e}")
 
 try:
     from components.charts import Charts
@@ -181,6 +181,10 @@ def create_database_tables():
 
 # Inizializzazione
 try:
+    print("🔧 Inizializzazione sistema di autenticazione...")
+    init_auth()
+    print("✅ Sistema di autenticazione inizializzato correttamente")
+    
     print("🔧 Inizializzazione database...")
     db = init_database()
     print("✅ Database inizializzato correttamente")
