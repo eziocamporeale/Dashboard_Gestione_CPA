@@ -20,9 +20,19 @@ sys.path.append(current_dir)
 try:
     from auth_advanced_simple import require_auth, show_user_info, login_form, init_auth
     print("✅ auth_advanced_simple importato correttamente")
+    AUTH_SYSTEM = "advanced"
 except Exception as e:
     print(f"❌ Errore import auth_advanced_simple: {e}")
-    st.error(f"Errore import auth_advanced_simple: {e}")
+    try:
+        from auth_fallback import require_auth, show_user_info, login_form, init_auth
+        print("✅ auth_fallback importato correttamente (sistema di riserva)")
+        AUTH_SYSTEM = "fallback"
+    except Exception as e2:
+        print(f"❌ Errore import auth_fallback: {e2}")
+        st.error(f"❌ Errore critico: impossibile importare sistema di autenticazione")
+        st.error(f"Errore auth_advanced: {e}")
+        st.error(f"Errore auth_fallback: {e2}")
+        st.stop()
 
 try:
     from components.charts import Charts
@@ -183,7 +193,13 @@ def create_database_tables():
 try:
     print("🔧 Inizializzazione sistema di autenticazione...")
     init_auth()
-    print("✅ Sistema di autenticazione inizializzato correttamente")
+    print(f"✅ Sistema di autenticazione inizializzato correttamente ({AUTH_SYSTEM})")
+    
+    # Mostra informazione all'utente
+    if AUTH_SYSTEM == "fallback":
+        st.info("ℹ️ **Sistema di Autenticazione**: Utilizzo versione di riserva (senza dipendenze esterne)")
+    else:
+        st.success("✅ **Sistema di Autenticazione**: Versione avanzata attiva")
     
     print("🔧 Inizializzazione database...")
     db = init_database()
