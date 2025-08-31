@@ -165,8 +165,16 @@ def login_form():
                 logger.info(f"🔍 Controlla se le credenziali sono corrette nel form")
                 
                 # FALLBACK: Validazione manuale delle credenziali
-                logger.info(f"🔧 ATTIVAZIONE FALLBACK: Validazione manuale credenziali")
-                return _manual_credential_validation()
+                # SOLO se il form è stato effettivamente inviato (True) E non è stato fatto logout
+                if st.session_state['FormSubmitter:Login-Login'] and not st.session_state.get('logout_performed', False):
+                    logger.info(f"🔧 ATTIVAZIONE FALLBACK: Validazione manuale credenziali")
+                    return _manual_credential_validation()
+                elif st.session_state.get('logout_performed', False):
+                    logger.info(f"🔍 Logout recente rilevato, fallback disabilitato")
+                    return False
+                else:
+                    logger.info(f"🔍 Form presente ma non inviato, nessun fallback necessario")
+                    return False
         
         # Se non c'è ancora stato di autenticazione
         return False
@@ -228,6 +236,10 @@ def logout_user():
             if key.startswith('FormSubmitter:') or key in ['editing_client', 'supabase_available', 'roles', 'show_charts']:
                 del st.session_state[key]
                 logger.info(f"🔧 Rimossa chiave aggiuntiva: {key}")
+        
+        # Aggiungi flag per indicare che è stato fatto logout
+        st.session_state['logout_performed'] = True
+        logger.info(f"🔧 Flag logout_performed impostato")
         
         logger.info(f"✅ Logout completo completato per {username}")
         return True
