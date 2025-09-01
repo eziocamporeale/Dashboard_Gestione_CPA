@@ -17,22 +17,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
-try:
-    from auth_advanced_simple import require_auth, show_user_info, login_form, init_auth
-    print("✅ auth_advanced_simple importato correttamente")
-    AUTH_SYSTEM = "advanced"
-except Exception as e:
-    print(f"❌ Errore import auth_advanced_simple: {e}")
-    try:
-        from auth_fallback import require_auth, show_user_info, login_form, init_auth
-        print("✅ auth_fallback importato correttamente (sistema di riserva)")
-        AUTH_SYSTEM = "fallback"
-    except Exception as e2:
-        print(f"❌ Errore import auth_fallback: {e2}")
-        st.error(f"❌ Errore critico: impossibile importare sistema di autenticazione")
-        st.error(f"Errore auth_advanced: {e}")
-        st.error(f"Errore auth_fallback: {e2}")
-        st.stop()
+from auth_simple_no_cookie import require_auth, show_user_info, login_form, init_auth
+print("✅ auth_simple_no_cookie importato correttamente")
+AUTH_SYSTEM = "simple"
 
 try:
     from components.charts import Charts
@@ -96,6 +83,14 @@ try:
 except Exception as e:
     print(f"❌ Errore import utils.secure_backup: {e}")
     st.error(f"Errore import utils.secure_backup: {e}")
+
+# Import sistema gestione utenti
+try:
+    from components.user_navigation import render_user_navigation
+    print("✅ Sistema gestione utenti importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import sistema gestione utenti: {e}")
+    st.error(f"Errore import sistema gestione utenti: {e}")
 
 # Configurazione pagina
 st.set_page_config(
@@ -380,7 +375,10 @@ if not st.session_state.get('authenticated', False):
     st.title("🔐 **Dashboard Gestione CPA Broker**")
     st.markdown("---")
     st.info("👋 **Benvenuto!** Effettua l'accesso per utilizzare il sistema.")
+    
+    # Form di login
     login_form()
+    
     st.stop()
 
 # Titolo principale (solo per utenti autenticati)
@@ -686,37 +684,11 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
     else:
         show_error_message("Errore nell'aggiornamento del cliente")
 
-# Contenuto principale
+# Contenuto principale - SISTEMA UTENTI INTEGRATO
 if selected == "🏠 Dashboard":
-    st.header("Dashboard Principale")
-    st.write("Benvenuto nella dashboard per la gestione delle CPA dei broker")
+    # Usa il nuovo sistema di navigazione utente
+    render_user_navigation()
     
-    # Ottieni dati da Supabase tramite ClientTable
-    client_table = components['client_table']
-    df_clienti = client_table.get_clienti()
-    stats = client_table.get_statistiche_clienti()
-    
-    # Statistiche rapide
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(label="Totale Clienti", value=stats['totale_clienti'])
-    
-    with col2:
-        st.metric(label="Broker Attivi", value=stats['broker_attivi'])
-    
-    with col3:
-        st.metric(label="Depositi Totali", value=format_currency(stats['depositi_totali']))
-    
-    with col4:
-        st.metric(label="CPA Attive", value=stats['cpa_attive'])
-    
-    # Grafici della dashboard
-    if not df_clienti.empty:
-        components['charts'].render_dashboard_charts(df_clienti)
-    else:
-        st.info("Aggiungi il primo cliente per visualizzare i grafici!")
-
 elif selected == "👥 Gestione Clienti":
     st.header("Gestione Clienti CPA")
     st.write("Gestisci i clienti e le loro informazioni")
@@ -731,7 +703,6 @@ elif selected == "👥 Gestione Clienti":
         # Pulsante per tornare indietro
         if st.button("← Torna alla Lista"):
             st.session_state.editing_client = None
-            # RIMOSSO st.rerun() per fermare il loop
         
         # Form di modifica
         success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form(

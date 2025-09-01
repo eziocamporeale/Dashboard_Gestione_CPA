@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2025-08-31T15:56:16.337319",
+    "score": 41,
+    "type": "Completo",
+    "issues_count": 2,
+    "warnings_count": 4,
+    "checks_passed": 1,
+    "total_checks": 7
+  }
+]
