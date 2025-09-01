@@ -52,11 +52,20 @@ class UserManagement:
     def get_all_users(self):
         """Recupera tutti gli utenti dal database"""
         try:
+            logger.info(f"🔍 GET_ALL_USERS: Recupero utenti da Supabase...")
             response = self.supabase_manager.supabase.table('users').select('*').execute()
+            logger.info(f"🔍 GET_ALL_USERS: Risposta Supabase: {len(response.data) if response.data else 0} utenti")
+            
             if response.data:
-                return pd.DataFrame(response.data)
-            return pd.DataFrame()
+                df = pd.DataFrame(response.data)
+                logger.info(f"🔍 GET_ALL_USERS: DataFrame creato con {len(df)} righe")
+                logger.info(f"🔍 GET_ALL_USERS: Colonne disponibili: {list(df.columns)}")
+                return df
+            else:
+                logger.warning(f"🔍 GET_ALL_USERS: Nessun utente trovato")
+                return pd.DataFrame()
         except Exception as e:
+            logger.error(f"🔍 GET_ALL_USERS: Errore nel recupero utenti: {e}")
             st.error(f"❌ Errore nel recupero utenti: {e}")
             return pd.DataFrame()
     
@@ -146,26 +155,36 @@ class UserManagement:
     def delete_user(self, user_id, username):
         """Elimina un utente (solo per admin)"""
         try:
+            logger.info(f"🔍 HOOK DELETE_USER: Tentativo eliminazione utente {username} (ID: {user_id})")
+            
             # Verifica che non sia l'utente corrente
             if user_id == st.session_state.get('user_info', {}).get('id'):
                 st.error("❌ Non puoi eliminare il tuo stesso account!")
+                logger.warning(f"🔍 HOOK DELETE_USER: Tentativo eliminazione account corrente bloccato")
                 return False
             
+            logger.info(f"🔍 HOOK DELETE_USER: Eliminazione profilo utente per ID {user_id}")
             # Elimina profilo utente
-            self.supabase_manager.supabase.table('user_profiles').delete().eq('user_id', user_id).execute()
+            profile_response = self.supabase_manager.supabase.table('user_profiles').delete().eq('user_id', user_id).execute()
+            logger.info(f"🔍 HOOK DELETE_USER: Profilo eliminato: {profile_response.data}")
             
+            logger.info(f"🔍 HOOK DELETE_USER: Eliminazione utente per ID {user_id}")
             # Elimina utente
             response = self.supabase_manager.supabase.table('users').delete().eq('id', user_id).execute()
+            logger.info(f"🔍 HOOK DELETE_USER: Risposta eliminazione: {response.data}")
             
             if response.data:
                 st.success(f"✅ Utente '{username}' eliminato con successo!")
+                logger.info(f"🔍 HOOK DELETE_USER: Utente {username} eliminato con successo")
                 return True
             else:
                 st.error("❌ Errore nell'eliminazione dell'utente")
+                logger.error(f"🔍 HOOK DELETE_USER: Errore eliminazione - nessun dato restituito")
                 return False
                 
         except Exception as e:
             st.error(f"❌ Errore nell'eliminazione dell'utente: {e}")
+            logger.error(f"🔍 HOOK DELETE_USER: Eccezione durante eliminazione: {e}")
             return False
     
     def toggle_user_status(self, user_id, current_status, username):
@@ -271,10 +290,37 @@ class UserManagement:
             if delete_user:
                 user_data = users_df[users_df['username'] == delete_user].iloc[0]
                 
-                if st.button(f"🗑️ Elimina {delete_user}", type="secondary"):
-                    if st.checkbox(f"Conferma eliminazione di {delete_user}"):
-                        self.delete_user(user_data['id'], delete_user)
+                # Gestione stato di conferma per eliminazione
+                confirm_key = f"confirm_delete_{delete_user}"
+                if confirm_key not in st.session_state:
+                    st.session_state[confirm_key] = False
+                
+                # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
+                if not st.session_state[confirm_key]:
+                    if st.button(f"🗑️ Elimina {delete_user}", type="secondary", key=f"delete_btn_{delete_user}"):
+                        logger.info(f"🔍 ELIMINAZIONE UTENTE: Pulsante elimina cliccato per {delete_user}")
+                        st.session_state[confirm_key] = True
                         st.rerun()
+                
+                # Se è richiesta la conferma, mostra il checkbox e il pulsante di conferma
+                else:
+                    logger.info(f"🔍 ELIMINAZIONE UTENTE: Mostrando conferma per {delete_user}")
+                    st.warning(f"⚠️ Sei sicuro di voler eliminare l'utente '{delete_user}'?")
+                    
+                    col_confirm1, col_confirm2 = st.columns(2)
+                    
+                    with col_confirm1:
+                        if st.button("✅ Conferma Eliminazione", type="primary", key=f"confirm_btn_{delete_user}"):
+                            logger.info(f"🔍 ELIMINAZIONE UTENTE: Conferma eliminazione cliccata per {delete_user}")
+                            if self.delete_user(user_data['id'], delete_user):
+                                st.session_state[confirm_key] = False
+                                st.rerun()
+                    
+                    with col_confirm2:
+                        if st.button("❌ Annulla", type="secondary", key=f"cancel_btn_{delete_user}"):
+                            logger.info(f"🔍 ELIMINAZIONE UTENTE: Annulla eliminazione cliccato per {delete_user}")
+                            st.session_state[confirm_key] = False
+                            st.rerun()
     
     def render_create_user(self):
         """Rende il form per la creazione di nuovi utenti"""
