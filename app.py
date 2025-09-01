@@ -92,6 +92,14 @@ except Exception as e:
     print(f"❌ Errore import sistema gestione utenti: {e}")
     st.error(f"Errore import sistema gestione utenti: {e}")
 
+# Import sistema impostazioni utente
+try:
+    from components.user_settings import render_user_settings
+    print("✅ Sistema impostazioni utente importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import sistema impostazioni utente: {e}")
+    st.error(f"Errore import sistema impostazioni utente: {e}")
+
 # Configurazione pagina
 st.set_page_config(
     page_title="Dashboard Gestione CPA",
@@ -770,8 +778,8 @@ elif selected == "⚙️ Impostazioni":
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
     # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_brokers, tab_security = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker", "🔒 Sicurezza"
+    tab_supabase, tab_system, tab_brokers, tab_security, tab_user_settings = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker", "🔒 Sicurezza", "👤 Impostazioni Utente"
     ])
     
     # TAB 1: Supabase
@@ -899,6 +907,14 @@ elif selected == "⚙️ Impostazioni":
         except Exception as e:
             st.error(f"❌ **Errore caricamento componente sicurezza:** {e}")
             st.info("🔧 Controlla che il file `components/security_tab.py` sia presente")
+    
+    # TAB 5: Impostazioni Utente
+    with tab_user_settings:
+        try:
+            render_user_settings()
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
+            st.info("🔧 Controlla che il file `components/user_settings.py` sia presente")
 
 # Funzione di test rimossa - non più necessaria
 
