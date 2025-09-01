@@ -2,6 +2,7 @@
 """
 🔐 SISTEMA DI AUTENTICAZIONE SEMPLICE SENZA COOKIE - Dashboard Gestione CPA
 Versione completamente personalizzata senza dipendenze esterne
+INTEGRATO CON SUPABASE
 """
 
 import streamlit as st
@@ -16,13 +17,48 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SimpleAuthSystem:
-    """Sistema di autenticazione semplice senza cookie"""
+    """Sistema di autenticazione semplice senza cookie - INTEGRATO CON SUPABASE"""
     
     def __init__(self):
         """Inizializza il sistema di autenticazione"""
         self.users = self.create_default_users()
         self.session_timeout = 3600  # 1 ora
+        self.supabase_manager = None
+        self.load_users_from_supabase()
         
+    def load_users_from_supabase(self):
+        """Carica utenti da Supabase"""
+        try:
+            from supabase_manager import SupabaseManager
+            self.supabase_manager = SupabaseManager()
+            
+            if self.supabase_manager.is_configured:
+                # Recupera utenti da Supabase
+                response = self.supabase_manager.supabase.table('users').select('*').execute()
+                if response.data:
+                    for user in response.data:
+                        username = user.get('username')
+                        if username:
+                            # Aggiungi utente da Supabase al dizionario locale
+                            self.users[username] = {
+                                'username': username,
+                                'password_hash': user.get('password_hash', ''),
+                                'email': user.get('email', ''),
+                                'name': user.get('full_name', username),
+                                'role': user.get('role', 'user'),
+                                'is_active': user.get('is_active', True),
+                                'from_supabase': True
+                            }
+                    logger.info(f"✅ Caricati {len(response.data)} utenti da Supabase")
+                else:
+                    logger.warning("⚠️ Nessun utente trovato in Supabase")
+            else:
+                logger.warning("⚠️ Supabase non configurato, uso solo utenti locali")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore caricamento utenti da Supabase: {e}")
+            logger.info("ℹ️ Continuo con utenti locali")
+    
     def create_default_users(self) -> Dict:
         """Crea utenti di default"""
         return {
@@ -31,7 +67,8 @@ class SimpleAuthSystem:
                 'password_hash': 'admin',  # Password semplice per test
                 'email': 'admin@cpadashboard.com',
                 'name': 'Amministratore CPA Dashboard',
-                'role': 'admin'
+                'role': 'admin',
+                'from_supabase': False
             }
         }
     
@@ -44,20 +81,51 @@ class SimpleAuthSystem:
     def verify_password(self, password: str, stored_hash: str) -> bool:
         """Verifica password"""
         try:
-            salt, hash_value = stored_hash.split('$')
-            password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-            return password_hash == hash_value
-        except:
+            # Se è un hash bcrypt (inizia con $2b$)
+            if stored_hash.startswith('$2b$'):
+                import bcrypt
+                return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
+            
+            # Se è un hash semplice (per utenti locali)
+            if stored_hash == password:
+                return True
+                
+            # Se è un hash SHA256 con salt
+            if '$' in stored_hash:
+                salt, hash_value = stored_hash.split('$')
+                password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+                return password_hash == hash_value
+                
+            return False
+        except Exception as e:
+            logger.error(f"❌ Errore verifica password: {e}")
             return False
     
     def authenticate_user(self, username: str, password: str) -> bool:
         """Autentica un utente"""
-        if username in self.users:
-            user = self.users[username]
-            # Per ora usiamo confronto diretto per semplicità
-            if password == user['password_hash']:
-                return True
-        return False
+        try:
+            if username in self.users:
+                user = self.users[username]
+                
+                # Verifica se l'utente è attivo
+                if not user.get('is_active', True):
+                    logger.warning(f"❌ Utente {username} non attivo")
+                    return False
+                
+                # Verifica password
+                if self.verify_password(password, user['password_hash']):
+                    logger.info(f"✅ Autenticazione riuscita per {username}")
+                    return True
+                else:
+                    logger.warning(f"❌ Password errata per {username}")
+                    return False
+            else:
+                logger.warning(f"❌ Utente {username} non trovato")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Errore autenticazione: {e}")
+            return False
     
     def get_user_info(self, username: str) -> Optional[Dict]:
         """Ottiene informazioni su un utente"""
