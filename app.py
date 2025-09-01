@@ -201,8 +201,6 @@ try:
     # Mostra informazione all'utente
     if AUTH_SYSTEM == "fallback":
         st.info("ℹ️ **Sistema di Autenticazione**: Utilizzo versione di riserva (senza dipendenze esterne)")
-    else:
-        st.success("✅ **Sistema di Autenticazione**: Versione avanzata attiva")
     
     print("🔧 Inizializzazione database...")
     db = init_database()
@@ -390,13 +388,16 @@ if not st.session_state.get('authenticated', False):
     st.stop()
 
 # Titolo principale (solo per utenti autenticati)
-st.title("📊 Dashboard Gestione CPA Broker")
-st.markdown("---")
 
 # Mostra informazioni utente nella sidebar
 show_user_info()
 
 # Menu di navigazione
+# Titolo principale sopra il menu
+st.title("🏠 Dashboard CPA - Gestione Clienti e Incroci")
+st.markdown("---")
+# Titolo principale sopra il menu
+st.markdown("---")
 selected = option_menu(
     menu_title=None,
     options=["🏠 Dashboard", "👥 Gestione Clienti", "🔄 Incroci", "📈 Riepilogo", "⚙️ Impostazioni"],
@@ -696,6 +697,13 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
 if selected == "🏠 Dashboard":
     # Usa il nuovo sistema di navigazione utente
     render_user_navigation()
+    # Pulisci il contenuto precedente quando si torna alla dashboard
+    if "current_page" in st.session_state:
+        del st.session_state["current_page"]
+    if "selected_client" in st.session_state:
+        del st.session_state["selected_client"]
+    if "editing_client" in st.session_state:
+        del st.session_state["editing_client"]
     
 elif selected == "👥 Gestione Clienti":
     st.header("Gestione Clienti CPA")

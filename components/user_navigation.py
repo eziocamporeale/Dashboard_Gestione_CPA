@@ -6,6 +6,7 @@ Navigazione e integrazione del sistema utenti nella dashboard
 
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 from datetime import datetime
 import sys
 import os
@@ -157,7 +158,6 @@ class UserNavigation:
     
     def render_dashboard_welcome(self):
         """Rende la pagina di benvenuto della dashboard"""
-        st.title("🏠 Dashboard CPA - Gestione Clienti e Incroci")
         
         if self.current_user:
             st.success(f"👋 Benvenuto, **{self.current_user_info.get('full_name', self.current_user)}**!")
@@ -217,27 +217,71 @@ class UserNavigation:
             st.markdown("---")
             
             # Azioni rapide
-            st.subheader("⚡ Azioni Rapide")
-            
+            # Riepilogo Depositi Totali
+            try:
+                depositi_response = self.supabase_manager.supabase.table("clienti").select("deposito").execute()
+                if depositi_response.data:
+                    df_depositi = pd.DataFrame(depositi_response.data)
+                    depositi_totali = df_depositi["deposito"].sum() if "deposito" in df_depositi.columns else 0
+                    st.metric("💰 Depositi Totali", f"€{depositi_totali:,.2f}")
+                else:
+                    st.metric("💰 Depositi Totali", "€0.00")
+            except Exception as e:
+                st.metric("💰 Depositi Totali", "€0.00")
+
+            # Grafici a torta
+            st.subheader("📊 Grafici Sistema")
             col1, col2 = st.columns(2)
-            
+
             with col1:
-                if st.button("👥 Gestione Utenti", use_container_width=True):
-                    st.session_state['current_page'] = 'user_management'
-                    st.rerun()
-                
-                if st.button("⚙️ Impostazioni", use_container_width=True):
-                    st.session_state['current_page'] = 'settings'
-                    st.rerun()
-            
+                try:
+                    # Distribuzione Clienti per Broker
+                    broker_response = self.supabase_manager.supabase.table("clienti").select("broker").execute()
+                    if broker_response.data:
+                        df_broker = pd.DataFrame(broker_response.data)
+                        broker_counts = df_broker["broker"].value_counts()
+                        fig_broker = px.pie(values=broker_counts.values, names=broker_counts.index, title="Distribuzione Clienti per Broker")
+                        st.plotly_chart(fig_broker, use_container_width=True)
+                    else:
+                        st.info("📊 Nessun dato disponibile per la distribuzione broker")
+                except Exception as e:
+                    st.info("📊 Errore nel caricamento grafico broker")
+
+                try:
+                    # Distribuzione Piattaforme
+                    piattaforma_response = self.supabase_manager.supabase.table("clienti").select("piattaforma").execute()
+                    if piattaforma_response.data:
+                        df_piattaforma = pd.DataFrame(piattaforma_response.data)
+                        piattaforma_counts = df_piattaforma["piattaforma"].value_counts()
+                        fig_piattaforma = px.pie(values=piattaforma_counts.values, names=piattaforma_counts.index, title="Distribuzione Piattaforme")
+                        st.plotly_chart(fig_piattaforma, use_container_width=True)
+                    else:
+                        st.info("📊 Nessun dato disponibile per la distribuzione piattaforme")
+                except Exception as e:
+                    st.info("📊 Errore nel caricamento grafico piattaforme")
+
             with col2:
-                if st.button("📊 Statistiche", use_container_width=True):
-                    st.session_state['current_page'] = 'system_stats'
-                    st.rerun()
-                
-                if st.button("🔄 Aggiorna", use_container_width=True):
-                    st.rerun()
-        
+                try:
+                    # Depositi Totali per Broker
+                    depositi_broker_response = self.supabase_manager.supabase.table("clienti").select("broker,deposito").execute()
+                    if depositi_broker_response.data:
+                        df_depositi_broker = pd.DataFrame(depositi_broker_response.data)
+                        depositi_per_broker = df_depositi_broker.groupby("broker")["deposito"].sum()
+                        fig_depositi = px.pie(values=depositi_per_broker.values, names=depositi_per_broker.index, title="Depositi Totali per Broker")
+                        st.plotly_chart(fig_depositi, use_container_width=True)
+                    else:
+                        st.info("📊 Nessun dato disponibile per i depositi per broker")
+                except Exception as e:
+                    st.info("📊 Errore nel caricamento grafico depositi")
+
+                try:
+                    # Statistiche Sistema
+                    stats_data = {"Metrica": ["Clienti", "Incroci", "Utenti"], "Valore": [clienti_count, incroci_count, users_count]}
+                    df_stats = pd.DataFrame(stats_data)
+                    fig_stats = px.pie(values=df_stats["Valore"], names=df_stats["Metrica"], title="Statistiche Sistema")
+                    st.plotly_chart(fig_stats, use_container_width=True)
+                except Exception as e:
+                    st.info("📊 Errore nel caricamento grafico statistiche")
         else:
             st.warning("⚠️ Devi effettuare il login per accedere alla dashboard.")
     
