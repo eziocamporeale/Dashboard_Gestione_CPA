@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
+from utils.translations import t
 
 class Charts:
     def __init__(self):
@@ -14,62 +15,65 @@ class Charts:
         """Rende i grafici per la dashboard principale"""
         
         if df_clienti.empty:
-            st.info("Nessun dato disponibile per i grafici")
+            st.info(t("charts.dashboard.no_data", "Nessun dato disponibile per i grafici"))
             return
         
         # Grafici
-        st.subheader("📈 Grafici Analitici")
+        st.subheader(t("charts.dashboard.title", "📈 Grafici Analitici"))
         
         # Grafico 1: Distribuzione per Broker
         col_chart1, col_chart2 = st.columns(2)
         
         with col_chart1:
-            st.write("**Distribuzione Clienti per Broker**")
+            st.write(f"**{t('charts.dashboard.broker_distribution.title', 'Distribuzione Clienti per Broker')}**")
             broker_counts = df_clienti['broker'].value_counts()
             
             fig_broker = px.pie(
                 values=broker_counts.values,
                 names=broker_counts.index,
-                title="Clienti per Broker",
+                title=t("charts.dashboard.broker_distribution.chart_title", "Clienti per Broker"),
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig_broker.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig_broker, width='stretch')
         
         with col_chart2:
-            st.write("**Distribuzione per Piattaforma**")
+            st.write(f"**{t('charts.dashboard.platform_distribution.title', 'Distribuzione per Piattaforma')}**")
             piattaforma_counts = df_clienti['piattaforma'].value_counts()
             
             fig_piattaforma = px.bar(
                 x=piattaforma_counts.index,
                 y=piattaforma_counts.values,
-                title="Clienti per Piattaforma",
+                title=t("charts.dashboard.platform_distribution.chart_title", "Clienti per Piattaforma"),
                 color=piattaforma_counts.values,
                 color_continuous_scale='viridis'
             )
-            fig_piattaforma.update_layout(xaxis_title="Piattaforma", yaxis_title="Numero Clienti")
+            fig_piattaforma.update_layout(
+                xaxis_title=t("charts.dashboard.platform_distribution.x_axis", "Piattaforma"), 
+                yaxis_title=t("charts.dashboard.platform_distribution.y_axis", "Numero Clienti")
+            )
             st.plotly_chart(fig_piattaforma, width='stretch')
         
         # Grafico 2: Depositi per Broker
-        st.write("**Depositi Totali per Broker**")
+        st.write(f"**{t('charts.dashboard.deposits_by_broker.title', 'Depositi Totali per Broker')}**")
         depositi_broker = df_clienti.groupby('broker')['deposito'].sum().sort_values(ascending=False)
         
         fig_depositi = px.bar(
             x=depositi_broker.index,
             y=depositi_broker.values,
-            title="Depositi Totali per Broker",
+            title=t("charts.dashboard.deposits_by_broker.chart_title", "Depositi Totali per Broker"),
             color=depositi_broker.values,
             color_continuous_scale='plasma'
         )
         fig_depositi.update_layout(
-            xaxis_title="Broker",
-            yaxis_title="Depositi Totali (€)",
+            xaxis_title=t("charts.dashboard.deposits_by_broker.x_axis", "Broker"),
+            yaxis_title=t("charts.dashboard.deposits_by_broker.y_axis", "Depositi Totali (€)"),
             xaxis_tickangle=-45
         )
         st.plotly_chart(fig_depositi, width='stretch')
         
         # Grafico 3: Trend temporale
-        st.write("**Trend Registrazioni nel Tempo**")
+        st.write(f"**{t('charts.dashboard.registration_trend.title', 'Trend Registrazioni nel Tempo')}**")
         
         # Converti la colonna data_registrazione in datetime se non lo è già
         if 'data_registrazione' in df_clienti.columns:
@@ -85,27 +89,27 @@ class Charts:
                     data_frame=registrazioni_mensili,
                     x='mese',
                     y='count',
-                    title="Registrazioni Mensili",
+                    title=t("charts.dashboard.registration_trend.chart_title", "Registrazioni Mensili"),
                     markers=True
                 )
                 fig_trend.update_layout(
-                    xaxis_title="Mese",
-                    yaxis_title="Numero Registrazioni",
+                    xaxis_title=t("charts.dashboard.registration_trend.x_axis", "Mese"),
+                    yaxis_title=t("charts.dashboard.registration_trend.y_axis", "Numero Registrazioni"),
                     xaxis_tickangle=-45
                 )
                 st.plotly_chart(fig_trend, width='stretch')
             else:
-                st.info("Nessun dato di registrazione disponibile per il grafico")
+                st.info(t("charts.dashboard.registration_trend.no_data", "Nessun dato di registrazione disponibile per il grafico"))
     
     def render_summary_charts(self, df_clienti):
         """Rende i grafici per la sezione riepilogo"""
         
         if df_clienti.empty:
-            st.info("Nessun dato disponibile per i grafici")
+            st.info(t("charts.summary.no_data", "Nessun dato disponibile per i grafici"))
             return
         
         # Tabella riassuntiva
-        st.subheader("📋 Riepilogo Dati")
+        st.subheader(t("charts.summary.title", "📋 Riepilogo Dati"))
         
         # Statistiche per broker - gestisci valori None
         if 'deposito' in df_clienti.columns:
@@ -121,12 +125,12 @@ class Charts:
                 stats_broker.columns = ['Numero Clienti', 'Depositi Totali', 'Deposito Medio', 'Deposito Min', 'Deposito Max']
                 stats_broker = stats_broker.sort_values('Numero Clienti', ascending=False)
                 
-                st.write("**Statistiche per Broker (solo clienti con deposito):**")
+                st.write(f"**{t('charts.summary.broker_stats.title', 'Statistiche per Broker (solo clienti con deposito):')}**")
                 st.dataframe(stats_broker, width='stretch')
             else:
-                st.info("Nessun cliente con deposito valido per le statistiche")
+                st.info(t("charts.summary.broker_stats.no_valid_deposits", "Nessun cliente con deposito valido per le statistiche"))
         else:
-            st.info("Colonna 'deposito' non disponibile per le statistiche")
+            st.info(t("charts.summary.broker_stats.deposit_column_missing", "Colonna 'deposito' non disponibile per le statistiche"))
         
         # Grafico a torta per i depositi - gestisci valori None
         if 'deposito' in df_clienti.columns:

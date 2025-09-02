@@ -12,6 +12,7 @@ import os
 import logging
 import hashlib
 import secrets
+from utils.translations import t
 
 # Configura il logger
 logger = logging.getLogger(__name__)
@@ -166,23 +167,28 @@ class UserSettings:
         """Rende l'interfaccia principale delle impostazioni utente"""
         
         if not self.current_user:
-            st.error("❌ Utente non autenticato")
+            st.error(t("user_settings.not_authenticated", "❌ Utente non autenticato"))
             return
         
-        st.header("⚙️ Impostazioni Utente")
+        st.header(t("user_settings.title", "⚙️ Impostazioni Utente"))
         st.markdown("---")
         
         # Recupera dati utente corrente
         user_data = self.get_current_user_data()
         
         if not user_data:
-            st.error("❌ Impossibile recuperare i dati utente")
+            st.error(t("user_settings.user_data_error", "❌ Impossibile recuperare i dati utente"))
             return
         
         # Tab per diverse funzionalità
         if self.current_role == 'admin':
             # Admin ha accesso a tutte le funzionalità
-            tab1, tab2, tab3, tab4 = st.tabs(["🔐 Cambio Password", "👤 Profilo Utente", "📊 Informazioni Account", "👑 Gestione Password Utenti"])
+            tab1, tab2, tab3, tab4 = st.tabs([
+                t("user_settings.tabs.change_password", "🔐 Cambio Password"),
+                t("user_settings.tabs.profile", "👤 Profilo Utente"),
+                t("user_settings.tabs.account_info", "📊 Informazioni Account"),
+                t("user_settings.tabs.admin_password_management", "👑 Gestione Password Utenti")
+            ])
             
             with tab1:
                 self.render_change_password()
@@ -197,7 +203,11 @@ class UserSettings:
                 self.render_admin_password_management()
         else:
             # Utenti normali hanno accesso limitato
-            tab1, tab2, tab3 = st.tabs(["🔐 Cambio Password", "👤 Profilo Utente", "📊 Informazioni Account"])
+            tab1, tab2, tab3 = st.tabs([
+                t("user_settings.tabs.change_password", "🔐 Cambio Password"),
+                t("user_settings.tabs.profile", "👤 Profilo Utente"),
+                t("user_settings.tabs.account_info", "📊 Informazioni Account")
+            ])
             
             with tab1:
                 self.render_change_password()

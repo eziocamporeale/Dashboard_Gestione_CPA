@@ -11,6 +11,7 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 import logging
+from utils.translations import t
 
 # Configurazione logging
 logging.basicConfig(level=logging.INFO)
@@ -49,15 +50,15 @@ class SimpleAuthSystem:
                                 'is_active': user.get('is_active', True),
                                 'from_supabase': True
                             }
-                    logger.info(f"✅ Caricati {len(response.data)} utenti da Supabase")
+                    logger.info(t("auth.system.users_loaded", "✅ Caricati {count} utenti da Supabase").format(count=len(response.data)))
                 else:
-                    logger.warning("⚠️ Nessun utente trovato in Supabase")
+                    logger.warning(t("auth.system.no_users_supabase", "⚠️ Nessun utente trovato in Supabase"))
             else:
-                logger.warning("⚠️ Supabase non configurato, uso solo utenti locali")
+                logger.warning(t("auth.system.supabase_not_configured", "⚠️ Supabase non configurato, uso solo utenti locali"))
                 
         except Exception as e:
-            logger.error(f"❌ Errore caricamento utenti da Supabase: {e}")
-            logger.info("ℹ️ Continuo con utenti locali")
+            logger.error(t("auth.system.supabase_error", "❌ Errore caricamento utenti da Supabase: {error}").format(error=e))
+            logger.info(t("auth.system.continue_local", "ℹ️ Continuo con utenti locali"))
     
     def create_default_users(self) -> Dict:
         """Crea utenti di default"""

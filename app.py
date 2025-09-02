@@ -4,6 +4,7 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 import plotly.express as px
+from utils.translations import t, translation_manager
 from streamlit_option_menu import option_menu
 import logging
 
@@ -27,63 +28,63 @@ try:
     print("✅ Charts importato correttamente")
 except Exception as e:
     print(f"❌ Errore import Charts: {e}")
-    st.error(f"Errore import Charts: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="Charts", error=e))
 
 try:
     from components.client_form import ClientForm
     print("✅ ClientForm importato correttamente")
 except Exception as e:
     print(f"❌ Errore import ClientForm: {e}")
-    st.error(f"Errore import ClientForm: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="ClientForm", error=e))
 
 try:
     from components.client_table import ClientTable
     print("✅ ClientTable importato correttamente")
 except Exception as e:
     print(f"❌ Errore import ClientTable: {e}")
-    st.error(f"Errore import ClientTable: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="ClientTable", error=e))
 
 try:
     from components.incroci_tab import IncrociTab
     print("✅ IncrociTab importato correttamente")
 except Exception as e:
     print(f"❌ Errore import IncrociTab: {e}")
-    st.error(f"Errore import IncrociTab: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="IncrociTab", error=e))
 
 try:
     from database.database import DatabaseManager
     print("✅ DatabaseManager importato correttamente")
 except Exception as e:
     print(f"❌ Errore import DatabaseManager: {e}")
-    st.error(f"Errore import DatabaseManager: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="DatabaseManager", error=e))
 
 try:
     from database.incroci_manager import IncrociManager
     print("✅ IncrociManager importato correttamente")
 except Exception as e:
     print(f"❌ Errore import IncrociManager: {e}")
-    st.error(f"Errore import IncrociManager: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="IncrociManager", error=e))
 
 try:
     from utils.helpers import *
     print("✅ utils.helpers importato correttamente")
 except Exception as e:
     print(f"❌ Errore import utils.helpers: {e}")
-    st.error(f"Errore import utils.helpers: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="utils.helpers", error=e))
 
 try:
     from utils.backup import DatabaseBackupManager, auto_backup
     print("✅ utils.backup importato correttamente")
 except Exception as e:
     print(f"❌ Errore import utils.backup: {e}")
-    st.error(f"Errore import utils.backup: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="utils.backup", error=e))
 
 try:
     from utils.secure_backup import create_secure_backup, list_secure_backups, restore_from_secure_backup
     print("✅ utils.secure_backup importato correttamente")
 except Exception as e:
     print(f"❌ Errore import utils.secure_backup: {e}")
-    st.error(f"Errore import utils.secure_backup: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="utils.secure_backup", error=e))
 
 # Import sistema gestione utenti
 try:
@@ -91,7 +92,7 @@ try:
     print("✅ Sistema gestione utenti importato correttamente")
 except Exception as e:
     print(f"❌ Errore import sistema gestione utenti: {e}")
-    st.error(f"Errore import sistema gestione utenti: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione utenti", error=e))
 
 # Import sistema impostazioni utente
 try:
@@ -99,11 +100,11 @@ try:
     print("✅ Sistema impostazioni utente importato correttamente")
 except Exception as e:
     print(f"❌ Errore import sistema impostazioni utente: {e}")
-    st.error(f"Errore import sistema impostazioni utente: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema impostazioni utente", error=e))
 
 # Configurazione pagina
 st.set_page_config(
-    page_title="Dashboard Gestione CPA",
+    page_title=t("dashboard.title", "Dashboard Gestione CPA"),
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -395,13 +396,13 @@ show_user_info()
 
 # Menu di navigazione
 # Titolo principale sopra il menu
-st.title("🏠 Dashboard CPA - Gestione Clienti e Incroci")
+st.title(t("dashboard.title", "🏠 Dashboard CPA - Gestione Clienti e Incroci"))
 st.markdown("---")
 # Titolo principale sopra il menu
 st.markdown("---")
 selected = option_menu(
     menu_title=None,
-    options=["🏠 Dashboard", "👥 Gestione Clienti", "🔄 Incroci", "📈 Riepilogo", "⚙️ Impostazioni"],
+    options=[t("navigation.dashboard", "🏠 Dashboard"), t("navigation.clients", "👥 Gestione Clienti"), t("navigation.crosses", "🔄 Incroci"), t("navigation.summary", "📈 Riepilogo"), t("navigation.settings", "⚙️ Impostazioni")],
     icons=["house", "people", "arrows-collapse", "bar-chart", "gear"],
     orientation="horizontal",
     styles={
@@ -708,7 +709,7 @@ if selected == "🏠 Dashboard":
     if "editing_client" in st.session_state:
         del st.session_state["editing_client"]
     
-elif selected == "👥 Gestione Clienti":
+elif selected == t("navigation.clients", "👥 Gestione Clienti"):
     st.header("Gestione Clienti CPA")
     st.write("Gestisci i clienti e le loro informazioni")
     
@@ -756,11 +757,11 @@ elif selected == "👥 Gestione Clienti":
         else:
             st.info("Nessun cliente presente. Aggiungi il primo cliente usando il form sopra!")
 
-elif selected == "🔄 Incroci":
+elif selected == t("navigation.crosses", "🔄 Incroci"):
     # Mostra il tab degli incroci
     components['incroci_tab'].render()
 
-elif selected == "📈 Riepilogo":
+elif selected == t("navigation.summary", "📈 Riepilogo"):
     st.header("Riepilogo Dati")
     st.write("Visualizza i dati in formato tabellare e grafico")
     
@@ -784,7 +785,7 @@ elif selected == "📈 Riepilogo":
     else:
         st.info("Nessun cliente presente nel database. Aggiungi clienti per visualizzare i dati!")
 
-elif selected == "⚙️ Impostazioni":
+elif selected == t("navigation.settings", "⚙️ Impostazioni"):
     st.header("⚙️ Impostazioni Sistema")
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
@@ -1061,29 +1062,29 @@ def fix_supabase_and_duplicates():
 
 # Sidebar pulita e organizzata
 with st.sidebar:
-    st.header("🎛️ Dashboard CPA")
+    st.header(t("dashboard.title", "🎛️ Dashboard CPA"))
     
     # Sezione principale
-    st.subheader("📊 Gestione")
+    st.subheader(t("sidebar.management", "📊 Gestione"))
     
-    if st.button("➕ Nuovo Cliente", use_container_width=True):
+    if st.button(t("clients.new_client", "➕ Nuovo Cliente"), use_container_width=True):
         st.session_state.editing_client = None
     
-    if st.button("🔄 Aggiorna Dati", use_container_width=True):
+    if st.button(t("common.refresh", "🔄 Aggiorna Dati"), use_container_width=True):
         pass
     
     # Sezione informazioni
-    st.subheader("ℹ️ Informazioni")
-    st.write("Dashboard per la gestione delle CPA dei broker")
+    st.subheader(t("sidebar.info", "ℹ️ Informazioni"))
+    st.write(t("dashboard.description", "Dashboard per la gestione delle CPA dei broker"))
     
     # Broker popolari
-    st.subheader("🏢 Broker Popolari")
+    st.subheader(t("sidebar.brokers", "🏢 Broker Popolari"))
     broker_suggestions = get_broker_suggestions()[:5]
     for broker in broker_suggestions:
         st.write(f"• {broker}")
     
     # Gestione broker
-    if st.button("⚙️ Gestisci Broker", use_container_width=True):
+    if st.button(t("sidebar.manage_brokers", "⚙️ Gestisci Broker"), use_container_width=True):
         st.session_state.show_broker_management = True
     
     # Link utili
@@ -1091,6 +1092,20 @@ with st.sidebar:
     st.write("• [Documentazione Streamlit](https://docs.streamlit.io/)")
     st.write("• [Plotly Charts](https://plotly.com/python/)")
     st.write("• [SQLite Tutorial](https://www.sqlitetutorial.net/)")
+    # Selettore di lingua
+    st.subheader(t("language.selector_title", "🌐 Lingua"))
+    selected_language = st.selectbox(
+        t("language.select_language", "Seleziona lingua:"),
+        options=["it", "es"],
+        format_func=lambda x: t("language.italian", "Italiano") if x == "it" else t("language.spanish", "Español"),
+        index=0 if st.session_state.get("language", "it") == "it" else 1,
+        key="language_selector"
+    )
+    
+    # Se la lingua è cambiata, aggiorna
+    if selected_language != st.session_state.get("language", "it"):
+        st.session_state["language"] = selected_language
+        st.rerun()
     
     # Separatore
     st.markdown("---")

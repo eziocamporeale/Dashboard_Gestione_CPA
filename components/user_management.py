@@ -10,6 +10,7 @@ from datetime import datetime
 import sys
 import os
 import logging
+from utils.translations import t
 
 # Configura il logger
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class UserManagement:
         logger.info(f"🔍 HOOK USER_MANAGEMENT: session_state.roles = {st.session_state.get('roles')}")
         
         if self.current_user_role != 'admin':
-            st.error("❌ Accesso negato. Solo gli amministratori possono gestire gli utenti.")
+            st.error(t("user_management.access_denied", "❌ Accesso negato. Solo gli amministratori possono gestire gli utenti."))
             logger.warning(f"🔍 HOOK USER_MANAGEMENT: Accesso negato per ruolo {self.current_user_role}")
             return False
         
@@ -216,11 +217,16 @@ class UserManagement:
         if not self.check_admin_permissions():
             return
         
-        st.header("👥 Gestione Utenti")
+        st.header(t("user_management.title", "👥 Gestione Utenti"))
         st.markdown("---")
         
         # Tab per diverse funzionalità
-        tab1, tab2, tab3, tab4 = st.tabs(["📊 Lista Utenti", "➕ Nuovo Utente", "🔧 Modifica Utente", "📈 Statistiche"])
+        tab1, tab2, tab3, tab4 = st.tabs([
+            t("user_management.tabs.users_list", "📊 Lista Utenti"),
+            t("user_management.tabs.new_user", "➕ Nuovo Utente"),
+            t("user_management.tabs.edit_user", "🔧 Modifica Utente"),
+            t("user_management.tabs.statistics", "📈 Statistiche")
+        ])
         
         with tab1:
             self.render_users_list()
@@ -236,20 +242,23 @@ class UserManagement:
     
     def render_users_list(self):
         """Rende la lista degli utenti"""
-        st.subheader("📊 Lista Utenti")
+        st.subheader(t("user_management.users_list.title", "📊 Lista Utenti"))
         
         # Recupera utenti
         users_df = self.get_all_users()
         
         if users_df.empty:
-            st.info("ℹ️ Nessun utente trovato nel sistema.")
+            st.info(t("user_management.users_list.no_users", "ℹ️ Nessun utente trovato nel sistema."))
             return
         
         # Formatta i dati per la visualizzazione
         display_df = users_df.copy()
         display_df['created_at'] = pd.to_datetime(display_df['created_at']).dt.strftime('%d/%m/%Y %H:%M')
         display_df['last_login'] = pd.to_datetime(display_df['last_login']).dt.strftime('%d/%m/%Y %H:%M') if 'last_login' in display_df.columns else 'Mai'
-        display_df['status'] = display_df['is_active'].map({True: '🟢 Attivo', False: '🔴 Inattivo'})
+        display_df['status'] = display_df['is_active'].map({
+            True: t("user_management.users_list.status.active", "🟢 Attivo"), 
+            False: t("user_management.users_list.status.inactive", "🔴 Inattivo")
+        })
         
         # Mostra tabella
         st.dataframe(
@@ -258,93 +267,87 @@ class UserManagement:
             hide_index=True
         )
         
-        # Azioni rapide
-        st.subheader("⚡ Azioni Rapide")
+        # Lista utenti con azioni dirette
+        st.subheader(t("user_management.users_list.title", "👥 Lista Utenti"))
         
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Attiva/Disattiva utente
-            selected_user = st.selectbox(
-                "Seleziona utente per cambio stato:",
-                options=users_df['username'].tolist(),
-                key="status_user_select"
-            )
+        # Tabella utenti con azioni
+        for _, user in users_df.iterrows():
+            user_name = user["username"]
+            current_status = user["is_active"]
+            user_role = user.get("role", "user")
             
-            if selected_user:
-                user_data = users_df[users_df['username'] == selected_user].iloc[0]
-                current_status = user_data['is_active']
+            # Creare una riga per ogni utente
+            with st.container():
+                col_name, col_status, col_actions = st.columns([2, 1, 3])
                 
-                if st.button(f"{'🔴 Disattiva' if current_status else '🟢 Attiva'} {selected_user}"):
-                    self.toggle_user_status(user_data['id'], current_status, selected_user)
-                    pass  # st.rerun() rimosso per evitare reindirizzamento
-        
-        with col2:
-            # Elimina utente
-            delete_user = st.selectbox(
-                "Seleziona utente da eliminare:",
-                options=users_df[users_df['username'] != 'admin']['username'].tolist(),
-                key="delete_user_select"
-            )
-            
-            if delete_user:
-                user_data = users_df[users_df['username'] == delete_user].iloc[0]
+                with col_name:
+                    st.write(f"**{user_name}**")
+                    if user_role != "user":
+                        st.write(f"*({user_role})*")
                 
-                # Gestione stato di conferma per eliminazione
-                confirm_key = f"confirm_delete_{delete_user}"
-                if confirm_key not in st.session_state:
-                    st.session_state[confirm_key] = False
+                with col_status:
+                    status_icon = "🟢" if current_status else "🔴"
+                    status_text = t("user_management.users_list.status.active", "Attivo") if current_status else t("user_management.users_list.status.inactive", "Inattivo")
+                    st.write(f"{status_icon} {status_text}")
                 
-                # Se non è ancora stata richiesta la conferma, mostra il pulsante elimina
-                if not st.session_state[confirm_key]:
-                    if st.button(f"🗑️ Elimina {delete_user}", type="secondary", key=f"delete_btn_{delete_user}"):
-                        logger.info(f"🔍 ELIMINAZIONE UTENTE: Pulsante elimina cliccato per {delete_user}")
-                        st.session_state[confirm_key] = True
-                        pass  # st.rerun() rimosso per evitare reindirizzamento
-                
-                # Se è richiesta la conferma, mostra il checkbox e il pulsante di conferma
-                else:
-                    logger.info(f"🔍 ELIMINAZIONE UTENTE: Mostrando conferma per {delete_user}")
-                    st.warning(f"⚠️ Sei sicuro di voler eliminare l'utente '{delete_user}'?")
+                with col_actions:
+                    # Pulsante Attiva/Disattiva (per tutti tranne admin)
+                    if user_name != "admin":
+                        button_text = f"{t('user_management.users_list.actions.deactivate', '🔴 Disattiva') if current_status else t('user_management.users_list.actions.activate', '🟢 Attiva')} {user_name}"
+                        if st.button(button_text, key=f"toggle_btn_{user_name}"):
+                            self.toggle_user_status(user["id"], current_status, user_name)
+                            st.success(t("user_management.users_list.messages.status_updated", "✅ Stato di {username} aggiornato!").format(username=user_name))
+                            st.rerun()
                     
-                    col_confirm1, col_confirm2 = st.columns(2)
-                    
-                    with col_confirm1:
-                        if st.button("✅ Conferma Eliminazione", type="primary", key=f"confirm_btn_{delete_user}"):
-                            logger.info(f"🔍 ELIMINAZIONE UTENTE: Conferma eliminazione cliccata per {delete_user}")
-                            if self.delete_user(user_data['id'], delete_user):
-                                st.session_state[confirm_key] = False
-                                pass  # st.rerun() rimosso per evitare reindirizzamento
-                    
-                    with col_confirm2:
-                        if st.button("❌ Annulla", type="secondary", key=f"cancel_btn_{delete_user}"):
-                            logger.info(f"🔍 ELIMINAZIONE UTENTE: Annulla eliminazione cliccato per {delete_user}")
+                    # Pulsante Elimina (solo per utenti non admin)
+                    if user_name != "admin":
+                        # Gestione stato di conferma per eliminazione
+                        confirm_key = f"confirm_delete_{user_name}"
+                        if confirm_key not in st.session_state:
                             st.session_state[confirm_key] = False
-                            pass  # st.rerun() rimosso per evitare reindirizzamento
-    
+                        
+                        if not st.session_state[confirm_key]:
+                            if st.button(f"{t('user_management.users_list.actions.delete', '🗑️ Elimina')} {user_name}", type="secondary", key=f"delete_btn_{user_name}"):
+                                st.session_state[confirm_key] = True
+                                st.rerun()
+                        else:
+                            st.warning(t("user_management.users_list.messages.delete_warning", "⚠️ Conferma eliminazione di {username}").format(username=user_name))
+                            col_confirm1, col_confirm2 = st.columns(2)
+                            with col_confirm1:
+                                if st.button(t("user_management.users_list.actions.confirm", "✅ Conferma"), type="primary", key=f"confirm_btn_{user_name}"):
+                                    if self.delete_user(user["id"], user_name):
+                                        st.session_state[confirm_key] = False
+                                        st.success(t("user_management.users_list.messages.delete_success", "✅ {username} eliminato con successo!").format(username=user_name))
+                                        st.rerun()
+                            with col_confirm2:
+                                if st.button(t("user_management.users_list.actions.cancel", "❌ Annulla"), key=f"cancel_btn_{user_name}"):
+                                    st.session_state[confirm_key] = False
+                                    st.rerun()
+            
+            st.markdown("---")
     def render_create_user(self):
         """Rende il form per la creazione di nuovi utenti"""
-        st.subheader("➕ Nuovo Utente")
+        st.subheader(t("user_management.create_user.title", "➕ Nuovo Utente"))
         
         with st.form("create_user_form"):
             col1, col2 = st.columns(2)
             
             with col1:
-                username = st.text_input("👤 Username *", placeholder="es. mario.rossi")
-                email = st.text_input("📧 Email *", placeholder="es. mario@example.com")
-                password = st.text_input("🔐 Password *", type="password", placeholder="Minimo 8 caratteri")
+                username = st.text_input(t("user_management.create_user.form.username", "👤 Username *"), placeholder="es. mario.rossi")
+                email = st.text_input(t("user_management.create_user.form.email", "📧 Email *"), placeholder="es. mario@example.com")
+                password = st.text_input(t("user_management.create_user.form.password", "🔐 Password *"), type="password", placeholder="Minimo 8 caratteri")
             
             with col2:
-                full_name = st.text_input("📝 Nome Completo *", placeholder="es. Mario Rossi")
-                role = st.selectbox("🏷️ Ruolo *", options=['user', 'manager', 'admin'])
-                is_active = st.checkbox("✅ Utente Attivo", value=True)
+                full_name = st.text_input(t("user_management.create_user.form.full_name", "📝 Nome Completo *"), placeholder="es. Mario Rossi")
+                role = st.selectbox(t("user_management.create_user.form.role", "🏷️ Ruolo *"), options=['user', 'manager', 'admin'])
+                is_active = st.checkbox(t("user_management.create_user.form.is_active", "✅ Utente Attivo"), value=True)
             
             # Validazione
-            if st.form_submit_button("🚀 Crea Utente"):
+            if st.form_submit_button(t("user_management.create_user.form.submit", "🚀 Crea Utente")):
                 if not all([username, email, password, full_name, role]):
-                    st.error("❌ Tutti i campi obbligatori devono essere compilati!")
+                    st.error(t("user_management.create_user.validation.required_fields", "❌ Tutti i campi obbligatori devono essere compilati!"))
                 elif len(password) < 8:
-                    st.error("❌ La password deve essere di almeno 8 caratteri!")
+                    st.error(t("user_management.create_user.validation.password_length", "❌ La password deve essere di almeno 8 caratteri!"))
                 else:
                     if self.create_user(username, email, password, full_name, role):
                         pass  # st.rerun() rimosso per evitare reindirizzamento

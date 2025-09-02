@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS clienti (
     deposito REAL NOT NULL,
     piattaforma TEXT NOT NULL,
     numero_conto TEXT NOT NULL,
-    wallet TEXT,
     password_conto TEXT,
     vps_ip TEXT,
     vps_username TEXT,

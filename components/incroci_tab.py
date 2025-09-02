@@ -11,6 +11,7 @@ from datetime import datetime, date
 from typing import Dict, List
 import logging
 import time
+from utils.translations import t
 
 class IncrociTab:
     """Tab per la gestione degli incroci"""
@@ -30,31 +31,36 @@ class IncrociTab:
     
     def render(self):
         """Rende il tab completo degli incroci"""
-        st.header("🔄 Gestione Incroci CPA")
-        st.markdown("Gestisci gli incroci tra account per sbloccare bonus senza rischio")
+        st.header(t("incroci.title", "🔄 Gestione Incroci CPA"))
+        st.markdown(t("incroci.description", "Gestisci gli incroci tra account per sbloccare bonus senza rischio"))
         
         # Sidebar per filtri e azioni rapide
         with st.sidebar:
-            st.subheader("🔍 Filtri")
+            st.subheader(t("incroci.filters.title", "🔍 Filtri"))
             stato_filtro = st.selectbox(
-                "Stato Incroci",
-                ["Tutti", "Attivi", "Chiusi", "Sospesi"],
+                t("incroci.filters.status", "Stato Incroci"),
+                [
+                    t("incroci.filters.status_options.all", "Tutti"),
+                    t("incroci.filters.status_options.active", "Attivi"),
+                    t("incroci.filters.status_options.closed", "Chiusi"),
+                    t("incroci.filters.status_options.suspended", "Sospesi")
+                ],
                 index=0
             )
             
-            st.subheader("📊 Statistiche Rapide")
+            st.subheader(t("incroci.quick_stats.title", "📊 Statistiche Rapide"))
             stats = self.incroci_manager.ottieni_statistiche_incroci()
             if stats:
-                st.metric("Incroci Attivi", stats['generali']['incroci_attivi'])
-                st.metric("Volume Totale", f"{stats['generali']['volume_totale']:,.0f}")
-                st.metric("Bonus Totali", f"{stats['bonus']['totale_bonus']:,.0f} USD")
+                st.metric(t("incroci.quick_stats.active_crosses", "Incroci Attivi"), stats['generali']['incroci_attivi'])
+                st.metric(t("incroci.quick_stats.total_volume", "Volume Totale"), f"{stats['generali']['volume_totale']:,.0f}")
+                st.metric(t("incroci.quick_stats.total_bonus", "Bonus Totali"), f"{stats['bonus']['totale_bonus']:,.0f} USD")
         
         # Tab principali
         tab1, tab2, tab3, tab4 = st.tabs([
-            "📋 Lista Incroci", 
-            "➕ Nuovo Incrocio", 
-            "📊 Statistiche", 
-            "🔍 Ricerca"
+            t("incroci.tabs.list", "📋 Lista Incroci"), 
+            t("incroci.tabs.new", "➕ Nuovo Incrocio"), 
+            t("incroci.tabs.statistics", "📊 Statistiche"), 
+            t("incroci.tabs.search", "🔍 Ricerca")
         ])
         
         with tab1:
@@ -102,35 +108,39 @@ class IncrociTab:
 
         
         # Ottieni incroci filtrati
-        if stato_filtro == "Tutti":
+        if stato_filtro == t("incroci.filters.status_options.all", "Tutti"):
             incroci_df = self.incroci_manager.ottieni_incroci()
         else:
-            stato_map = {"Attivi": "attivo", "Chiusi": "chiuso", "Sospesi": "sospeso"}
+            stato_map = {
+                t("incroci.filters.status_options.active", "Attivi"): "attivo", 
+                t("incroci.filters.status_options.closed", "Chiusi"): "chiuso", 
+                t("incroci.filters.status_options.suspended", "Sospesi"): "sospeso"
+            }
             incroci_df = self.incroci_manager.ottieni_incroci(stato_map[stato_filtro])
         
         if incroci_df.empty:
-            st.info("Nessun incrocio trovato")
+            st.info(t("incroci.list.no_crosses", "Nessun incrocio trovato"))
             return
         
         # Mostra numero totale incroci
-        st.write(f"**Totale incroci trovati: {len(incroci_df)}**")
+        st.write(t("incroci.list.total_found", "**Totale incroci trovati: {count}**").format(count=len(incroci_df)))
         
         # Gestione conferma eliminazione
         if st.session_state.get('mostra_conferma_eliminazione', False) and st.session_state.get('incrocio_da_eliminare'):
             incrocio_id = st.session_state.incrocio_da_eliminare
-            st.warning(f"⚠️ **Attenzione**: Stai per eliminare l'incrocio {incrocio_id}")
-            st.info("Questa azione è irreversibile e eliminerà tutti i dati correlati (account e bonus)")
+            st.warning(t("incroci.list.delete_warning", "⚠️ **Attenzione**: Stai per eliminare l'incrocio {cross_id}").format(cross_id=incrocio_id))
+            st.info(t("incroci.list.delete_irreversible", "Questa azione è irreversibile e eliminerà tutti i dati correlati (account e bonus)"))
             
             col_confirm1, col_confirm2 = st.columns(2)
             
             with col_confirm1:
                 if st.button("❌ Conferma Eliminazione", key="confirm_elimina_finale", type="primary"):
-                    st.info(f"🔄 Eliminazione incrocio {incrocio_id} in corso...")
+                    st.info(t("incroci.list.delete_in_progress", "🔄 Eliminazione incrocio {cross_id} in corso...").format(cross_id=incrocio_id))
                     
                     success = self.incroci_manager.elimina_incrocio(incrocio_id)
                     
                     if success:
-                        st.success("✅ Incrocio eliminato con successo!")
+                        st.success(t("incroci.list.delete_success", "✅ Incrocio eliminato con successo!"))
                         
                         st.session_state.incroci_aggiornati = True
                         st.session_state.ultimo_eliminato = incrocio_id
@@ -140,10 +150,10 @@ class IncrociTab:
                         st.session_state.mostra_conferma_eliminazione = False
                         st.session_state.incrocio_da_eliminare = None
                         
-                        st.success("✅ **Eliminazione completata!** Clicca '🔄 Aggiorna Lista' per vedere i cambiamenti.")
+                        st.success(t("incroci.list.delete_completed", "✅ **Eliminazione completata!** Clicca '🔄 Aggiorna Lista' per vedere i cambiamenti."))
                         st.rerun()
                     else:
-                        st.error("❌ Errore nell'eliminazione dell'incrocio")
+                        st.error(t("incroci.list.delete_error", "❌ Errore nell'eliminazione dell'incrocio"))
                         # Reset dello stato in caso di errore
                         st.session_state.mostra_conferma_eliminazione = False
                         st.session_state.incrocio_da_eliminare = None
@@ -161,29 +171,29 @@ class IncrociTab:
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    st.write("**Account Long:**")
-                    st.write(f"Cliente: {incrocio['cliente_long']}")
-                    st.write(f"Broker: {incrocio['broker_long']}")
-                    st.write(f"Conto: {incrocio['conto_long']}")
+                    st.write(t("incroci.details.long_account", "**Account Long:**"))
+                    st.write(t("incroci.details.client", "Cliente: {client}").format(client=incrocio['cliente_long']))
+                    st.write(t("incroci.details.broker", "Broker: {broker}").format(broker=incrocio['broker_long']))
+                    st.write(t("incroci.details.account", "Conto: {account}").format(account=incrocio['conto_long']))
                     volume_long = incrocio.get('volume_long', 0) or 0
-                    st.write(f"Volume: {volume_long:,.0f}")
+                    st.write(t("incroci.details.volume", "Volume: {volume}").format(volume=f"{volume_long:,.0f}"))
                 
                 with col2:
-                    st.write("**Account Short:**")
-                    st.write(f"Cliente: {incrocio['cliente_short']}")
-                    st.write(f"Broker: {incrocio['broker_short']}")
-                    st.write(f"Conto: {incrocio['conto_short']}")
+                    st.write(t("incroci.details.short_account", "**Account Short:**"))
+                    st.write(t("incroci.details.client", "Cliente: {client}").format(client=incrocio['cliente_short']))
+                    st.write(t("incroci.details.broker", "Broker: {broker}").format(broker=incrocio['broker_short']))
+                    st.write(t("incroci.details.account", "Conto: {account}").format(account=incrocio['conto_short']))
                     volume_short = incrocio.get('volume_short', 0) or 0
-                    st.write(f"Volume: {volume_short:,.0f}")
+                    st.write(t("incroci.details.volume", "Volume: {volume}").format(volume=f"{volume_short:,.0f}"))
                 
                 with col3:
-                    st.write("**Dettagli:**")
-                    st.write(f"Stato: {incrocio['stato']}")
-                    st.write(f"Apertura: {incrocio['data_apertura']}")
+                    st.write(t("incroci.details.details", "**Dettagli:**"))
+                    st.write(t("incroci.details.status", "Stato: {status}").format(status=incrocio['stato']))
+                    st.write(t("incroci.details.opening", "Apertura: {date}").format(date=incrocio['data_apertura']))
                     if pd.notna(incrocio['data_chiusura']):
-                        st.write(f"Chiusura: {incrocio['data_chiusura']}")
+                        st.write(t("incroci.details.closing", "Chiusura: {date}").format(date=incrocio['data_chiusura']))
                     bonus_totale = incrocio.get('totale_bonus', 0) or 0
-                    st.write(f"Bonus: ${bonus_totale:,.0f}")
+                    st.write(t("incroci.details.bonus", "Bonus: ${bonus}").format(bonus=f"{bonus_totale:,.0f}"))
                 
                 # Azioni
                 col_azioni1, col_azioni2, col_azioni3, col_azioni4 = st.columns(4)
@@ -199,7 +209,7 @@ class IncrociTab:
                 
                 with col_azioni3:
                     if st.button(f"📝 Modifica", key=f"mod_{incrocio['id']}"):
-                        st.info("Funzionalità di modifica in sviluppo")
+                        st.info(t("incroci.details.edit_development", "Funzionalità di modifica in sviluppo"))
                 
                 with col_azioni4:
                     if st.button(f"🗑️ Elimina", key=f"elimina_{incrocio['id']}", type="secondary"):

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from supabase_manager import SupabaseManager
+from utils.translations import t
 
 class ClientTable:
     def __init__(self):
@@ -112,7 +113,7 @@ class ClientTable:
             df_clienti = self.get_clienti()
         
         if df_clienti.empty:
-            st.info("Nessun cliente presente nel database. Aggiungi il primo cliente!")
+            st.info(t("clients.no_clients", "Nessun cliente presente nel database. Aggiungi il primo cliente!"))
             return
         
         # Formattazione della tabella per una migliore visualizzazione
@@ -143,16 +144,16 @@ class ClientTable:
         
         # Rinomina le colonne per una migliore visualizzazione
         mapping_colonne = {
-            'id': 'ID',
-            'nome_cliente': 'Nome Cliente',
-            'email': 'Email',
-            'broker': 'Broker',
-            'data_registrazione': 'Data Registrazione',
-            'deposito': 'Deposito',
-            'piattaforma': 'Piattaforma',
-            'numero_conto': 'Numero Conto',
-            'wallet': 'Wallet',
-            'vps_ip': 'IP VPS'
+            'id': t("clients.columns.id", "ID"),
+            'nome_cliente': t("clients.columns.name", "Nome Cliente"),
+            'email': t("clients.columns.email", "Email"),
+            'broker': t("clients.columns.broker", "Broker"),
+            'data_registrazione': t("clients.columns.registration_date", "Data Registrazione"),
+            'deposito': t("clients.columns.deposit", "Deposito"),
+            'piattaforma': t("clients.columns.platform", "Piattaforma"),
+            'numero_conto': t("clients.columns.account_number", "Numero Conto"),
+            'wallet': t("clients.columns.wallet", "Wallet"),
+            'vps_ip': t("clients.columns.vps_ip", "IP VPS")
         }
         
         df_display = df_display.rename(columns=mapping_colonne)
@@ -160,14 +161,14 @@ class ClientTable:
         # Gestione conferma eliminazione cliente (come negli incroci)
         if st.session_state.get('mostra_conferma_eliminazione_cliente', False) and st.session_state.get('cliente_da_eliminare'):
             cliente_id = st.session_state.cliente_da_eliminare
-            st.warning(f"⚠️ **Attenzione**: Stai per eliminare il cliente ID {cliente_id}")
-            st.info("Questa azione è irreversibile e eliminerà tutti i dati del cliente")
+            st.warning(f"{t('clients.messages.delete_warning', '⚠️ **Attenzione**: Stai per eliminare il cliente ID')} {cliente_id}")
+            st.info(t("clients.messages.delete_irreversible", "Questa azione è irreversibile e eliminerà tutti i dati del cliente"))
             
             col_confirm1, col_confirm2 = st.columns(2)
             
             with col_confirm1:
-                if st.button("❌ Conferma Eliminazione", key="confirm_elimina_cliente_finale", type="primary"):
-                    st.info(f"🔄 Eliminazione cliente {cliente_id} in corso...")
+                if st.button(t("clients.actions.confirm_delete", "❌ Conferma Eliminazione"), key="confirm_elimina_cliente_finale", type="primary"):
+                    st.info(f"{t('clients.messages.delete_in_progress', '🔄 Eliminazione cliente')} {cliente_id} in corso...")
                     
                     # Chiama la funzione di eliminazione
                     if on_delete:
@@ -177,29 +178,29 @@ class ClientTable:
                         st.session_state.mostra_conferma_eliminazione_cliente = False
                         st.session_state.cliente_da_eliminare = None
                         
-                        st.success("✅ **Eliminazione completata!** Clicca '🔄 Aggiorna' per vedere i cambiamenti.")
+                        st.success(t("clients.messages.delete_completed", "✅ **Eliminazione completata!** Clicca '🔄 Aggiorna' per vedere i cambiamenti."))
                         st.rerun()
             
             with col_confirm2:
-                if st.button("🔙 Annulla", key="cancel_elimina_cliente_finale"):
+                if st.button(t("clients.actions.cancel", "🔙 Annulla"), key="cancel_elimina_cliente_finale"):
                     # Reset dello stato
                     st.session_state.mostra_conferma_eliminazione_cliente = False
                     st.session_state.cliente_da_eliminare = None
                     st.rerun()
         
         # Filtri per la tabella
-        st.subheader("🔍 Filtri")
+        st.subheader(t("clients.table.filters", "🔍 Filtri"))
         col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
         
         with col_filtro1:
-            filtro_nome = st.text_input("Filtra per Nome", placeholder="Nome cliente...")
+            filtro_nome = st.text_input(t("clients.table.filter_name", "Filtra per Nome"), placeholder="Nome cliente...")
         
         with col_filtro2:
-            filtro_broker = st.selectbox("Filtra per Broker", 
+            filtro_broker = st.selectbox(t("clients.table.filter_broker", "Filtra per Broker"), 
                                        ["Tutti"] + list(df_clienti['broker'].unique()) if 'broker' in df_clienti.columns else ["Tutti"])
         
         with col_filtro3:
-            filtro_piattaforma = st.selectbox("Filtra per Piattaforma", 
+            filtro_piattaforma = st.selectbox(t("clients.table.filter_platform", "Filtra per Piattaforma"), 
                                             ["Tutte"] + list(df_clienti['piattaforma'].unique()) if 'piattaforma' in df_clienti.columns else ["Tutte"])
         
         # Applicazione filtri
@@ -218,10 +219,12 @@ class ClientTable:
         df_display = df_filtrato[colonne_disponibili].rename(columns=mapping_colonne)
         
         # Mostra statistiche dei filtri
-        st.write(f"**Risultati:** {len(df_filtrato)} cliente{'i' if len(df_filtrato) != 1 else ''} su {len(df_clienti)} totali")
+        clienti_text = t("clients.table.clients_plural", "clienti") if len(df_filtrato) != 1 else t("clients.table.clients", "cliente")
+        totali_text = t("clients.table.total", "totali")
+        st.write(f"**{t('clients.table.results', 'Risultati')}:** {len(df_filtrato)} {clienti_text} su {len(df_clienti)} {totali_text}")
         
         # Tabella principale
-        st.subheader("📋 Tabella Clienti")
+        st.subheader(t("clients.table.title", "📋 Tabella Clienti"))
         
         # Mostra la tabella con st.dataframe per una migliore interazione
         st.dataframe(
@@ -243,12 +246,12 @@ class ClientTable:
         )
         
         # Azioni rapide (sempre visibili)
-        st.subheader("⚡ Azioni Rapide")
+        st.subheader(t("clients.table.quick_actions", "⚡ Azioni Rapide"))
         
         col_azione1, col_azione2, col_azione3 = st.columns(3)
         
         with col_azione1:
-            if st.button("📊 Esporta", help="Esporta i dati filtrati in formato CSV"):
+            if st.button(t("clients.actions.export", "📊 Esporta"), help=t("clients.help.export", "Esporta i dati filtrati in formato CSV")):
                 csv = df_filtrato.to_csv(index=False)
                 st.download_button(
                     label="💾 CSV",
@@ -258,26 +261,26 @@ class ClientTable:
                 )
         
         with col_azione2:
-            if st.button("🔄 Aggiorna", help="Aggiorna i dati dalla tabella"):
+            if st.button(t("clients.actions.refresh", "🔄 Aggiorna"), help=t("clients.help.refresh", "Aggiorna i dati dalla tabella")):
                 st.rerun()
         
         with col_azione3:
-            if st.button("📈 Grafici", help="Mostra grafici riassuntivi"):
+            if st.button(t("clients.actions.charts", "📈 Grafici"), help=t("clients.help.charts", "Mostra grafici riassuntivi")):
                 st.session_state.show_charts = True
                 st.rerun()
         
         # Azioni sui clienti (solo quando si seleziona un cliente)
         if len(df_filtrato) > 0:
-            st.subheader("⚡ Azioni sui Clienti")
-            st.info("💡 **Seleziona un cliente dalla sezione 'Dettagli Cliente' per visualizzare le azioni disponibili**")
+            st.subheader(t("clients.table.client_actions", "⚡ Azioni sui Clienti"))
+            st.info(t("clients.messages.select_client_actions", "💡 **Seleziona un cliente dalla sezione 'Dettagli Cliente' per visualizzare le azioni disponibili**"))
         
         # Dettagli cliente selezionato (opzionale)
         if len(df_filtrato) > 0:
-            st.subheader("👤 Dettagli Cliente")
+            st.subheader(t("clients.table.client_details", "👤 Dettagli Cliente"))
             
             # Selezione cliente per visualizzare i dettagli
             cliente_selezionato = st.selectbox(
-                "Seleziona un cliente per visualizzare i dettagli completi:",
+                t("clients.table.select_client", "Seleziona un cliente per visualizzare i dettagli completi:"),
                 options=df_filtrato['nome_cliente'].tolist(),
                 index=0
             )
@@ -289,22 +292,23 @@ class ClientTable:
                 col_det1, col_det2 = st.columns(2)
                 
                 with col_det1:
-                    st.write(f"**Nome:** {cliente_dettagli['nome_cliente']}")
-                    st.write(f"**Email:** {cliente_dettagli['email']}")
-                    st.write(f"**Broker:** {cliente_dettagli['broker']}")
-                    st.write(f"**Data Registrazione:** {cliente_dettagli['data_registrazione']}")
-                    st.write(f"**Deposito:** €{cliente_dettagli.get('deposito', 0):,.2f}" if cliente_dettagli.get('deposito') is not None else "**Deposito:** Non specificato")
+                    st.write(f"**{t('clients.details.name', 'Nome')}:** {cliente_dettagli['nome_cliente']}")
+                    st.write(f"**{t('clients.details.email', 'Email')}:** {cliente_dettagli['email']}")
+                    st.write(f"**{t('clients.details.broker', 'Broker')}:** {cliente_dettagli['broker']}")
+                    st.write(f"**{t('clients.details.registration_date', 'Data Registrazione')}:** {cliente_dettagli['data_registrazione']}")
+                    not_specified = t("clients.table.not_specified", "Non specificato")
+                    st.write(f"**{t('clients.details.deposit', 'Deposito')}:** €{cliente_dettagli.get('deposito', 0):,.2f}" if cliente_dettagli.get('deposito') is not None else f"**{t('clients.details.deposit', 'Deposito')}:** {not_specified}")
                 
                 with col_det2:
-                    st.write(f"**Piattaforma:** {cliente_dettagli['piattaforma']}")
-                    st.write(f"**Numero Conto:** {cliente_dettagli['numero_conto']}")
-                    st.write(f"**IP VPS:** {cliente_dettagli.get('vps_ip', 'Non specificato')}")
-                    st.write(f"**Wallet:** {cliente_dettagli.get("wallet", "Non specificato")}")
-                    st.write(f"**Username VPS:** {cliente_dettagli.get('vps_username', 'Non specificato')}")
+                    st.write(f"**{t('clients.details.platform', 'Piattaforma')}:** {cliente_dettagli['piattaforma']}")
+                    st.write(f"**{t('clients.details.account_number', 'Numero Conto')}:** {cliente_dettagli['numero_conto']}")
+                    st.write(f"**{t('clients.details.vps_ip', 'IP VPS')}:** {cliente_dettagli.get('vps_ip', not_specified)}")
+                    st.write(f"**{t('clients.details.wallet', 'Wallet')}:** {cliente_dettagli.get('wallet', not_specified)}")
+                    st.write(f"**{t('clients.details.vps_username', 'Username VPS')}:** {cliente_dettagli.get('vps_username', not_specified)}")
                 
                 # Campi aggiuntivi se presenti
                 if 'campi_aggiuntivi' in cliente_dettagli and cliente_dettagli['campi_aggiuntivi']:
-                    st.write("**Campi Aggiuntivi:**")
+                    st.write(f"**{t('clients.table.additional_fields', 'Campi Aggiuntivi')}:**")
                     campi = cliente_dettagli['campi_aggiuntivi']
                     if isinstance(campi, str):
                         for campo in campi.split(';'):
@@ -313,20 +317,20 @@ class ClientTable:
                 
                 # Pulsanti azione (visibili solo quando si seleziona un cliente)
                 st.markdown("---")
-                st.subheader("⚡ Azioni Disponibili")
+                st.subheader(t("clients.table.available_actions", "⚡ Azioni Disponibili"))
                 
                 col_btn1, col_btn2, col_btn3 = st.columns(3)
                 
                 with col_btn1:
                     # Chiave semplice per modifica
-                    if st.button("✏️ Modifica", key=f"edit_simple_{cliente_dettagli['id']}", help="Modifica cliente"):
+                    if st.button(t("clients.actions.edit", "✏️ Modifica"), key=f"edit_simple_{cliente_dettagli['id']}", help=t("clients.help.edit", "Modifica cliente")):
                         if on_edit:
                             on_edit(cliente_dettagli)
                             st.rerun()  # Forza il refresh immediato
                 
                 with col_btn2:
                     # Chiave unica con timestamp per eliminazione
-                    if st.button("🗑️ Elimina", key=f"delete_simple_{cliente_dettagli['id']}", type="secondary", help="Elimina cliente"):
+                    if st.button(t("clients.actions.delete", "🗑️ Elimina"), key=f"delete_simple_{cliente_dettagli['id']}", type="secondary", help=t("clients.help.delete", "Elimina cliente")):
                         if on_delete:
                             # Invece di chiamare direttamente, impostiamo lo stato come negli incroci
                             st.session_state.cliente_da_eliminare = cliente_dettagli['id']
@@ -335,6 +339,6 @@ class ClientTable:
                 
                 with col_btn3:
                     # Chiave unica con timestamp per copia
-                    if st.button("📋 Copia Dati", key=f"copy_simple_{cliente_dettagli['id']}", help="Copia dati"):
+                    if st.button(t("clients.actions.copy_data", "📋 Copia Dati"), key=f"copy_simple_{cliente_dettagli['id']}", help=t("clients.help.copy_data", "Copia dati")):
                         # Copia i dati negli appunti (simulato)
-                        st.success("Dati copiati negli appunti!")
+                        st.success(t("clients.actions.data_copied", "Dati copiati negli appunti!"))

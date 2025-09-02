@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import datetime
+from utils.translations import t
 
 class ClientForm:
     def __init__(self):
@@ -10,29 +11,29 @@ class ClientForm:
         """Rende il form per inserimento/modifica cliente"""
         
         # Form per aggiungere/modificare cliente
-        with st.expander("➕ Aggiungi Nuovo Cliente" if not is_edit else "✏️ Modifica Cliente", expanded=True):
-            st.subheader("Informazioni Cliente")
+        with st.expander(t("clients.add_new_client", "➕ Aggiungi Nuovo Cliente") if not is_edit else t("clients.edit_client", "✏️ Modifica Cliente"), expanded=True):
+            st.subheader(t("clients.client_info", "Informazioni Cliente"))
             
             col1, col2 = st.columns(2)
             
             with col1:
                 nome_cliente = st.text_input(
-                    "Nome Cliente *", 
+                    t("clients.form.name", "Nome Cliente *"), 
                     value=dati_cliente.get('nome_cliente', '') if dati_cliente else '',
-                    help="Nome completo del cliente"
+                    help=t("clients.help.name", "Nome completo del cliente")
                 )
                 
                 email = st.text_input(
-                    "Email *", 
+                    t("clients.form.email", "Email *"), 
                     value=dati_cliente.get('email', '') if dati_cliente else '',
-                    help="Indirizzo email del cliente"
+                    help=t("clients.help.email", "Indirizzo email del cliente")
                 )
                 
                 password_email = st.text_input(
-                    "Password Email", 
+                    t("clients.form.password_email", "Password Email"), 
                     value=dati_cliente.get('password_email', '') if dati_cliente else '',
                     type="password",
-                    help="Password per l'accesso all'email"
+                    help=t("clients.help.password_email", "Password per l'accesso all'email")
                 )
                 
                 # Campo broker con menu a tendina e possibilità di aggiungerne di nuovi
@@ -43,91 +44,91 @@ class ClientForm:
                     broker_options.insert(-1, dati_cliente.get('broker'))
                 
                 broker_selection = st.selectbox(
-                    "Broker *", 
+                    t("clients.form.broker", "Broker *"), 
                     options=broker_options,
                     index=broker_options.index(dati_cliente.get('broker', 'Ultima Markets')) if dati_cliente and dati_cliente.get('broker') in broker_options else 0,
-                    help="Seleziona il broker o scegli 'Altro' per inserirne uno nuovo"
+                    help=t("clients.help.broker", "Seleziona il broker o scegli 'Altro' per inserirne uno nuovo")
                 )
                 
                 # Se seleziona "Altro", mostra campo di testo per inserire nuovo broker
                 if broker_selection == "Altro":
                     broker = st.text_input(
-                        "Nome Nuovo Broker *",
+                        t("clients.form.new_broker", "Nome Nuovo Broker *"),
                         value="",
-                        help="Inserisci il nome del nuovo broker"
+                        help=t("clients.help.new_broker", "Inserisci il nome del nuovo broker")
                     )
                 else:
                     broker = broker_selection
                 
                 data_registrazione = st.date_input(
-                    "Data Registrazione *", 
+                    t("clients.form.registration_date", "Data Registrazione *"), 
                     value=datetime.fromisoformat(dati_cliente.get('data_registrazione', datetime.now().isoformat())).date() if dati_cliente and dati_cliente.get('data_registrazione') else datetime.now().date(),
-                    help="Data di registrazione del cliente"
+                    help=t("clients.help.registration_date", "Data di registrazione del cliente")
                 )
             
             with col2:
                 deposito = st.number_input(
-                    "Deposito (€) *", 
+                    t("clients.form.deposit", "Deposito (€) *"), 
                     min_value=0.0, 
                     step=0.01,
                     value=float(dati_cliente.get('deposito', 0.0) or 0.0) if dati_cliente else 0.0,
-                    help="Importo del deposito iniziale"
+                    help=t("clients.help.deposit", "Importo del deposito iniziale")
                 )
                 
                 piattaforma = st.selectbox(
-                    "Piattaforma *", 
+                    t("clients.form.platform", "Piattaforma *"), 
                     ["MT4", "MT5", "cTrader", "Altro"],
                     index=["MT4", "MT5", "cTrader", "Altro"].index(dati_cliente.get('piattaforma', 'MT4')) if dati_cliente else 0,
-                    help="Piattaforma di trading utilizzata"
+                    help=t("clients.help.platform", "Piattaforma di trading utilizzata")
                 )
                 
                 numero_conto = st.text_input(
-                    "Numero Conto *", 
+                    t("clients.form.account_number", "Numero Conto *"), 
                     value=dati_cliente.get('numero_conto', '') if dati_cliente else '',
-                    help="Numero del conto di trading"
+                    help=t("clients.help.account_number", "Numero del conto di trading")
                 )
                 
                 wallet = st.text_input(
-                    "Wallet *", 
+                    t("clients.form.wallet", "Wallet *"), 
                     value=dati_cliente.get("wallet", "") if dati_cliente else "",
-                    help="Indirizzo wallet del cliente"
+                    help=t("clients.help.wallet", "Indirizzo wallet del cliente")
                 )
 
                 password_conto = st.text_input(
-                    "Password Conto", 
+                    t("clients.form.account_password", "Password Conto"), 
                     value=dati_cliente.get('password_conto', '') if dati_cliente else '',
                     type="password",
-                    help="Password per l'accesso al conto di trading"
+                    help=t("clients.help.account_password", "Password per l'accesso al conto di trading")
                 )
             
             # Sezione VPS
-            st.subheader("Informazioni VPS")
+            st.subheader(t("clients.form.vps_info", "Informazioni VPS"))
             col_vps1, col_vps2, col_vps3 = st.columns(3)
             
             with col_vps1:
                 vps_ip = st.text_input(
-                    "IP VPS", 
+                    t("clients.form.vps_ip", "IP VPS"), 
                     value=dati_cliente.get('vps_ip', '') if dati_cliente else '',
-                    help="Indirizzo IP del server VPS"
+                    help=t("clients.help.vps_ip", "Indirizzo IP del server VPS")
                 )
             
             with col_vps2:
                 vps_username = st.text_input(
-                    "Username VPS", 
+                    t("clients.form.vps_username", "Username VPS"), 
                     value=dati_cliente.get('vps_username', '') if dati_cliente else '',
-                    help="Username per l'accesso al VPS"
+                    help=t("clients.help.vps_username", "Username per l'accesso al VPS")
                 )
             
             with col_vps3:
                 vps_password = st.text_input(
-                    "Password VPS", 
+                    t("clients.form.vps_password", "Password VPS"), 
                     value=dati_cliente.get('vps_password', '') if dati_cliente else '',
                     type="password",
-                    help="Password per l'accesso al VPS"
+                    help=t("clients.help.vps_password", "Password per l'accesso al VPS")
                 )
             
             # Campi aggiuntivi dinamici
-            st.subheader("Campi Aggiuntivi")
+            st.subheader(t("clients.form.additional_fields", "Campi Aggiuntivi"))
             
             if 'campi_aggiuntivi' not in st.session_state:
                 st.session_state.campi_aggiuntivi = []
@@ -148,31 +149,31 @@ class ClientForm:
                 col_nome, col_valore, col_del = st.columns([2, 2, 1])
                 with col_nome:
                     campo['nome'] = st.text_input(
-                        f"Nome Campo {i+1}", 
+                        f"{t('clients.form.field_name', 'Nome Campo')} {i+1}", 
                         value=campo['nome'], 
                         key=f"nome_{i}",
-                        help="Nome del campo aggiuntivo"
+                        help=t("clients.help.field_name", "Nome del campo aggiuntivo")
                     )
                 with col_valore:
                     campo['valore'] = st.text_input(
-                        f"Valore {i+1}", 
+                        f"{t('clients.form.field_value', 'Valore')} {i+1}", 
                         value=campo['valore'], 
                         key=f"valore_{i}",
-                        help="Valore del campo aggiuntivo"
+                        help=t("clients.help.field_value", "Valore del campo aggiuntivo")
                     )
                 with col_del:
-                    if st.button("🗑️", key=f"del_{i}", help="Elimina questo campo"):
+                    if st.button(t("common.delete", "🗑️"), key=f"del_{i}", help=t("clients.help.delete_field", "Elimina questo campo")):
                         st.session_state.campi_aggiuntivi.pop(i)
                         st.rerun()
             
             # Pulsante per aggiungere nuovi campi
-            if st.button("➕ Aggiungi Campo", help="Aggiungi un nuovo campo personalizzato"):
+            if st.button(t("clients.form.add_field", "➕ Aggiungi Campo"), help=t("clients.help.add_field", "Aggiungi un nuovo campo personalizzato")):
                 st.session_state.campi_aggiuntivi.append({'nome': '', 'valore': ''})
                 st.rerun()
             
             # Pulsante salva
-            button_text = "💾 Aggiorna Cliente" if is_edit else "💾 Salva Cliente"
-            if st.button(button_text, type="primary", help="Salva le informazioni del cliente"):
+            button_text = t("clients.form.update_client", "💾 Aggiorna Cliente") if is_edit else t("clients.form.save_client", "💾 Salva Cliente")
+            if st.button(button_text, type="primary", help=t("clients.help.save_client", "Salva le informazioni del cliente")):
                 if nome_cliente and email and broker and data_registrazione and deposito and piattaforma and numero_conto:
                     # Preparazione dati per il salvataggio
                     dati_salvataggio = {
@@ -195,7 +196,7 @@ class ClientForm:
                     
                     return True, dati_salvataggio, campi_validi
                 else:
-                    st.error("Compila tutti i campi obbligatori!")
+                    st.error(t("clients.form.fill_required", "Compila tutti i campi obbligatori!"))
                     return False, None, None
             
             return False, None, None

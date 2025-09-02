@@ -1,0 +1,638 @@
+{
+  "dashboard": {
+    "title": "🏠 Dashboard CPA - Gestión de Clientes y Cruces",
+    "description": "Dashboard para la gestión de CPA de brokers"
+  },
+  "navigation": {
+    "dashboard": "🏠 Dashboard",
+    "clients": "👥 Gestión de Clientes",
+    "crosses": "🔄 Cruces",
+    "summary": "📈 Resumen",
+    "settings": "⚙️ Configuración"
+  },
+  "sidebar": {
+    "management": "📊 Gestión",
+    "info": "ℹ️ Información",
+    "brokers": "🏢 Brokers Populares",
+    "manage_brokers": "⚙️ Gestionar Brokers"
+  },
+      "clients": {
+      "new_client": "➕ Nuevo Cliente",
+      "edit_client": "✏️ Editar Cliente",
+      "add_new_client": "➕ Agregar Nuevo Cliente",
+      "client_info": "Información del Cliente",
+      "no_clients": "Ningún cliente presente en la base de datos. ¡Agrega el primer cliente!",
+      "table": {
+        "title": "📋 Tabla de Clientes",
+        "filters": "🔍 Filtros",
+        "filter_name": "Filtrar por Nombre",
+        "filter_broker": "Filtrar por Broker",
+        "filter_platform": "Filtrar por Plataforma",
+        "results": "Resultados",
+        "clients": "cliente",
+        "clients_plural": "clientes",
+        "total": "totales",
+        "quick_actions": "⚡ Acciones Rápidas",
+        "client_actions": "⚡ Acciones sobre Clientes",
+        "client_details": "👤 Detalles del Cliente",
+        "available_actions": "⚡ Acciones Disponibles",
+        "select_client": "Selecciona un cliente para ver los detalles completos:",
+        "additional_fields": "Campos Adicionales",
+        "not_specified": "No especificado"
+      },
+      "actions": {
+        "export": "📊 Exportar",
+        "refresh": "🔄 Actualizar",
+        "charts": "📈 Gráficos",
+        "edit": "✏️ Editar",
+        "delete": "🗑️ Eliminar",
+        "copy_data": "📋 Copiar Datos",
+        "confirm_delete": "❌ Confirmar Eliminación",
+        "cancel": "🔙 Cancelar",
+        "data_copied": "¡Datos copiados al portapapeles!"
+      },
+      "messages": {
+        "delete_warning": "⚠️ **Atención**: Estás a punto de eliminar el cliente ID",
+        "delete_irreversible": "Esta acción es irreversible y eliminará todos los datos del cliente",
+        "delete_in_progress": "🔄 Eliminación cliente",
+        "delete_completed": "✅ **¡Eliminación completada!** Haz clic en '🔄 Actualizar' para ver los cambios.",
+        "select_client_actions": "💡 **Selecciona un cliente de la sección 'Detalles del Cliente' para ver las acciones disponibles**"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Nombre Cliente",
+        "email": "Email",
+        "broker": "Broker",
+        "registration_date": "Fecha Registro",
+        "deposit": "Depósito",
+        "platform": "Plataforma",
+        "account_number": "Número Cuenta",
+        "wallet": "Wallet",
+        "vps_ip": "IP VPS"
+      },
+      "details": {
+        "name": "Nombre",
+        "email": "Email",
+        "broker": "Broker",
+        "registration_date": "Fecha Registro",
+        "deposit": "Depósito",
+        "platform": "Plataforma",
+        "account_number": "Número Cuenta",
+        "vps_ip": "IP VPS",
+        "wallet": "Wallet",
+        "vps_username": "Usuario VPS"
+      },
+      "form": {
+        "name": "Nombre del Cliente *",
+        "email": "Email *",
+        "password_email": "Contraseña Email",
+        "broker": "Broker *",
+        "new_broker": "Nombre Nuevo Broker *",
+        "registration_date": "Fecha de Registro *",
+        "deposit": "Depósito (€) *",
+        "platform": "Plataforma *",
+        "account_number": "Número de Cuenta *",
+        "wallet": "Wallet *",
+        "account_password": "Contraseña Cuenta",
+        "vps_info": "Información VPS",
+        "vps_ip": "IP VPS",
+        "vps_username": "Usuario VPS",
+        "vps_password": "Contraseña VPS",
+        "additional_fields": "Campos Adicionales",
+        "field_name": "Nombre Campo",
+        "field_value": "Valor",
+        "add_field": "➕ Agregar Campo",
+        "save_client": "💾 Guardar Cliente",
+        "update_client": "💾 Actualizar Cliente",
+        "fill_required": "¡Completa todos los campos obligatorios!"
+      },
+      "help": {
+        "name": "Nombre completo del cliente",
+        "email": "Dirección de email del cliente",
+        "password_email": "Contraseña para acceder al email",
+        "broker": "Selecciona el broker o elige 'Otro' para insertar uno nuevo",
+        "new_broker": "Inserta el nombre del nuevo broker",
+        "registration_date": "Fecha de registro del cliente",
+        "deposit": "Importe del depósito inicial",
+        "platform": "Plataforma de trading utilizada",
+        "account_number": "Número de la cuenta de trading",
+        "wallet": "Dirección wallet del cliente",
+        "account_password": "Contraseña para acceder a la cuenta de trading",
+        "vps_ip": "Dirección IP del servidor VPS",
+        "vps_username": "Usuario para acceder al VPS",
+        "vps_password": "Contraseña para acceder al VPS",
+        "field_name": "Nombre del campo adicional",
+        "field_value": "Valor del campo adicional",
+        "add_field": "Agregar un nuevo campo personalizado",
+        "save_client": "Guardar la información del cliente",
+        "delete_field": "Eliminar este campo",
+        "export": "Exportar los datos filtrados en formato CSV",
+        "refresh": "Actualizar los datos de la tabla",
+        "charts": "Mostrar gráficos resumen",
+        "edit": "Editar cliente",
+        "delete": "Eliminar cliente",
+        "copy_data": "Copiar datos"
+      }
+    },
+  "language": {
+    "selector_title": "🌐 Idioma",
+    "select_language": "Selecciona idioma:",
+    "italian": "Italiano",
+    "spanish": "Español"
+  },
+      "user_management": {
+      "title": "👥 Gestión de Usuarios",
+      "access_denied": "❌ Acceso denegado. Solo los administradores pueden gestionar usuarios.",
+      "tabs": {
+        "users_list": "📊 Lista de Usuarios",
+        "new_user": "➕ Nuevo Usuario",
+        "edit_user": "🔧 Editar Usuario",
+        "statistics": "📈 Estadísticas"
+      },
+      "users_list": {
+        "title": "📊 Lista de Usuarios",
+        "no_users": "ℹ️ No se encontraron usuarios en el sistema.",
+        "status": {
+          "active": "🟢 Activo",
+          "inactive": "🔴 Inactivo"
+        },
+        "actions": {
+          "activate": "🟢 Activar",
+          "deactivate": "🔴 Desactivar",
+          "delete": "🗑️ Eliminar",
+          "confirm": "✅ Confirmar",
+          "cancel": "❌ Cancelar"
+        },
+        "messages": {
+          "status_updated": "✅ Estado de {username} actualizado!",
+          "delete_warning": "⚠️ Confirmar eliminación de {username}",
+          "delete_success": "✅ {username} eliminado con éxito!"
+        }
+      },
+      "create_user": {
+        "title": "➕ Nuevo Usuario",
+        "form": {
+          "username": "👤 Usuario *",
+          "email": "📧 Email *",
+          "password": "🔐 Contraseña *",
+          "full_name": "📝 Nombre Completo *",
+          "role": "🏷️ Rol *",
+          "is_active": "✅ Usuario Activo",
+          "submit": "🚀 Crear Usuario"
+        },
+        "validation": {
+          "required_fields": "❌ Todos los campos obligatorios deben estar completos!",
+          "password_length": "❌ La contraseña debe tener al menos 8 caracteres!"
+        },
+        "success": "✅ Usuario '{username}' creado con éxito!"
+      },
+      "edit_user": {
+        "title": "🔧 Editar Usuario",
+        "no_users": "ℹ️ No hay usuarios para editar.",
+        "select_user": "Selecciona usuario para editar:",
+        "form": {
+          "email": "📧 Email",
+          "full_name": "📝 Nombre Completo",
+          "role": "🏷️ Rol",
+          "is_active": "✅ Usuario Activo",
+          "submit": "💾 Guardar Cambios"
+        },
+        "success": "✅ Usuario actualizado con éxito!"
+      },
+      "statistics": {
+        "title": "📈 Estadísticas de Usuarios",
+        "no_data": "ℹ️ No hay datos disponibles para las estadísticas.",
+        "metrics": {
+          "total_users": "👥 Usuarios Totales",
+          "active_users": "🟢 Usuarios Activos",
+          "inactive_users": "🔴 Usuarios Inactivos",
+          "roles": "🏷️ Roles"
+        },
+        "charts": {
+          "role_distribution": "📊 Distribución de Roles",
+          "users_by_date": "📅 Usuarios por Fecha de Creación"
+        }
+      },
+      "errors": {
+        "delete_self": "❌ No puedes eliminar tu propia cuenta!",
+        "user_creation": "❌ Error en la creación del usuario",
+        "user_update": "❌ Error en la actualización del usuario",
+        "user_delete": "❌ Error en la eliminación del usuario",
+        "status_change": "❌ Error en el cambio de estado del usuario"
+      }
+    },
+    "charts": {
+      "dashboard": {
+        "title": "📈 Gráficos Analíticos",
+        "no_data": "No hay datos disponibles para los gráficos",
+        "broker_distribution": {
+          "title": "Distribución de Clientes por Broker",
+          "chart_title": "Clientes por Broker"
+        },
+        "platform_distribution": {
+          "title": "Distribución por Plataforma",
+          "chart_title": "Clientes por Plataforma",
+          "x_axis": "Plataforma",
+          "y_axis": "Número de Clientes"
+        },
+        "deposits_by_broker": {
+          "title": "Depósitos Totales por Broker",
+          "chart_title": "Depósitos Totales por Broker",
+          "x_axis": "Broker",
+          "y_axis": "Depósitos Totales (€)"
+        },
+        "registration_trend": {
+          "title": "Tendencia de Registros en el Tiempo",
+          "chart_title": "Registros Mensuales",
+          "x_axis": "Mes",
+          "y_axis": "Número de Registros",
+          "no_data": "No hay datos de registro disponibles para el gráfico"
+        }
+      },
+      "summary": {
+        "title": "📋 Resumen de Datos",
+        "no_data": "No hay datos disponibles para los gráficos",
+        "broker_stats": {
+          "title": "Estadísticas por Broker (solo clientes con depósito):",
+          "no_valid_deposits": "No hay clientes con depósito válido para las estadísticas",
+          "deposit_column_missing": "Columna 'depósito' no disponible para las estadísticas"
+        },
+        "deposits_pie": {
+          "title": "Distribución de Depósitos por Broker (solo clientes con depósito)",
+          "no_valid_deposits": "No hay clientes con depósito válido para el gráfico circular",
+          "deposit_column_missing": "Columna 'depósito' no disponible para el gráfico circular"
+        },
+        "platform_broker": {
+          "title": "Distribución por Plataforma y Broker",
+          "chart_title": "Clientes por Plataforma y Broker",
+          "x_axis": "Plataforma",
+          "y_axis": "Número de Clientes",
+          "legend": "Broker"
+        },
+        "deposit_ranges": {
+          "title": "Distribución por Rango de Depósitos",
+          "chart_title": "Distribución por Rango de Depósitos",
+          "x_axis": "Rango de Depósitos (€)",
+          "y_axis": "Número de Clientes",
+          "no_valid_deposits": "No hay clientes con depósito válido para el gráfico de rangos",
+          "deposit_column_missing": "Columna 'depósito' no disponible para el gráfico de rangos"
+        },
+        "vps_usage": {
+          "title": "Uso de VPS",
+          "chart_title": "Uso de VPS",
+          "with_vps": "Con VPS",
+          "without_vps": "Sin VPS"
+        }
+      },
+      "export": {
+        "title": "📤 Opciones de Exportación",
+        "all_data": {
+          "button": "📊 Exportar Todos los Datos",
+          "download": "💾 Descargar CSV Completo"
+        },
+        "statistics": {
+          "button": "📈 Exportar Estadísticas",
+          "download": "💾 Descargar Estadísticas",
+          "metrics": {
+            "total_clients": "Total de Clientes",
+            "active_brokers": "Brokers Activos",
+            "total_deposits": "Depósitos Totales",
+            "active_cpa": "CPA Activas"
+          }
+        },
+        "by_broker": {
+          "button": "🔍 Exportar por Broker",
+          "download": "💾 Descargar por Broker"
+        }
+      }
+    },
+    "user_settings": {
+      "title": "⚙️ Configuración de Usuario",
+      "not_authenticated": "❌ Usuario no autenticado",
+      "user_data_error": "❌ No se pueden recuperar los datos del usuario",
+      "tabs": {
+        "change_password": "🔐 Cambiar Contraseña",
+        "profile": "👤 Perfil de Usuario",
+        "account_info": "📊 Información de Cuenta",
+        "admin_password_management": "👑 Gestión de Contraseñas de Usuarios"
+      },
+      "change_password": {
+        "title": "🔐 Cambiar Contraseña",
+        "warning": "⚠️ **Atención**: El cambio de contraseña requiere la contraseña actual por seguridad",
+        "form": {
+          "current_password": "🔑 Contraseña Actual",
+          "new_password": "🆕 Nueva Contraseña",
+          "confirm_password": "✅ Confirmar Nueva Contraseña",
+          "submit": "🔄 Cambiar Contraseña"
+        },
+        "validation": {
+          "all_fields_required": "❌ Todos los campos son obligatorios",
+          "passwords_dont_match": "❌ Las nuevas contraseñas no coinciden",
+          "password_too_short": "❌ La nueva contraseña debe tener al menos 8 caracteres",
+          "current_password_wrong": "❌ Contraseña actual incorrecta",
+          "user_not_found": "❌ Usuario no encontrado",
+          "update_error": "❌ Error en la actualización de la contraseña",
+          "password_validation": {
+            "too_short": "⚠️ La contraseña debe tener al menos 8 caracteres",
+            "dont_match": "⚠️ Las contraseñas no coinciden",
+            "valid": "✅ Contraseña válida"
+          }
+        },
+        "success": "✅ Contraseña cambiada con éxito!"
+      },
+      "profile": {
+        "title": "👤 Perfil de Usuario",
+        "form": {
+          "full_name": "📝 Nombre Completo",
+          "email": "📧 Email",
+          "submit": "💾 Guardar Cambios"
+        },
+        "info": {
+          "username": "👤 Usuario",
+          "role": "🏷️ Rol",
+          "account_created": "📅 Cuenta creada"
+        },
+        "validation": {
+          "fields_required": "❌ Nombre completo y email son obligatorios",
+          "update_error": "❌ Error en la actualización del perfil"
+        },
+        "success": "✅ Perfil actualizado con éxito!"
+      },
+      "account_info": {
+        "title": "📊 Información de Cuenta",
+        "metrics": {
+          "username": "👤 Usuario",
+          "email": "📧 Email",
+          "role": "🏷️ Rol",
+          "creation_date": "📅 Fecha de Creación",
+          "last_update": "🔄 Última Actualización",
+          "status": "🟢 Estado"
+        },
+        "status": {
+          "active": "Activo",
+          "inactive": "Inactivo"
+        },
+        "last_login": {
+          "title": "🕐 Último Acceso",
+          "never": "Nunca"
+        },
+        "session_stats": {
+          "title": "📈 Estadísticas de Sesión",
+          "session_start": "🕐 Inicio de Sesión"
+        },
+        "logout": {
+          "force": "🚪 Forzar Cierre de Sesión",
+          "warning": "⚠️ ¿Estás seguro de que quieres forzar el cierre de sesión?",
+          "confirm": "✅ Confirmar Cierre de Sesión Forzado"
+        }
+      },
+      "admin_password_management": {
+        "title": "👑 Gestión de Contraseñas de Usuarios",
+        "info": "🔐 **FUNCIÓN ADMIN**: Cambia las contraseñas de cualquier usuario del sistema",
+        "no_users": "⚠️ No se encontraron usuarios en el sistema",
+        "select_user": "👤 Selecciona usuario para cambiar contraseña:",
+        "change_password_for": "🔐 Cambiar Contraseña para: {username}",
+        "user_info": {
+          "username": "👤 Usuario",
+          "email": "📧 Email",
+          "role": "🏷️ Rol",
+          "status": "🟢 Estado"
+        },
+        "form": {
+          "new_password": "🆕 Nueva Contraseña",
+          "confirm_password": "✅ Confirmar Nueva Contraseña",
+          "submit": "🔄 Cambiar Contraseña de Usuario"
+        },
+        "validation": {
+          "all_fields_required": "❌ Todos los campos son obligatorios",
+          "passwords_dont_match": "❌ Las contraseñas no coinciden",
+          "password_too_short": "❌ La contraseña debe tener al menos 8 caracteres",
+          "user_not_found": "❌ Usuario {username} no encontrado",
+          "update_error": "❌ Error en la actualización de la contraseña",
+          "password_validation": {
+            "too_short": "⚠️ La contraseña debe tener al menos 8 caracteres",
+            "dont_match": "⚠️ Las contraseñas no coinciden",
+            "valid": "✅ Contraseña válida"
+          }
+        },
+        "success": "✅ Contraseña cambiada con éxito para el usuario {username}!"
+      }
+    },
+    "incroci": {
+      "title": "🔄 Gestión de Cruces CPA",
+      "description": "Gestiona los cruces entre cuentas para desbloquear bonos sin riesgo",
+      "filters": {
+        "title": "🔍 Filtros",
+        "status": "Estado Cruces",
+        "status_options": {
+          "all": "Todos",
+          "active": "Activos",
+          "closed": "Cerrados",
+          "suspended": "Suspendidos"
+        }
+      },
+      "quick_stats": {
+        "title": "📊 Estadísticas Rápidas",
+        "active_crosses": "Cruces Activos",
+        "total_volume": "Volumen Total",
+        "total_bonus": "Bonos Totales"
+      },
+      "tabs": {
+        "list": "📋 Lista Cruces",
+        "new": "➕ Nuevo Cruce",
+        "statistics": "📊 Estadísticas",
+        "search": "🔍 Búsqueda"
+      },
+      "list": {
+        "title": "📋 Lista Cruces",
+        "no_crosses": "No se encontraron cruces",
+        "total_found": "Total cruces encontrados: {count}",
+        "refresh_button": "🔄 Actualizar Lista",
+        "delete_warning": "⚠️ **Atención**: Estás a punto de eliminar el cruce {cross_id}",
+        "delete_irreversible": "Esta acción es irreversible y eliminará todos los datos relacionados (cuentas y bonos)",
+        "delete_in_progress": "🔄 Eliminación cruce {cross_id} en curso...",
+        "delete_success": "✅ Cruce eliminado con éxito!",
+        "delete_completed": "✅ **¡Eliminación completada!** Haz clic en '🔄 Actualizar Lista' para ver los cambios.",
+        "delete_error": "❌ Error en la eliminación del cruce",
+        "cross_deleted": "✅ Cruce {cross_id} eliminado con éxito! Lista actualizada.",
+        "list_updated": "🔄 Lista actualizada después de operaciones"
+      },
+      "details": {
+        "long_account": "Cuenta Long:",
+        "short_account": "Cuenta Short:",
+        "client": "Cliente:",
+        "broker": "Broker:",
+        "account": "Cuenta:",
+        "volume": "Volumen:",
+        "details": "Detalles:",
+        "status": "Estado:",
+        "opening": "Apertura:",
+        "closing": "Cierre:",
+        "bonus": "Bono:",
+        "edit_development": "Función de edición en desarrollo"
+      },
+      "new": {
+        "title": "➕ Nuevo Cruce",
+        "general_info": "Información General",
+        "auto_loading": "💡 **Auto-carga**: Los campos Broker y Número de Cuenta se completan automáticamente cuando seleccionas un cliente",
+        "long_account": "Cuenta Long (Buy)",
+        "short_account": "Cuenta Short (Sell)",
+        "bonus_cpa": "Bono CPA",
+        "bonus_optional": "💡 **Opcional**: Completa los campos de bono si quieres rastrear los bonos CPA desbloqueados",
+        "bonus_configured": "💡 **Bono configurado**: {type} - {amount} {currency}",
+        "bonus_optional_note": "💡 **Bono opcional**: Déjalo vacío si no quieres rastrear bonos",
+        "debug_data": "🔍 **Debug - Datos a guardar:**",
+        "create_success": "✅ Cruce creado con éxito!",
+        "create_error": "❌ Error en la creación del cruce",
+        "missing_data": "❌ Datos faltantes o no válidos"
+      },
+      "statistics": {
+        "title": "📊 Estadísticas Cruces",
+        "no_stats": "No hay estadísticas disponibles",
+        "crosses_by_pair": "Cruces por Par",
+        "crosses_by_broker": "Cruces por Broker",
+        "details_by_pair": "Detalles por Par"
+      },
+      "search": {
+        "title": "🔍 Búsqueda Cruces",
+        "development": "Función de búsqueda en desarrollo",
+        "enter_search": "Ingresa un término de búsqueda para comenzar"
+      },
+      "errors": {
+        "no_clients": "⚠️ No se encontraron clientes en la base de datos. ¡Agrega algunos clientes primero!",
+        "load_clients_error": "❌ Error al cargar clientes: {error}",
+        "same_accounts": "❌ Las cuentas long y short deben ser diferentes",
+        "close_success": "✅ Cruce cerrado con éxito!",
+        "close_error": "❌ Error al cerrar el cruce",
+        "details_development": "Función de detalles en desarrollo"
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "🔐 Acceso Sistema",
+        "username": "👤 Usuario",
+        "username_placeholder": "Ingresa usuario",
+        "password": "🔒 Contraseña",
+        "password_placeholder": "Ingresa contraseña",
+        "login_button": "🚀 Acceder",
+        "reset_button": "🔙 Reset",
+        "welcome": "✅ ¡Bienvenido {username}! Acceso realizado con éxito.",
+        "invalid_credentials": "❌ ¡Credenciales inválidas! Usuario o contraseña incorrectos.",
+        "enter_credentials": "⚠️ Ingresa usuario y contraseña para acceder."
+      },
+      "access": {
+        "required": "🔒 Acceso Requerido",
+        "required_message": "Debes iniciar sesión para usar esta funcionalidad.",
+        "permission_denied": "🚫 Permiso Denegado - No tienes permisos para esta operación.",
+        "permission_request": "Solicitud de permiso: **{permission}**"
+      },
+      "system": {
+        "fallback_auth": "ℹ️ Sistema de Autenticación: Uso versión de respaldo (sin dependencias externas)",
+        "users_loaded": "✅ Cargados {count} usuarios desde Supabase",
+        "no_users_supabase": "⚠️ No se encontraron usuarios en Supabase",
+        "supabase_not_configured": "⚠️ Supabase no configurado, uso solo usuarios locales",
+        "supabase_error": "❌ Error al cargar usuarios desde Supabase: {error}",
+        "continue_local": "ℹ️ Continúo con usuarios locales"
+      }
+    },
+    "system": {
+      "errors": {
+        "import_error": "Error import {module}: {error}",
+        "init_error": "Error inicialización {component}: {error}",
+        "components_error": "❌ No se pueden inicializar los componentes. Revisa los logs para detalles.",
+        "general_error": "Error inicialización: {error}"
+      },
+      "broker_management": {
+        "title": "🏢 Gestión Broker Populares",
+        "current_brokers": "📋 Broker Actuales",
+        "remove_success": "¡Broker '{broker}' removido y guardado!",
+        "save_error": "¡Error al guardar!",
+        "edit_title": "✏️ Editar Broker",
+        "rename_success": "¡Broker renombrado a '{new_name}' y guardado!",
+        "empty_name": "¡El nombre del broker no puede estar vacío!",
+        "add_title": "➕ Agregar Nuevo Broker",
+        "add_success": "¡Broker '{broker}' agregado y guardado con éxito!",
+        "already_exists": "¡Este broker ya está presente en la lista!",
+        "invalid_name": "¡Ingresa un nombre válido para el broker!",
+        "statistics": "📊 Estadísticas",
+        "total_brokers": "Total broker: {count}",
+        "unique_brokers": "Broker únicos: {count}",
+        "restore_success": "¡Lista broker restaurada y guardada!"
+      },
+      "sync": {
+        "in_progress": "🔄 Sincronización en curso... {count} clientes a procesar",
+        "process_info": "🔄 Proceso de sincronización:",
+        "final_summary": "📊 Resumen final:",
+        "synced": "Sincronizados: {count}",
+        "updated": "Actualizados: {count}",
+        "errors": "Errores: {count}",
+        "total_processed": "Total procesados: {count}"
+      },
+      "clients": {
+        "save_success_local_supabase": "✅ ¡Cliente {name} guardado en LOCAL y SUPABASE!",
+        "save_success_local_supabase_error": "⚠️ Cliente guardado en LOCAL pero error SUPABASE: {error}",
+        "save_success_local_only": "✅ Cliente {name} guardado en LOCAL (Supabase no configurado)",
+        "save_error_sync": "⚠️ Cliente guardado en LOCAL pero error sincronización SUPABASE: {error}",
+        "delete_success_supabase": "✅ ¡ELIMINACIÓN EXITOSA! Cliente {name} eliminado de Supabase",
+        "delete_failed_supabase": "❌ ¡ELIMINACIÓN FALLIDA! Cliente {name} no eliminado: {error}",
+        "delete_not_found_supabase": "❌ ¡CLIENTE NO ENCONTRADO EN SUPABASE! ID: {id}",
+        "delete_error_supabase": "❌ Error eliminación desde Supabase: {error}",
+        "delete_error_general": "❌ Error durante eliminación: {error}",
+        "update_success_local_supabase": "✅ ¡Cliente {name} actualizado en LOCAL y SUPABASE!",
+        "update_success_local_supabase_error": "⚠️ Cliente actualizado en LOCAL pero error SUPABASE: {error}",
+        "update_success_local_not_found": "⚠️ Cliente actualizado en LOCAL pero no encontrado en SUPABASE",
+        "update_success_local_only": "✅ Cliente {name} actualizado en LOCAL (Supabase no configurado)",
+        "update_error_sync": "⚠️ Cliente actualizado en LOCAL pero error sincronización SUPABASE: {error}"
+      },
+      "dashboard": {
+        "clients_title": "Gestión Clientes CPA",
+        "clients_description": "Gestiona los clientes y sus informaciones",
+        "edit_client": "✏️ Editar Cliente",
+        "existing_clients": "📋 Clientes Existentes",
+        "no_clients": "No hay clientes presentes. ¡Agrega el primer cliente usando el formulario arriba!",
+        "summary_title": "Resumen Datos",
+        "summary_description": "Visualiza los datos en formato tabular y gráfico",
+        "complete_table": "📋 Tabla Completa Clientes",
+        "no_clients_database": "No hay clientes presentes en la base de datos. ¡Agrega clientes para visualizar los datos!"
+      },
+      "settings": {
+        "title": "⚙️ Configuración Sistema",
+        "supabase_config": "🚀 CONFIGURACIÓN SUPABASE: Gestiona sistema remoto, seguridad y configuración",
+        "supabase_management": "🚀 Gestión Supabase",
+        "remote_database": "📊 BASE DE DATOS REMOTA: Todos los datos se sincronizan automáticamente con Supabase",
+        "supabase_active": "✅ SUPABASE ACTIVO - Configuración correcta",
+        "connection_status": "🔗 Estado Conexión",
+        "status_connected": "Estado: Conectado a Supabase",
+        "security_protected": "Seguridad: Configuración protegida",
+        "last_update": "Última actualización: {datetime}",
+        "supabase_not_configured": "❌ SUPABASE NO CONFIGURADO - Revisa las variables de entorno",
+        "supabase_connection_error": "❌ Error conexión Supabase: {error}",
+        "test_connection": "🧪 Test Conexión",
+        "connection_ok": "✅ CONEXIÓN OK - {count} clientes leídos",
+        "incroci_ok": "✅ CRUCES OK - {count} cruces leídos",
+        "supabase_not_configured_test": "❌ Supabase no configurado",
+        "test_failed": "❌ Test fallido: {error}",
+        "system_info": "ℹ️ Información Sistema",
+        "app_status": "📋 ESTADO APLICACIÓN: Monitorea el estado general del sistema",
+        "environment": "🖥️ Ambiente:",
+        "os": "OS: {os}",
+        "python": "Python: {version}",
+        "streamlit": "Streamlit: {version}",
+        "components": "📊 Componentes:",
+        "clientform": "✅ ClientForm",
+        "clienttable": "✅ ClientTable",
+        "incrocitab": "✅ IncrociTab",
+        "charts": "✅ Charts",
+        "recent_logs": "📝 Logs Recientes",
+        "debugging": "🔍 DEBUGGING: Últimos mensajes de log del sistema",
+        "system_logs": "📋 Log del Sistema:"
+      }
+    },
+    "common": {
+      "refresh": "🔄 Actualizar Datos",
+      "delete": "🗑️",
+      "add": "➕",
+      "save": "💾",
+      "update": "✏️"
+    }
+}
