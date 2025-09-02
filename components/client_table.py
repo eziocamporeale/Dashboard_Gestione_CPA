@@ -299,6 +299,7 @@ class ClientTable:
                     st.write(f"**Piattaforma:** {cliente_dettagli['piattaforma']}")
                     st.write(f"**Numero Conto:** {cliente_dettagli['numero_conto']}")
                     st.write(f"**IP VPS:** {cliente_dettagli.get('vps_ip', 'Non specificato')}")
+                    st.write(f"**Wallet:** {cliente_dettagli.get("wallet", "Non specificato")}")
                     st.write(f"**Username VPS:** {cliente_dettagli.get('vps_username', 'Non specificato')}")
                 
                 # Campi aggiuntivi se presenti
