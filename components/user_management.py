@@ -277,7 +277,7 @@ class UserManagement:
                 
                 if st.button(f"{'🔴 Disattiva' if current_status else '🟢 Attiva'} {selected_user}"):
                     self.toggle_user_status(user_data['id'], current_status, selected_user)
-                    st.rerun()
+                    pass  # st.rerun() rimosso per evitare reindirizzamento
         
         with col2:
             # Elimina utente
@@ -300,7 +300,7 @@ class UserManagement:
                     if st.button(f"🗑️ Elimina {delete_user}", type="secondary", key=f"delete_btn_{delete_user}"):
                         logger.info(f"🔍 ELIMINAZIONE UTENTE: Pulsante elimina cliccato per {delete_user}")
                         st.session_state[confirm_key] = True
-                        st.rerun()
+                        pass  # st.rerun() rimosso per evitare reindirizzamento
                 
                 # Se è richiesta la conferma, mostra il checkbox e il pulsante di conferma
                 else:
@@ -314,13 +314,13 @@ class UserManagement:
                             logger.info(f"🔍 ELIMINAZIONE UTENTE: Conferma eliminazione cliccata per {delete_user}")
                             if self.delete_user(user_data['id'], delete_user):
                                 st.session_state[confirm_key] = False
-                                st.rerun()
+                                pass  # st.rerun() rimosso per evitare reindirizzamento
                     
                     with col_confirm2:
                         if st.button("❌ Annulla", type="secondary", key=f"cancel_btn_{delete_user}"):
                             logger.info(f"🔍 ELIMINAZIONE UTENTE: Annulla eliminazione cliccato per {delete_user}")
                             st.session_state[confirm_key] = False
-                            st.rerun()
+                            pass  # st.rerun() rimosso per evitare reindirizzamento
     
     def render_create_user(self):
         """Rende il form per la creazione di nuovi utenti"""
@@ -347,7 +347,7 @@ class UserManagement:
                     st.error("❌ La password deve essere di almeno 8 caratteri!")
                 else:
                     if self.create_user(username, email, password, full_name, role):
-                        st.rerun()
+                        pass  # st.rerun() rimosso per evitare reindirizzamento
     
     def render_edit_user(self):
         """Rende l'interfaccia per la modifica degli utenti"""
@@ -390,7 +390,7 @@ class UserManagement:
                     }
                     
                     if self.update_user(user_data['id'], updates):
-                        st.rerun()
+                        pass  # st.rerun() rimosso per evitare reindirizzamento
     
     def render_user_statistics(self):
         """Rende le statistiche degli utenti"""
