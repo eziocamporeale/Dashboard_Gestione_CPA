@@ -151,6 +151,7 @@ class ClientTable:
             'deposito': 'Deposito',
             'piattaforma': 'Piattaforma',
             'numero_conto': 'Numero Conto',
+            'wallet': 'Wallet',
             'vps_ip': 'IP VPS'
         }
         

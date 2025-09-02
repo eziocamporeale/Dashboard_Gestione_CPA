@@ -87,6 +87,12 @@ class ClientForm:
                     help="Numero del conto di trading"
                 )
                 
+                wallet = st.text_input(
+                    "Wallet *", 
+                    value=dati_cliente.get("wallet", "") if dati_cliente else "",
+                    help="Indirizzo wallet del cliente"
+                )
+
                 password_conto = st.text_input(
                     "Password Conto", 
                     value=dati_cliente.get('password_conto', '') if dati_cliente else '',
