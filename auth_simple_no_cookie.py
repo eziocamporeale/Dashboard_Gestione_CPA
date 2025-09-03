@@ -42,6 +42,7 @@ class SimpleAuthSystem:
                         if username:
                             # Aggiungi utente da Supabase al dizionario locale
                             self.users[username] = {
+                                'id': user.get('id'),  # IMPORTANTE: Salva l'ID
                                 'username': username,
                                 'password_hash': user.get('password_hash', ''),
                                 'email': user.get('email', ''),
@@ -170,8 +171,11 @@ def login_form():
                 st.session_state.username = username
                 st.session_state.name = user_info['name']
                 st.session_state.roles = user_info['role']
+                # IMPORTANTE: Imposta user_info completo con tutti i dati inclusi l'id
+                st.session_state.user_info = user_info
                 
                 logger.info(f"✅ Login riuscito per utente: {username}")
+                logger.info(f"🔍 DEBUG: user_info impostato nella sessione: {user_info}")
                 st.success(f'✅ Benvenuto {user_info["name"]}!')
                 
                 # Riavvia l'app
@@ -270,3 +274,69 @@ def has_permission(required_role: str) -> bool:
     required_level = role_hierarchy.get(required_role, 0)
     
     return current_level >= required_level
+
+def login_form():
+    """Form di login per l'autenticazione"""
+    try:
+        # Crea un'istanza del sistema di autenticazione
+        auth_system = SimpleAuthSystem()
+        
+        # Form di login
+        with st.form("login_form"):
+            st.markdown("### 🔐 **Accesso Sistema**")
+            
+            username = st.text_input("👤 **Username**", placeholder="Inserisci username")
+            password = st.text_input("🔒 **Password**", type="password", placeholder="Inserisci password")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                submit_button = st.form_submit_button("🚀 **Accedi**", type="primary")
+            with col2:
+                if st.form_submit_button("🔄 **Reset**"):
+                    st.rerun()
+            
+            if submit_button:
+                if username and password:
+                    # Prova il login usando authenticate_user
+                    if auth_system.authenticate_user(username, password):
+                        # Login riuscito
+                        user_info = auth_system.get_user_info(username)
+                        
+                        # Imposta lo stato di sessione
+                        st.session_state.authenticated = True
+                        st.session_state.username = username
+                        st.session_state.name = user_info['name']
+                        st.session_state.roles = user_info['role']
+                        st.session_state.user_info = user_info
+                        
+                        logger.info(f"✅ Login riuscito per utente: {username}")
+                        st.success(f'✅ Benvenuto {user_info["name"]}!')
+                        
+                        # Riavvia l'app
+                        st.rerun()
+                        return True
+                    else:
+                        # Login fallito
+                        st.error('❌ Username o password non corretti')
+                        logger.warning(f"❌ Login fallito per utente: {username}")
+                        return False
+                else:
+                    st.error("❌ Inserisci username e password")
+        
+        return False
+        
+    except Exception as e:
+        logger.error(f"❌ Errore form di login: {e}")
+        st.error(f"❌ Errore sistema di autenticazione: {e}")
+        return False
+
+def init_auth():
+    """Inizializza il sistema di autenticazione"""
+    try:
+        # Crea un'istanza del sistema di autenticazione
+        auth_system = SimpleAuthSystem()
+        logger.info("✅ Sistema di autenticazione semplice inizializzato")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Errore inizializzazione sistema di autenticazione: {e}")
+        return False

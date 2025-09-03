@@ -102,6 +102,14 @@ except Exception as e:
     print(f"❌ Errore import sistema impostazioni utente: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema impostazioni utente", error=e))
 
+# Import sistema gestione permessi
+try:
+    from components.permissions_management import permissions_management
+    print("✅ Sistema gestione permessi importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import sistema gestione permessi: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione permessi", error=e))
+
 # Configurazione pagina
 st.set_page_config(
     page_title=t("dashboard.title", "Dashboard Gestione CPA"),
@@ -402,7 +410,13 @@ st.markdown("---")
 st.markdown("---")
 selected = option_menu(
     menu_title=None,
-    options=[t("navigation.dashboard", "🏠 Dashboard"), t("navigation.clients", "👥 Gestione Clienti"), t("navigation.crosses", "🔄 Incroci"), t("navigation.summary", "📈 Riepilogo"), t("navigation.settings", "⚙️ Impostazioni")],
+    options=[
+        t("navigation.dashboard", "🏠 Dashboard"), 
+        t("navigation.clients", "👥 Gestione Clienti"), 
+        t("navigation.crosses", "🔄 Incroci"), 
+        t("navigation.summary", "📈 Riepilogo"), 
+        t("navigation.settings", "⚙️ Impostazioni")
+    ],
     icons=["house", "people", "arrows-collapse", "bar-chart", "gear"],
     orientation="horizontal",
     styles={
@@ -790,8 +804,8 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
     # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_brokers, tab_security, tab_user_settings = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker", "🔒 Sicurezza", "👤 Impostazioni Utente"
+    tab_supabase, tab_system, tab_brokers, tab_security, tab_permissions, tab_user_settings = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente"
     ])
     
     # TAB 1: Supabase
@@ -920,7 +934,23 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
             st.error(f"❌ **Errore caricamento componente sicurezza:** {e}")
             st.info("🔧 Controlla che il file `components/security_tab.py` sia presente")
     
-    # TAB 5: Impostazioni Utente
+    # TAB 5: Permessi
+    with tab_permissions:
+        st.subheader("🛡️ " + t("permissions.management.title", "Gestione Permessi e Ruoli"))
+        st.info("🔐 **SISTEMA PERMESSI AVANZATO**: Gestisci utenti, ruoli e permessi del sistema")
+        
+        # Verifica se l'utente è admin
+        try:
+            from utils.supabase_permissions import has_role
+            if has_role('admin'):
+                permissions_management.render()
+            else:
+                st.error("❌ " + t("permissions.admin_only", "Solo gli amministratori possono accedere alla gestione permessi."))
+        except Exception as e:
+            st.error(f"❌ Errore caricamento sistema permessi: {e}")
+            st.info("ℹ️ Assicurati che Supabase sia configurato correttamente.")
+    
+    # TAB 6: Impostazioni Utente
     with tab_user_settings:
         try:
             render_user_settings()
