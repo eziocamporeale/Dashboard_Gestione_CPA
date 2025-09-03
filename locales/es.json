@@ -703,7 +703,8 @@
         "user_not_found_db": "❌ Usuario no encontrado en la base de datos.",
         "insufficient_permissions": "❌ Permisos insuficientes para acceder a esta sección.",
         "insufficient_role": "❌ Rol insuficiente para acceder a esta sección.",
-        "resource_access_denied": "❌ Acceso denegado al recurso solicitado."
+        "resource_access_denied": "❌ Acceso denegado al recurso solicitado.",
+      "login_required": "Inicia sesión para acceder a la gestión de permisos."
       },
       "settings": {
         "title": "⚙️ Configuración Sistema",

@@ -939,13 +939,20 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
         st.subheader("🛡️ " + t("permissions.management.title", "Gestione Permessi e Ruoli"))
         st.info("🔐 **SISTEMA PERMESSI AVANZATO**: Gestisci utenti, ruoli e permessi del sistema")
         
-        # Verifica se l'utente è admin
+        # Verifica se l'utente è autenticato e admin
         try:
             from utils.supabase_permissions import has_role
-            if has_role('admin'):
-                permissions_management.render()
+            
+            # Prima verifica se l'utente è autenticato
+            if not st.session_state.get('authenticated', False):
+                st.info("ℹ️ " + t("permissions.login_required", "Effettua il login per accedere alla gestione permessi."))
+                pass
             else:
-                st.error("❌ " + t("permissions.admin_only", "Solo gli amministratori possono accedere alla gestione permessi."))
+                # Poi verifica se è admin
+                if has_role('admin'):
+                    permissions_management.render()
+                else:
+                    st.error("❌ " + t("permissions.admin_only", "Solo gli amministratori possono accedere alla gestione permessi."))
         except Exception as e:
             st.error(f"❌ Errore caricamento sistema permessi: {e}")
             st.info("ℹ️ Assicurati che Supabase sia configurato correttamente.")
