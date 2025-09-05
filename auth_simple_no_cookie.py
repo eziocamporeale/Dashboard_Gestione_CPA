@@ -249,13 +249,9 @@ def require_auth():
         st.stop()
 
 def show_user_info():
-    """Mostra solo il pulsante logout (informazioni utente gestite da user_navigation.py)"""
-    if st.session_state.get('authenticated', False):
-        with st.sidebar:
-            if st.button("🚪 **Logout**", type="secondary"):
-                logout_user()
-    else:
-        st.info("👋 **Benvenuto!** Effettua l'accesso per utilizzare il sistema.")
+    """Funzione vuota - informazioni utente e logout gestiti da user_navigation.py"""
+    # Tutte le informazioni utente e il logout sono ora gestiti da user_navigation.py
+    pass
 
 def get_current_role():
     """Ottiene il ruolo corrente dell'utente"""

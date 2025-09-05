@@ -54,6 +54,11 @@ class UserNavigation:
                 st.markdown(f"*{current_role.title()}*")
                 st.markdown(f"`{self.current_user}`")
             
+            # Pulsante logout nella sezione utente
+            if st.button("🚪 Logout", type="secondary", use_container_width=True):
+                from auth_simple_no_cookie import logout_user
+                logout_user()
+            
             st.markdown("---")
     
     def render_user_menu(self):
