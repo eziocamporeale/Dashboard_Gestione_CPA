@@ -55,7 +55,7 @@ class UserNavigation:
                 st.markdown(f"`{self.current_user}`")
             
             # Pulsante logout nella sezione utente
-            if st.button("🚪 Logout", type="secondary", use_container_width=True):
+            if st.button("🚪 Logout", type="secondary", use_container_width=True, key="logout_user_section"):
                 from auth_simple_no_cookie import logout_user
                 logout_user()
             
@@ -78,12 +78,7 @@ class UserNavigation:
                 st.session_state['current_page'] = 'settings'
                 st.rerun()
             
-            # Pulsante logout
-            if st.button("🚪 Logout", use_container_width=True, type="secondary"):
-                # Importa la funzione di logout
-                from auth_simple_no_cookie import logout_user
-                logout_user()
-                st.rerun()
+            # Pulsante logout rimosso - ora gestito nella sezione utente
             
             # Menu amministratore - USA IL RUOLO CORRETTO DAL SESSION_STATE
             # HOOK: traccia quando viene verificato il ruolo per il menu admin
