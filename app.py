@@ -1094,66 +1094,50 @@ def fix_supabase_and_duplicates():
 
 # Sezione soluzione completa rimossa - non più necessaria
 
-# Sidebar essenziale e collassabile
+# Sidebar compatta e essenziale
 with st.sidebar:
-    st.header(t("dashboard.title", "🎛️ Dashboard CPA"))
+    st.header("🎛️ Dashboard CPA")
     
-    # Sezione principale - solo azioni essenziali
-    st.subheader(t("sidebar.management", "📊 Gestione"))
-    
-    if st.button(t("clients.new_client", "➕ Nuovo Cliente"), use_container_width=True):
+    # Menu principale compatto
+    if st.button("➕ Nuovo Cliente", use_container_width=True):
         st.session_state.editing_client = None
         st.session_state.show_client_form = True
     
-    if st.button(t("common.refresh", "🔄 Aggiorna Dati"), use_container_width=True):
-        pass
-    
-    # Gestione broker
-    if st.button(t("sidebar.manage_brokers", "⚙️ Gestisci Broker"), use_container_width=True):
+    if st.button("⚙️ Gestisci Broker", use_container_width=True):
         st.session_state.show_broker_management = True
     
-    # Sezione informazioni essenziali
-    st.markdown("---")
-    st.subheader(t("sidebar.info", "ℹ️ Info Sistema"))
-    st.write(t("dashboard.description", "Dashboard per la gestione delle CPA dei broker"))
-    
-    # Statistiche rapide
+    # Statistiche rapide compatte
     try:
-        # Conta clienti
         clienti_response = supabase_manager.supabase.table('clienti').select('count', count='exact').execute()
         clienti_count = clienti_response.count if hasattr(clienti_response, 'count') else 0
         
-        # Conta incroci
         incroci_response = supabase_manager.supabase.table('incroci').select('count', count='exact').execute()
         incroci_count = incroci_response.count if hasattr(incroci_response, 'count') else 0
         
-        st.metric("👥 Clienti", clienti_count)
-        st.metric("🔗 Incroci", incroci_count)
-        
-    except Exception as e:
-        st.info("📊 Statistiche non disponibili")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("👥", clienti_count)
+        with col2:
+            st.metric("🔗", incroci_count)
+            
+    except Exception:
+        st.caption("📊 Statistiche non disponibili")
     
-    # Selettore di lingua (essenziale)
+    # Selettore lingua compatto
     st.markdown("---")
-    st.subheader(t("language.selector_title", "🌐 Lingua"))
     selected_language = st.selectbox(
-        t("language.select_language", "Seleziona lingua:"),
+        "🌐 Lingua",
         options=["it", "es"],
-        format_func=lambda x: t("language.italian", "Italiano") if x == "it" else t("language.spanish", "Español"),
+        format_func=lambda x: "🇮🇹 IT" if x == "it" else "🇪🇸 ES",
         index=0 if st.session_state.get("language", "it") == "it" else 1,
         key="language_selector"
     )
     
-    # Se la lingua è cambiata, aggiorna
     if selected_language != st.session_state.get("language", "it"):
         st.session_state["language"] = selected_language
         st.rerun()
     
-    # Separatore
-    st.markdown("---")
-    
-    # Versione e stato
-    st.caption("v2.0.0 - Database stabile")
-    st.caption("✅ Tutti i problemi risolti")
+    # Versione compatta
+    st.caption("v2.0.0")
 
 
