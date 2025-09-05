@@ -122,7 +122,7 @@ st.set_page_config(
     page_title=t("dashboard.title", "Dashboard Gestione CPA"),
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Inizializzazione del database
@@ -1094,39 +1094,47 @@ def fix_supabase_and_duplicates():
 
 # Sezione soluzione completa rimossa - non più necessaria
 
-# Sidebar pulita e organizzata
+# Sidebar essenziale e collassabile
 with st.sidebar:
     st.header(t("dashboard.title", "🎛️ Dashboard CPA"))
     
-    # Sezione principale
+    # Sezione principale - solo azioni essenziali
     st.subheader(t("sidebar.management", "📊 Gestione"))
     
     if st.button(t("clients.new_client", "➕ Nuovo Cliente"), use_container_width=True):
         st.session_state.editing_client = None
+        st.session_state.show_client_form = True
     
     if st.button(t("common.refresh", "🔄 Aggiorna Dati"), use_container_width=True):
         pass
-    
-    # Sezione informazioni
-    st.subheader(t("sidebar.info", "ℹ️ Informazioni"))
-    st.write(t("dashboard.description", "Dashboard per la gestione delle CPA dei broker"))
-    
-    # Broker popolari
-    st.subheader(t("sidebar.brokers", "🏢 Broker Popolari"))
-    broker_suggestions = get_broker_suggestions()[:5]
-    for broker in broker_suggestions:
-        st.write(f"• {broker}")
     
     # Gestione broker
     if st.button(t("sidebar.manage_brokers", "⚙️ Gestisci Broker"), use_container_width=True):
         st.session_state.show_broker_management = True
     
-    # Link utili
-    st.subheader("🔗 Link Utili")
-    st.write("• [Documentazione Streamlit](https://docs.streamlit.io/)")
-    st.write("• [Plotly Charts](https://plotly.com/python/)")
-    st.write("• [SQLite Tutorial](https://www.sqlitetutorial.net/)")
-    # Selettore di lingua
+    # Sezione informazioni essenziali
+    st.markdown("---")
+    st.subheader(t("sidebar.info", "ℹ️ Info Sistema"))
+    st.write(t("dashboard.description", "Dashboard per la gestione delle CPA dei broker"))
+    
+    # Statistiche rapide
+    try:
+        # Conta clienti
+        clienti_response = supabase_manager.supabase.table('clienti').select('count', count='exact').execute()
+        clienti_count = clienti_response.count if hasattr(clienti_response, 'count') else 0
+        
+        # Conta incroci
+        incroci_response = supabase_manager.supabase.table('incroci').select('count', count='exact').execute()
+        incroci_count = incroci_response.count if hasattr(incroci_response, 'count') else 0
+        
+        st.metric("👥 Clienti", clienti_count)
+        st.metric("🔗 Incroci", incroci_count)
+        
+    except Exception as e:
+        st.info("📊 Statistiche non disponibili")
+    
+    # Selettore di lingua (essenziale)
+    st.markdown("---")
     st.subheader(t("language.selector_title", "🌐 Lingua"))
     selected_language = st.selectbox(
         t("language.select_language", "Seleziona lingua:"),
