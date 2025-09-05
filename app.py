@@ -1106,22 +1106,6 @@ with st.sidebar:
     if st.button("⚙️ Gestisci Broker", use_container_width=True):
         st.session_state.show_broker_management = True
     
-    # Statistiche rapide compatte
-    try:
-        clienti_response = supabase_manager.supabase.table('clienti').select('count', count='exact').execute()
-        clienti_count = clienti_response.count if hasattr(clienti_response, 'count') else 0
-        
-        incroci_response = supabase_manager.supabase.table('incroci').select('count', count='exact').execute()
-        incroci_count = incroci_response.count if hasattr(incroci_response, 'count') else 0
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("👥", clienti_count)
-        with col2:
-            st.metric("🔗", incroci_count)
-            
-    except Exception:
-        st.caption("📊 Statistiche non disponibili")
     
     # Selettore lingua compatto
     st.markdown("---")
