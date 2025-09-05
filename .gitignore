@@ -85,6 +85,26 @@ Thumbs.db
 # Streamlit secrets
 .streamlit/secrets.toml
 
+# Environment files - CRITICO!
+.env
+.env.*
+env.*
+*.env
+
+# Configuration files with potential secrets
+config
+auth_config.yaml
+auth_config_*.yaml
+monitoring_config.py
+
+# Backup files - CRITICO!
+*backup*
+*.backup
+*_backup_*
+backup_*.py
+verifica_backup.py
+confronto_backup_*.xlsx
+
 # IDE
 .vscode/
 .idea/
