@@ -30,43 +30,27 @@ class UserNavigation:
         self.current_user_info = st.session_state.get('user_info', {})
         
     def render_user_header(self):
-        """Rende l'header con informazioni utente"""
+        """Rende l'header con informazioni utente compatte"""
         if not self.current_user:
             return
         
-        # Header utente nella sidebar
+        # Header utente compatto nella sidebar
         with st.sidebar:
             st.markdown("---")
-            st.markdown("### 👤 **Utente Corrente**")
+            st.markdown("### 👤 **Utente**")
             
-            # Informazioni utente
-            col1, col2 = st.columns([1, 3])
+            # Informazioni utente in layout compatto
+            current_role = st.session_state.get('roles', 'user')
+            role_icon = {'admin': '👑', 'manager': '👔', 'user': '👤'}
+            
+            # Layout compatto con tutte le info
+            col1, col2 = st.columns([1, 2])
             
             with col1:
-                # Avatar/icona utente - USA IL RUOLO CORRETTO DAL SESSION_STATE
-                # HOOK: traccia quando viene visualizzata l'icona del ruolo
-                logger.info(f"🔍 HOOK NAVIGATION: Visualizzazione icona ruolo")
-                logger.info(f"🔍 HOOK NAVIGATION: user_info.role = {self.current_user_info.get('role')}")
-                logger.info(f"🔍 HOOK NAVIGATION: session_state.roles = {st.session_state.get('roles')}")
-                
-                role_icon = {
-                    'admin': '👑',
-                    'manager': '👔',
-                    'user': '👤'
-                }
-                # Usa il ruolo dal session_state invece che da user_info
-                current_role = st.session_state.get('roles', 'user')
                 st.markdown(f"<h2>{role_icon.get(current_role, '👤')}</h2>", unsafe_allow_html=True)
             
             with col2:
                 st.markdown(f"**{self.current_user_info.get('full_name', self.current_user)}**")
-                # HOOK: traccia quando viene visualizzato il ruolo
-                logger.info(f"🔍 HOOK NAVIGATION: Visualizzazione ruolo utente")
-                logger.info(f"🔍 HOOK NAVIGATION: user_info.role = {self.current_user_info.get('role')}")
-                logger.info(f"🔍 HOOK NAVIGATION: session_state.roles = {st.session_state.get('roles')}")
-                
-                # Usa il ruolo dal session_state invece che da user_info
-                current_role = st.session_state.get('roles', 'user')
                 st.markdown(f"*{current_role.title()}*")
                 st.markdown(f"`{self.current_user}`")
             

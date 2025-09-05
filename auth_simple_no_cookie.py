@@ -249,18 +249,9 @@ def require_auth():
         st.stop()
 
 def show_user_info():
-    """Mostra informazioni sull'utente corrente"""
+    """Mostra solo il pulsante logout (informazioni utente gestite da user_navigation.py)"""
     if st.session_state.get('authenticated', False):
-        username = st.session_state.get('username', 'N/A')
-        name = st.session_state.get('name', 'N/A')
-        role = st.session_state.get('roles', 'N/A')
-        
         with st.sidebar:
-            st.markdown("### 👤 **Informazioni Utente**")
-            st.info(f"**Username:** {username}")
-            st.info(f"**Nome:** {name}")
-            st.info(f"**Email:** N/A")
-            
             if st.button("🚪 **Logout**", type="secondary"):
                 logout_user()
     else:
