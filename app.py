@@ -52,6 +52,13 @@ except Exception as e:
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="IncrociTab", error=e))
 
 try:
+    from components.broker_links_manager import BrokerLinksManager
+    print("✅ BrokerLinksManager importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import BrokerLinksManager: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="BrokerLinksManager", error=e))
+
+try:
     from database.database import DatabaseManager
     print("✅ DatabaseManager importato correttamente")
 except Exception as e:
@@ -130,14 +137,15 @@ def init_components(db):
         print("🔧 Inizializzazione componenti...")
         
         # Verifica che tutti i componenti siano disponibili
-        if not all([Charts, ClientForm, ClientTable, IncrociTab]):
+        if not all([Charts, ClientForm, ClientTable, IncrociTab, BrokerLinksManager]):
             raise Exception("Uno o più componenti non sono disponibili")
         
         components_dict = {
             'client_form': ClientForm(),
             'client_table': ClientTable(),
             'charts': Charts(),
-            'incroci_tab': IncrociTab(IncrociManager(), db)
+            'incroci_tab': IncrociTab(IncrociManager(), db),
+            'broker_links_manager': BrokerLinksManager()
         }
         
         print("✅ Componenti inizializzati correttamente")
@@ -240,15 +248,23 @@ except Exception as e:
 
 # Funzioni per gestire i broker popolari
 def get_broker_suggestions():
-    """Restituisce la lista dei broker popolari dal database o dalla lista predefinita"""
+    """Restituisce la lista dei broker popolari dal database Supabase o dalla lista predefinita"""
     try:
-        # Prova a ottenere broker dal database
-        if 'db' in globals() and db:
-            broker_db = db.ottieni_broker()
-            if broker_db and not broker_db.empty:
-                return broker_db['nome_broker'].tolist()
-    except:
-        pass
+        # Prova a ottenere broker dal database Supabase
+        from supabase_manager import SupabaseManager
+        supabase_manager = SupabaseManager()
+        
+        if supabase_manager.is_configured:
+            broker_links = supabase_manager.get_broker_links(active_only=True)
+            if broker_links:
+                # Estrae solo i nomi dei broker attivi
+                broker_names = [link.get('broker_name', '') for link in broker_links if link.get('broker_name')]
+                if broker_names:
+                    return broker_names
+    except Exception as e:
+        # Log dell'errore per debug
+        import logging
+        logging.getLogger(__name__).warning(f"Errore recupero broker da Supabase: {e}")
     
     # Lista predefinita se non ci sono broker nel database
     return [
@@ -414,10 +430,11 @@ selected = option_menu(
         t("navigation.dashboard", "🏠 Dashboard"), 
         t("navigation.clients", "👥 Gestione Clienti"), 
         t("navigation.crosses", "🔄 Incroci"), 
+        t("navigation.broker", "🔗 Broker"), 
         t("navigation.summary", "📈 Riepilogo"), 
         t("navigation.settings", "⚙️ Impostazioni")
     ],
-    icons=["house", "people", "arrows-collapse", "bar-chart", "gear"],
+    icons=["house", "people", "arrows-collapse", "link", "bar-chart", "gear"],
     orientation="horizontal",
     styles={
         "container": {"padding": "0!important", "background-color": "#fafafa"},
@@ -775,6 +792,10 @@ elif selected == t("navigation.crosses", "🔄 Incroci"):
     # Mostra il tab degli incroci
     components['incroci_tab'].render()
 
+elif selected == t("navigation.broker", "🔗 Broker"):
+    # Mostra la gestione dei link broker
+    components['broker_links_manager'].render_broker_links_page()
+
 elif selected == t("navigation.summary", "📈 Riepilogo"):
     st.header("Riepilogo Dati")
     st.write("Visualizza i dati in formato tabellare e grafico")
@@ -804,8 +825,8 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
     # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_brokers, tab_security, tab_permissions, tab_user_settings = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🏢 Broker", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente"
+    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente"
     ])
     
     # TAB 1: Supabase
@@ -897,31 +918,7 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
         st.write("• ✅ Componenti inizializzati correttamente")
         st.write("• ✅ Configurazione da Streamlit Cloud secrets")
     
-    # TAB 3: Broker
-    with tab_brokers:
-        st.subheader("🏢 Gestione Broker")
-        st.info("💼 **BROKER POPOLARI**: Lista aggiornata dei broker supportati")
-        
-        # Lista broker attuali
-        broker_list = [
-            "Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", 
-            "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"
-        ]
-        
-        st.write("**📋 Broker Attualmente Supportati:**")
-        for i, broker in enumerate(broker_list, 1):
-            st.write(f"{i}. {broker}")
-        
-        st.success("✅ **Lista aggiornata** - Tutti i broker sono configurati correttamente")
-        
-        # Informazioni aggiuntive
-        st.markdown("---")
-        st.subheader("ℹ️ Informazioni Broker")
-        st.write("• **Aggiornamento:** Lista aggiornata automaticamente")
-        st.write("• **Compatibilità:** Supporta tutti i broker principali")
-        st.write("• **Personalizzazione:** Possibile aggiungere broker personalizzati")
-    
-    # TAB 4: Sicurezza
+    # TAB 3: Sicurezza
     with tab_security:
         try:
             from components.security_tab import SecurityTab
@@ -934,7 +931,7 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
             st.error(f"❌ **Errore caricamento componente sicurezza:** {e}")
             st.info("🔧 Controlla che il file `components/security_tab.py` sia presente")
     
-    # TAB 5: Permessi
+    # TAB 4: Permessi
     with tab_permissions:
         st.subheader("🛡️ " + t("permissions.management.title", "Gestione Permessi e Ruoli"))
         st.info("🔐 **SISTEMA PERMESSI AVANZATO**: Gestisci utenti, ruoli e permessi del sistema")
@@ -957,7 +954,7 @@ elif selected == t("navigation.settings", "⚙️ Impostazioni"):
             st.error(f"❌ Errore caricamento sistema permessi: {e}")
             st.info("ℹ️ Assicurati che Supabase sia configurato correttamente.")
     
-    # TAB 6: Impostazioni Utente
+    # TAB 5: Impostazioni Utente
     with tab_user_settings:
         try:
             render_user_settings()

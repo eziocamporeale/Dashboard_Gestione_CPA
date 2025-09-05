@@ -102,14 +102,11 @@ class UserNavigation:
             logger.info(f"🔍 HOOK NAVIGATION: user_info.role = {self.current_user_info.get('role')}")
             logger.info(f"🔍 HOOK NAVIGATION: session_state.roles = {st.session_state.get('roles')}")
             
-            # Usa il ruolo dal session_state invece che da user_info
-            if st.session_state.get('roles') == 'admin':
+            # Usa il ruolo dal user_info invece che dal session_state
+            current_role = self.current_user_info.get('role', 'user')
+            if current_role == 'admin':
                 st.markdown("---")
                 st.markdown("#### 👑 **Amministrazione**")
-                
-                if st.button("👥 Gestione Utenti", use_container_width=True):
-                    st.session_state['current_page'] = 'user_management'
-                    st.rerun()
                 
                 if st.button("📊 Statistiche Sistema", use_container_width=True):
                     st.session_state['current_page'] = 'system_stats'
@@ -129,7 +126,6 @@ class UserNavigation:
         breadcrumb_map = {
             'dashboard': '🏠 Dashboard',
             'settings': '⚙️ Impostazioni',
-            'user_management': '👥 Gestione Utenti',
             'system_stats': '📊 Statistiche Sistema'
         }
         
@@ -144,10 +140,6 @@ class UserNavigation:
         if current_page == 'settings':
             from .user_settings import render_user_settings
             render_user_settings()
-        
-        elif current_page == 'user_management':
-            from .user_management import render_user_management
-            render_user_management()
         
         elif current_page == 'system_stats':
             self.render_system_statistics()

@@ -2,6 +2,7 @@
 """
 👥 COMPONENTE GESTIONE UTENTI - Dashboard CPA
 Sistema completo per la gestione di utenti, ruoli e permessi
+SOLO ADMIN PUÒ ACCEDERE A QUESTA SEZIONE
 """
 
 import streamlit as st
@@ -10,7 +11,6 @@ from datetime import datetime
 import sys
 import os
 import logging
-from utils.translations import t
 
 # Configura il logger
 logger = logging.getLogger(__name__)
@@ -21,40 +21,39 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'progetti', 'supab
 from supabase_manager import SupabaseManager
 
 class UserManagement:
-    """Classe per la gestione completa degli utenti"""
+    """Classe per la gestione completa degli utenti - SOLO ADMIN"""
     
     def __init__(self):
         """Inizializza il sistema di gestione utenti"""
         self.supabase_manager = SupabaseManager()
-        # HOOK: traccia quando viene verificato il ruolo per user_management
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: Inizializzazione componente")
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: user_info.role = {st.session_state.get('user_info', {}).get('role')}")
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: session_state.roles = {st.session_state.get('roles')}")
-        
-        # Usa il ruolo dal session_state invece che da user_info
-        self.current_user_role = st.session_state.get('roles', 'user')
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: Ruolo finale impostato = {self.current_user_role}")
+        # Verifica ruolo corrente dall'user_info
+        user_info = st.session_state.get('user_info', {})
+        self.current_user_role = user_info.get('role', 'user')
+        logger.info(f"🔍 USER_MANAGEMENT: Inizializzazione per ruolo {self.current_user_role}")
+        logger.info(f"🔍 USER_MANAGEMENT: user_info caricato (senza dati sensibili)")
         
     def check_admin_permissions(self):
         """Verifica che l'utente abbia i permessi di amministratore"""
-        # HOOK: traccia quando viene verificato il permesso admin
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: Verifica permesso admin")
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: current_user_role = {self.current_user_role}")
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: session_state.roles = {st.session_state.get('roles')}")
-        
         if self.current_user_role != 'admin':
-            st.error(t("user_management.access_denied", "❌ Accesso negato. Solo gli amministratori possono gestire gli utenti."))
-            logger.warning(f"🔍 HOOK USER_MANAGEMENT: Accesso negato per ruolo {self.current_user_role}")
+            st.error("❌ **ACCESSO NEGATO** - Solo gli amministratori possono gestire gli utenti.")
+            st.info("🔒 Questa sezione è riservata agli utenti con ruolo **admin**")
+            logger.warning(f"🔍 USER_MANAGEMENT: Accesso negato per ruolo {self.current_user_role}")
             return False
         
-        logger.info(f"🔍 HOOK USER_MANAGEMENT: Accesso consentito per ruolo {self.current_user_role}")
+        logger.info(f"🔍 USER_MANAGEMENT: Accesso consentito per ruolo {self.current_user_role}")
         return True
     
     def get_all_users(self):
-        """Recupera tutti gli utenti dal database"""
+        """Recupera tutti gli utenti dal database con informazioni sui ruoli"""
         try:
             logger.info(f"🔍 GET_ALL_USERS: Recupero utenti da Supabase...")
-            response = self.supabase_manager.supabase.table('users').select('*').execute()
+            # Query con join sui ruoli per ottenere informazioni complete
+            response = self.supabase_manager.supabase.table('users').select(
+                'id, username, email, full_name, first_name, last_name, '
+                'is_active, role_id, created_at, updated_at, '
+                'roles(name, description, permissions)'
+            ).execute()
+            
             logger.info(f"🔍 GET_ALL_USERS: Risposta Supabase: {len(response.data) if response.data else 0} utenti")
             
             if response.data:
@@ -70,377 +69,241 @@ class UserManagement:
             st.error(f"❌ Errore nel recupero utenti: {e}")
             return pd.DataFrame()
     
-    def get_user_roles(self):
+    def get_all_roles(self):
         """Recupera tutti i ruoli disponibili"""
         try:
-            response = self.supabase_manager.supabase.table('user_roles').select('*').execute()
+            response = self.supabase_manager.supabase.table('roles').select('*').execute()
             if response.data:
-                return {role['role_name']: role['description'] for role in response.data}
-            return {}
+                return response.data
+            return []
         except Exception as e:
             st.error(f"❌ Errore nel recupero ruoli: {e}")
-            return {}
+            return []
     
-    def create_user(self, username, email, password, full_name, role):
-        """Crea un nuovo utente"""
-        try:
-            # Hash della password (semplificato per ora)
-            import hashlib
-            password_hash = hashlib.sha256(password.encode()).hexdigest()
-            
-            user_data = {
-                'username': username,
-                'email': email,
-                'password_hash': password_hash,
-                'full_name': full_name,
-                'role': role,
-                'is_active': True,
-                'created_at': datetime.now().isoformat(),
-                'updated_at': datetime.now().isoformat()
-            }
-            
-            response = self.supabase_manager.supabase.table('users').insert(user_data).execute()
-            
-            if response.data:
-                # Crea profilo utente
-                user_id = response.data[0]['id']
-                profile_data = {
-                    'user_id': user_id,
-                    'timezone': 'Europe/Rome',
-                    'language': 'it',
-                    'created_at': datetime.now().isoformat(),
-                    'updated_at': datetime.now().isoformat()
-                }
-                
-                self.supabase_manager.supabase.table('user_profiles').insert(profile_data).execute()
-                
-                # Log creazione
-                log_data = {
-                    'user_id': user_id,
-                    'action': 'user_created',
-                    'success': True,
-                    'details': {'created_by': st.session_state.get('username', 'admin')},
-                    'created_at': datetime.now().isoformat()
-                }
-                
-                self.supabase_manager.supabase.table('user_access_logs').insert(log_data).execute()
-                
-                st.success(f"✅ Utente '{username}' creato con successo!")
-                return True
-            else:
-                st.error("❌ Errore nella creazione dell'utente")
-                return False
-                
-        except Exception as e:
-            st.error(f"❌ Errore nella creazione dell'utente: {e}")
-            return False
-    
-    def update_user(self, user_id, updates):
-        """Aggiorna un utente esistente"""
-        try:
-            updates['updated_at'] = datetime.now().isoformat()
-            
-            response = self.supabase_manager.supabase.table('users').update(updates).eq('id', user_id).execute()
-            
-            if response.data:
-                st.success("✅ Utente aggiornato con successo!")
-                return True
-            else:
-                st.error("❌ Errore nell'aggiornamento dell'utente")
-                return False
-                
-        except Exception as e:
-            st.error(f"❌ Errore nell'aggiornamento dell'utente: {e}")
-            return False
-    
-    def delete_user(self, user_id, username):
-        """Elimina un utente (solo per admin)"""
-        try:
-            logger.info(f"🔍 HOOK DELETE_USER: Tentativo eliminazione utente {username} (ID: {user_id})")
-            
-            # Verifica che non sia l'utente corrente
-            if user_id == st.session_state.get('user_info', {}).get('id'):
-                st.error("❌ Non puoi eliminare il tuo stesso account!")
-                logger.warning(f"🔍 HOOK DELETE_USER: Tentativo eliminazione account corrente bloccato")
-                return False
-            
-            logger.info(f"🔍 HOOK DELETE_USER: Eliminazione profilo utente per ID {user_id}")
-            # Elimina profilo utente
-            profile_response = self.supabase_manager.supabase.table('user_profiles').delete().eq('user_id', user_id).execute()
-            logger.info(f"🔍 HOOK DELETE_USER: Profilo eliminato: {profile_response.data}")
-            
-            logger.info(f"🔍 HOOK DELETE_USER: Eliminazione utente per ID {user_id}")
-            # Elimina utente
-            response = self.supabase_manager.supabase.table('users').delete().eq('id', user_id).execute()
-            logger.info(f"🔍 HOOK DELETE_USER: Risposta eliminazione: {response.data}")
-            
-            if response.data:
-                st.success(f"✅ Utente '{username}' eliminato con successo!")
-                logger.info(f"🔍 HOOK DELETE_USER: Utente {username} eliminato con successo")
-                return True
-            else:
-                st.error("❌ Errore nell'eliminazione dell'utente")
-                logger.error(f"🔍 HOOK DELETE_USER: Errore eliminazione - nessun dato restituito")
-                return False
-                
-        except Exception as e:
-            st.error(f"❌ Errore nell'eliminazione dell'utente: {e}")
-            logger.error(f"🔍 HOOK DELETE_USER: Eccezione durante eliminazione: {e}")
-            return False
-    
-    def toggle_user_status(self, user_id, current_status, username):
-        """Attiva/disattiva un utente"""
-        try:
-            new_status = not current_status
-            updates = {
-                'is_active': new_status,
-                'updated_at': datetime.now().isoformat()
-            }
-            
-            response = self.supabase_manager.supabase.table('users').update(updates).eq('id', user_id).execute()
-            
-            if response.data:
-                status_text = "attivato" if new_status else "disattivato"
-                st.success(f"✅ Utente '{username}' {status_text} con successo!")
-                return True
-            else:
-                st.error("❌ Errore nel cambio di stato dell'utente")
-                return False
-                
-        except Exception as e:
-            st.error(f"❌ Errore nel cambio di stato dell'utente: {e}")
-            return False
+    def get_roles(self):
+        """Recupera tutti i ruoli dal database (alias per get_all_roles)"""
+        return self.get_all_roles()
     
     def render_user_management(self):
-        """Rende l'interfaccia principale di gestione utenti"""
+        """Rende l'interfaccia principale di gestione utenti - SOLO ADMIN"""
         
+        # CONTROLLO PRINCIPALE: Solo Admin può accedere
         if not self.check_admin_permissions():
             return
         
-        st.header(t("user_management.title", "👥 Gestione Utenti"))
+        # Controlla se mostrare il form di modifica
+        if st.session_state.get('edit_user_id'):
+            self.render_edit_form(st.session_state['edit_user_id'])
+            return
+        
+        st.header("👥 Gestione Utenti")
+        st.markdown("**🔒 Sezione riservata agli amministratori**")
         st.markdown("---")
         
-        # Tab per diverse funzionalità
-        tab1, tab2, tab3, tab4 = st.tabs([
-            t("user_management.tabs.users_list", "📊 Lista Utenti"),
-            t("user_management.tabs.new_user", "➕ Nuovo Utente"),
-            t("user_management.tabs.edit_user", "🔧 Modifica Utente"),
-            t("user_management.tabs.statistics", "📈 Statistiche")
-        ])
-        
-        with tab1:
-            self.render_users_list()
-        
-        with tab2:
-            self.render_create_user()
-        
-        with tab3:
-            self.render_edit_user()
-        
-        with tab4:
-            self.render_user_statistics()
-    
-    def render_users_list(self):
-        """Rende la lista degli utenti"""
-        st.subheader(t("user_management.users_list.title", "📊 Lista Utenti"))
-        
-        # Recupera utenti
+        # Mostra lista utenti
         users_df = self.get_all_users()
         
         if users_df.empty:
-            st.info(t("user_management.users_list.no_users", "ℹ️ Nessun utente trovato nel sistema."))
+            st.info("📭 Nessun utente trovato")
             return
         
-        # Formatta i dati per la visualizzazione
-        display_df = users_df.copy()
-        display_df['created_at'] = pd.to_datetime(display_df['created_at']).dt.strftime('%d/%m/%Y %H:%M')
-        display_df['last_login'] = pd.to_datetime(display_df['last_login']).dt.strftime('%d/%m/%Y %H:%M') if 'last_login' in display_df.columns else 'Mai'
-        display_df['status'] = display_df['is_active'].map({
-            True: t("user_management.users_list.status.active", "🟢 Attivo"), 
-            False: t("user_management.users_list.status.inactive", "🔴 Inattivo")
-        })
+        # Mostra tabella utenti con azioni
+        st.subheader("📊 Lista Utenti")
         
-        # Mostra tabella
-        st.dataframe(
-            display_df[['username', 'full_name', 'email', 'role', 'status', 'created_at', 'last_login']],
-            use_container_width=True,
-            hide_index=True
-        )
-        
-        # Lista utenti con azioni dirette
-        st.subheader(t("user_management.users_list.title", "👥 Lista Utenti"))
-        
-        # Tabella utenti con azioni
-        for _, user in users_df.iterrows():
-            user_name = user["username"]
-            current_status = user["is_active"]
-            user_role = user.get("role", "user")
-            
-            # Creare una riga per ogni utente
+        # Tabella interattiva con azioni
+        for index, user in users_df.iterrows():
             with st.container():
-                col_name, col_status, col_actions = st.columns([2, 1, 3])
-                
-                with col_name:
-                    st.write(f"**{user_name}**")
-                    if user_role != "user":
-                        st.write(f"*({user_role})*")
-                
-                with col_status:
-                    status_icon = "🟢" if current_status else "🔴"
-                    status_text = t("user_management.users_list.status.active", "Attivo") if current_status else t("user_management.users_list.status.inactive", "Inattivo")
-                    st.write(f"{status_icon} {status_text}")
-                
-                with col_actions:
-                    # Pulsante Attiva/Disattiva (per tutti tranne admin)
-                    if user_name != "admin":
-                        button_text = f"{t('user_management.users_list.actions.deactivate', '🔴 Disattiva') if current_status else t('user_management.users_list.actions.activate', '🟢 Attiva')} {user_name}"
-                        if st.button(button_text, key=f"toggle_btn_{user_name}"):
-                            self.toggle_user_status(user["id"], current_status, user_name)
-                            st.success(t("user_management.users_list.messages.status_updated", "✅ Stato di {username} aggiornato!").format(username=user_name))
-                            st.rerun()
-                    
-                    # Pulsante Elimina (solo per utenti non admin)
-                    if user_name != "admin":
-                        # Gestione stato di conferma per eliminazione
-                        confirm_key = f"confirm_delete_{user_name}"
-                        if confirm_key not in st.session_state:
-                            st.session_state[confirm_key] = False
-                        
-                        if not st.session_state[confirm_key]:
-                            if st.button(f"{t('user_management.users_list.actions.delete', '🗑️ Elimina')} {user_name}", type="secondary", key=f"delete_btn_{user_name}"):
-                                st.session_state[confirm_key] = True
-                                st.rerun()
-                        else:
-                            st.warning(t("user_management.users_list.messages.delete_warning", "⚠️ Conferma eliminazione di {username}").format(username=user_name))
-                            col_confirm1, col_confirm2 = st.columns(2)
-                            with col_confirm1:
-                                if st.button(t("user_management.users_list.actions.confirm", "✅ Conferma"), type="primary", key=f"confirm_btn_{user_name}"):
-                                    if self.delete_user(user["id"], user_name):
-                                        st.session_state[confirm_key] = False
-                                        st.success(t("user_management.users_list.messages.delete_success", "✅ {username} eliminato con successo!").format(username=user_name))
-                                        st.rerun()
-                            with col_confirm2:
-                                if st.button(t("user_management.users_list.actions.cancel", "❌ Annulla"), key=f"cancel_btn_{user_name}"):
-                                    st.session_state[confirm_key] = False
-                                    st.rerun()
-            
-            st.markdown("---")
-    def render_create_user(self):
-        """Rende il form per la creazione di nuovi utenti"""
-        st.subheader(t("user_management.create_user.title", "➕ Nuovo Utente"))
-        
-        with st.form("create_user_form"):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                username = st.text_input(t("user_management.create_user.form.username", "👤 Username *"), placeholder="es. mario.rossi")
-                email = st.text_input(t("user_management.create_user.form.email", "📧 Email *"), placeholder="es. mario@example.com")
-                password = st.text_input(t("user_management.create_user.form.password", "🔐 Password *"), type="password", placeholder="Minimo 8 caratteri")
-            
-            with col2:
-                full_name = st.text_input(t("user_management.create_user.form.full_name", "📝 Nome Completo *"), placeholder="es. Mario Rossi")
-                role = st.selectbox(t("user_management.create_user.form.role", "🏷️ Ruolo *"), options=['user', 'manager', 'admin'])
-                is_active = st.checkbox(t("user_management.create_user.form.is_active", "✅ Utente Attivo"), value=True)
-            
-            # Validazione
-            if st.form_submit_button(t("user_management.create_user.form.submit", "🚀 Crea Utente")):
-                if not all([username, email, password, full_name, role]):
-                    st.error(t("user_management.create_user.validation.required_fields", "❌ Tutti i campi obbligatori devono essere compilati!"))
-                elif len(password) < 8:
-                    st.error(t("user_management.create_user.validation.password_length", "❌ La password deve essere di almeno 8 caratteri!"))
-                else:
-                    if self.create_user(username, email, password, full_name, role):
-                        pass  # st.rerun() rimosso per evitare reindirizzamento
-    
-    def render_edit_user(self):
-        """Rende l'interfaccia per la modifica degli utenti"""
-        st.subheader("🔧 Modifica Utente")
-        
-        # Recupera utenti
-        users_df = self.get_all_users()
-        
-        if users_df.empty:
-            st.info("ℹ️ Nessun utente da modificare.")
-            return
-        
-        # Selezione utente
-        selected_user = st.selectbox(
-            "Seleziona utente da modificare:",
-            options=users_df['username'].tolist(),
-            key="edit_user_select"
-        )
-        
-        if selected_user:
-            user_data = users_df[users_df['username'] == selected_user].iloc[0]
-            
-            with st.form("edit_user_form"):
-                col1, col2 = st.columns(2)
+                col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 1, 1, 1])
                 
                 with col1:
-                    new_email = st.text_input("📧 Email", value=user_data.get('email', ''))
-                    new_full_name = st.text_input("📝 Nome Completo", value=user_data.get('full_name', ''))
+                    st.write(f"**{user['username']}**")
                 
                 with col2:
-                    new_role = st.selectbox("🏷️ Ruolo", options=['user', 'manager', 'admin'], index=['user', 'manager', 'admin'].index(user_data.get('role', 'user')))
-                    new_status = st.checkbox("✅ Utente Attivo", value=user_data.get('is_active', True))
+                    st.write(user['email'])
                 
-                if st.form_submit_button("💾 Salva Modifiche"):
-                    updates = {
-                        'email': new_email,
-                        'full_name': new_full_name,
-                        'role': new_role,
-                        'is_active': new_status
-                    }
-                    
-                    if self.update_user(user_data['id'], updates):
-                        pass  # st.rerun() rimosso per evitare reindirizzamento
-    
-    def render_user_statistics(self):
-        """Rende le statistiche degli utenti"""
-        st.subheader("📈 Statistiche Utenti")
+                with col3:
+                    st.write(user['full_name'] or 'N/A')
+                
+                with col4:
+                    status = "🟢 Attivo" if user['is_active'] else "🔴 Inattivo"
+                    st.write(status)
+                
+                with col5:
+                    if st.button("✏️ Modifica", key=f"edit_{user['id']}"):
+                        st.session_state['edit_user_id'] = user['id']
+                        st.rerun()
+                
+                with col6:
+                    if st.button("🗑️ Elimina", key=f"delete_{user['id']}"):
+                        self.delete_user(user['id'])
+                
+                st.markdown("---")
         
-        # Recupera dati
-        users_df = self.get_all_users()
-        
-        if users_df.empty:
-            st.info("ℹ️ Nessun dato disponibile per le statistiche.")
-            return
-        
-        # Calcola statistiche
-        total_users = len(users_df)
-        active_users = len(users_df[users_df['is_active'] == True])
-        inactive_users = total_users - active_users
-        
-        role_counts = users_df['role'].value_counts()
-        
-        # Mostra metriche
-        col1, col2, col3, col4 = st.columns(4)
+        # Statistiche rapide
+        st.subheader("📈 Statistiche")
+        col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.metric("👥 Utenti Totali", total_users)
+            total_users = len(users_df)
+            st.metric("👥 Totale Utenti", total_users)
         
         with col2:
+            active_users = len(users_df[users_df['is_active'] == True])
             st.metric("🟢 Utenti Attivi", active_users)
         
         with col3:
+            inactive_users = len(users_df[users_df['is_active'] == False])
             st.metric("🔴 Utenti Inattivi", inactive_users)
+    
+    def delete_user(self, user_id: str):
+        """Elimina un utente con conferma"""
         
-        with col4:
-            st.metric("🏷️ Ruoli", len(role_counts))
+        # Verifica se è già stata richiesta la conferma
+        if st.session_state.get('confirm_delete_user'):
+            # Esegui l'eliminazione
+            success, message = self.supabase_manager.delete_user(user_id)
+            
+            if success:
+                st.success(message)
+                # Log dell'azione
+                logger.info(f"🔍 USER_MANAGEMENT: Utente {user_id} eliminato da admin")
+            else:
+                st.error(message)
+            
+            # Reset dello stato di conferma
+            st.session_state['confirm_delete_user'] = False
+            st.rerun()
+        else:
+            # Richiedi conferma
+            st.session_state['confirm_delete_user'] = True
+            st.warning("⚠️ **Conferma eliminazione utente**")
+            st.info("🔒 Questa azione non può essere annullata. L'utente verrà eliminato definitivamente dal sistema.")
+    
+    def edit_user(self, user_id: str):
+        """Modifica un utente"""
         
-        # Grafico distribuzione ruoli
-        st.subheader("📊 Distribuzione Ruoli")
-        if not role_counts.empty:
-            st.bar_chart(role_counts)
+        # Verifica se è già stata richiesta la modifica
+        if st.session_state.get('edit_user_id') == user_id:
+            # Mostra form di modifica
+            self.render_edit_form(user_id)
+        else:
+            # Imposta l'utente da modificare
+            st.session_state['edit_user_id'] = user_id
+            st.rerun()
+    
+    def render_edit_form(self, user_id: str):
+        """Renderizza il form di modifica utente"""
         
-        # Grafico utenti per data creazione
-        st.subheader("📅 Utenti per Data Creazione")
-        if 'created_at' in users_df.columns:
-            users_df['created_date'] = pd.to_datetime(users_df['created_at']).dt.date
-            date_counts = users_df['created_date'].value_counts().sort_index()
-            st.line_chart(date_counts)
+        # Recupera i dati dell'utente
+        users_df = self.get_all_users()
+        user_data = users_df[users_df['id'] == user_id].iloc[0]
+        
+        st.markdown("### ✏️ Modifica Utente")
+        
+        # Pulsante per tornare alla lista
+        if st.button("← Torna alla Lista"):
+            st.session_state['edit_user_id'] = None
+            st.rerun()
+        
+        # Form di modifica
+        with st.form("edit_user_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                username = st.text_input(
+                    "Username",
+                    value=user_data['username'],
+                    help="Username dell'utente"
+                )
+                
+                email = st.text_input(
+                    "Email",
+                    value=user_data['email'],
+                    help="Email dell'utente"
+                )
+            
+            with col2:
+                full_name = st.text_input(
+                    "Nome Completo",
+                    value=user_data['full_name'] or '',
+                    help="Nome completo dell'utente"
+                )
+                
+                is_active = st.selectbox(
+                    "Stato",
+                    options=[True, False],
+                    index=0 if user_data['is_active'] else 1,
+                    format_func=lambda x: "🟢 Attivo" if x else "🔴 Inattivo"
+                )
+            
+            # Ruolo
+            try:
+                roles = self.get_roles()
+                if roles:
+                    role_options = [role['name'] for role in roles]
+                    current_role = user_data.get('role', 'User')
+                    
+                    try:
+                        role_index = role_options.index(current_role)
+                    except ValueError:
+                        role_index = 0
+                    
+                    selected_role = st.selectbox(
+                        "Ruolo",
+                        options=role_options,
+                        index=role_index,
+                        help="Ruolo dell'utente"
+                    )
+                else:
+                    selected_role = user_data.get('role', 'User')
+                    st.selectbox(
+                        "Ruolo",
+                        options=[selected_role],
+                        index=0,
+                        help="Ruolo dell'utente (solo ruolo corrente disponibile)"
+                    )
+            except Exception as e:
+                logger.error(f"❌ Errore nel caricamento ruoli: {e}")
+                selected_role = user_data.get('role', 'User')
+                st.selectbox(
+                    "Ruolo",
+                    options=[selected_role],
+                    index=0,
+                    help="Ruolo dell'utente (errore nel caricamento ruoli)"
+                )
+            
+            # Pulsanti dentro il form
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.form_submit_button("💾 Salva Modifiche", use_container_width=True):
+                    # Prepara i dati per l'aggiornamento
+                    update_data = {
+                        'username': username,
+                        'email': email,
+                        'full_name': full_name,
+                        'is_active': is_active,
+                        'role': selected_role
+                    }
+                    
+                    # Aggiorna l'utente
+                    success, message = self.supabase_manager.update_user(user_id, update_data)
+                    
+                    if success:
+                        st.success(message)
+                        logger.info(f"🔍 USER_MANAGEMENT: Utente {user_id} modificato da admin")
+                        # Reset dello stato e torna alla lista
+                        st.session_state['edit_user_id'] = None
+                        st.rerun()
+                    else:
+                        st.error(message)
+            
+            with col2:
+                if st.form_submit_button("❌ Annulla", use_container_width=True):
+                    st.session_state['edit_user_id'] = None
+                    st.rerun()
 
 def render_user_management():
-    """Funzione principale per rendere il componente di gestione utenti"""
+    """Funzione principale per rendere il componente di gestione utenti - SOLO ADMIN"""
     user_mgmt = UserManagement()
     user_mgmt.render_user_management()

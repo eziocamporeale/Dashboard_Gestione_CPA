@@ -7,6 +7,36 @@ class ClientForm:
         """Inizializza il form per i clienti"""
         pass
     
+    def get_broker_options_from_database(self):
+        """Recupera i broker dal database Supabase"""
+        try:
+            from supabase_manager import SupabaseManager
+            
+            # Inizializza SupabaseManager
+            supabase_manager = SupabaseManager()
+            
+            if supabase_manager.is_configured:
+                # Recupera i broker attivi dal database
+                broker_links = supabase_manager.get_broker_links(active_only=True)
+                
+                if broker_links:
+                    # Estrae solo i nomi dei broker attivi
+                    broker_names = [link.get('broker_name', '') for link in broker_links if link.get('broker_name')]
+                    # Aggiunge "Altro" per inserire nuovi broker
+                    broker_names.append("Altro")
+                    return broker_names
+            
+            # Fallback alla lista predefinita se non ci sono broker nel database
+            return ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"]
+            
+        except Exception as e:
+            # Log dell'errore per debug
+            import logging
+            logging.getLogger(__name__).warning(f"Errore recupero broker da database: {e}")
+            
+            # Fallback alla lista predefinita in caso di errore
+            return ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"]
+    
     def render_form(self, dati_cliente=None, is_edit=False):
         """Rende il form per inserimento/modifica cliente"""
         
@@ -36,17 +66,22 @@ class ClientForm:
                     help=t("clients.help.password_email", "Password per l'accesso all'email")
                 )
                 
-                # Campo broker con menu a tendina e possibilità di aggiungerne di nuovi
-                broker_options = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"]
+                # Campo broker con menu a tendina dinamico dal database
+                broker_options = self.get_broker_options_from_database()
                 
                 # Se è una modifica e il broker non è nella lista, aggiungilo
                 if dati_cliente and dati_cliente.get('broker') and dati_cliente.get('broker') not in broker_options:
                     broker_options.insert(-1, dati_cliente.get('broker'))
                 
+                # Determina l'indice di default
+                default_index = 0
+                if dati_cliente and dati_cliente.get('broker') in broker_options:
+                    default_index = broker_options.index(dati_cliente.get('broker'))
+                
                 broker_selection = st.selectbox(
                     t("clients.form.broker", "Broker *"), 
                     options=broker_options,
-                    index=broker_options.index(dati_cliente.get('broker', 'Ultima Markets')) if dati_cliente and dati_cliente.get('broker') in broker_options else 0,
+                    index=default_index,
                     help=t("clients.help.broker", "Seleziona il broker o scegli 'Altro' per inserirne uno nuovo")
                 )
                 

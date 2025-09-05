@@ -30,8 +30,10 @@ class UserSettings:
         self.supabase_manager = SupabaseManager()
         self.current_user = st.session_state.get('username')
         self.current_role = st.session_state.get('roles')
+        self.current_user_info = st.session_state.get('user_info', {})
         
         logger.info(f"🔍 USER_SETTINGS: Inizializzazione per utente {self.current_user}")
+        logger.info(f"🔍 USER_SETTINGS: user_info caricato (senza dati sensibili)")
         
     def hash_password(self, password: str) -> str:
         """Hash della password con salt"""
@@ -91,7 +93,7 @@ class UserSettings:
             # Verifica password corrente
             current_hash = user_data.get('password_hash', '')
             logger.info(f"🔍 USER_SETTINGS: Password corrente nel DB: {current_hash}")
-            logger.info(f"🔍 USER_SETTINGS: Password inserita: {current_password}")
+            logger.info(f"🔍 USER_SETTINGS: Password inserita (hashata)")
             
             # Per compatibilità con il sistema attuale (password semplice)
             password_correct = False
@@ -103,7 +105,7 @@ class UserSettings:
             else:
                 # Prova con hash (per password hashate)
                 password_correct = self.verify_password(current_password, current_hash)
-                logger.info(f"🔍 USER_SETTINGS: Password corretta (hash): {password_correct}")
+                logger.info(f"🔍 USER_SETTINGS: Password corretta: {password_correct}")
             
             if not password_correct:
                 st.error("❌ Password corrente non corretta")
@@ -112,7 +114,7 @@ class UserSettings:
             
             # Hash della nuova password
             new_password_hash = self.hash_password(new_password)
-            logger.info(f"🔍 USER_SETTINGS: Nuova password hashata: {new_password_hash}")
+            logger.info(f"🔍 USER_SETTINGS: Nuova password hashata correttamente")
             
             # Aggiorna password nel database
             response = self.supabase_manager.supabase.table('users').update({
@@ -181,13 +183,17 @@ class UserSettings:
             return
         
         # Tab per diverse funzionalità
-        if self.current_role == 'admin':
+        current_role = self.current_user_info.get('role', 'user')
+        logger.info(f"🔍 USER_SETTINGS: current_role: {current_role}")
+        
+        if current_role == 'admin':
             # Admin ha accesso a tutte le funzionalità
-            tab1, tab2, tab3, tab4 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
                 t("user_settings.tabs.change_password", "🔐 Cambio Password"),
                 t("user_settings.tabs.profile", "👤 Profilo Utente"),
                 t("user_settings.tabs.account_info", "📊 Informazioni Account"),
-                t("user_settings.tabs.admin_password_management", "👑 Gestione Password Utenti")
+                t("user_settings.tabs.admin_password_management", "👑 Gestione Password Utenti"),
+                "👥 Gestione Utenti"
             ])
             
             with tab1:
@@ -201,6 +207,9 @@ class UserSettings:
             
             with tab4:
                 self.render_admin_password_management()
+            
+            with tab5:
+                self.render_user_management()
         else:
             # Utenti normali hanno accesso limitato
             tab1, tab2, tab3 = st.tabs([
@@ -381,7 +390,7 @@ class UserSettings:
             
             # Hash della nuova password
             new_password_hash = self.hash_password(new_password)
-            logger.info(f"🔍 USER_SETTINGS: Nuova password hashata per {username}: {new_password_hash}")
+            logger.info(f"🔍 USER_SETTINGS: Nuova password hashata per {username}")
             
             # Aggiorna password nel database
             update_response = self.supabase_manager.supabase.table('users').update({
@@ -401,6 +410,16 @@ class UserSettings:
             logger.error(f"🔍 USER_SETTINGS: Errore cambio password admin: {e}")
             st.error(f"❌ Errore durante il cambio password: {e}")
             return False
+    
+    def render_user_management(self):
+        """Rende l'interfaccia di gestione utenti (solo admin)"""
+        try:
+            # Importa il componente di gestione utenti
+            from .user_management import render_user_management
+            render_user_management()
+        except Exception as e:
+            logger.error(f"🔍 USER_SETTINGS: Errore caricamento gestione utenti: {e}")
+            st.error(f"❌ Errore nel caricamento della gestione utenti: {e}")
 
 def render_user_settings():
     """Funzione principale per rendere il componente di impostazioni utente"""

@@ -28,18 +28,25 @@ class SimpleAuthSystem:
         self.load_users_from_supabase()
         
     def load_users_from_supabase(self):
-        """Carica utenti da Supabase"""
+        """Carica utenti da Supabase con nuova struttura ruoli"""
         try:
             from supabase_manager import SupabaseManager
             self.supabase_manager = SupabaseManager()
             
             if self.supabase_manager.is_configured:
-                # Recupera utenti da Supabase
-                response = self.supabase_manager.supabase.table('users').select('*').execute()
+                # Recupera utenti da Supabase SENZA join sui ruoli per evitare RLS recursion
+                response = self.supabase_manager.supabase.table('users').select(
+                    'id, username, password_hash, email, full_name, first_name, last_name, '
+                    'is_active, role_id, role'
+                ).execute()
+                
                 if response.data:
                     for user in response.data:
                         username = user.get('username')
                         if username:
+                            # Usa il ruolo diretto dalla tabella users (senza join)
+                            role_name = user.get('role', 'User')
+                            
                             # Aggiungi utente da Supabase al dizionario locale
                             self.users[username] = {
                                 'id': user.get('id'),  # IMPORTANTE: Salva l'ID
@@ -47,11 +54,15 @@ class SimpleAuthSystem:
                                 'password_hash': user.get('password_hash', ''),
                                 'email': user.get('email', ''),
                                 'name': user.get('full_name', username),
-                                'role': user.get('role', 'user'),
+                                'first_name': user.get('first_name', ''),
+                                'last_name': user.get('last_name', ''),
+                                'role': role_name,  # Nome del ruolo per compatibilità
+                                'role_id': user.get('role_id'),  # ID del ruolo
+                                'role_info': {},  # Vuoto per ora, evita problemi RLS
                                 'is_active': user.get('is_active', True),
                                 'from_supabase': True
                             }
-                    logger.info(t("auth.system.users_loaded", "✅ Caricati {count} utenti da Supabase").format(count=len(response.data)))
+                    logger.info(t("auth.system.users_loaded", "✅ Caricati {count} utenti da Supabase con struttura ruoli").format(count=len(response.data)))
                 else:
                     logger.warning(t("auth.system.no_users_supabase", "⚠️ Nessun utente trovato in Supabase"))
             else:
@@ -175,7 +186,7 @@ def login_form():
                 st.session_state.user_info = user_info
                 
                 logger.info(f"✅ Login riuscito per utente: {username}")
-                logger.info(f"🔍 DEBUG: user_info impostato nella sessione: {user_info}")
+                logger.info(f"🔍 DEBUG: user_info impostato nella sessione (senza dati sensibili)")
                 st.success(f'✅ Benvenuto {user_info["name"]}!')
                 
                 # Riavvia l'app
@@ -257,23 +268,58 @@ def show_user_info():
 
 def get_current_role():
     """Ottiene il ruolo corrente dell'utente"""
-    return st.session_state.get('roles', 'user')
+    # Prima controlla se è autenticato
+    if not st.session_state.get('authenticated', False):
+        return 'user'
+    
+    # Ottieni le informazioni dell'utente corrente
+    user_info = st.session_state.get('user_info', {})
+    current_role = user_info.get('role', 'user')
+    
+    # Log per debug
+    logger.info(f"🔍 HOOK AUTH: get_current_role() - user_info caricato (senza dati sensibili)")
+    logger.info(f"🔍 HOOK AUTH: get_current_role() - current_role: {current_role}")
+    
+    return current_role
 
 def has_permission(required_role: str) -> bool:
-    """Verifica se l'utente ha i permessi necessari"""
+    """Verifica se l'utente ha i permessi necessari usando la nuova struttura ruoli"""
     current_role = get_current_role()
     
-    # Gerarchia dei ruoli
+    # Log per debug
+    logger.info(f"🔍 HOOK AUTH: has_permission() - current_role: {current_role}, required_role: {required_role}")
+    
+    # Gerarchia dei ruoli (aggiornata con i nomi corretti dal database)
     role_hierarchy = {
         'user': 1,
         'manager': 2,
         'admin': 3
     }
     
-    current_level = role_hierarchy.get(current_role, 0)
-    required_level = role_hierarchy.get(required_role, 0)
+    current_level = role_hierarchy.get(current_role.lower(), 0)
+    required_level = role_hierarchy.get(required_role.lower(), 0)
     
-    return current_level >= required_level
+    has_perm = current_level >= required_level
+    logger.info(f"🔍 HOOK AUTH: has_permission() - current_level: {current_level}, required_level: {required_level}, has_perm: {has_perm}")
+    
+    return has_perm
+
+def get_user_role_info():
+    """Ottiene informazioni complete del ruolo dell'utente corrente"""
+    user_info = st.session_state.get('user_info', {})
+    return user_info.get('role_info', {})
+
+def has_role_permission(permission: str) -> bool:
+    """Verifica se l'utente ha un permesso specifico dal suo ruolo"""
+    role_info = get_user_role_info()
+    permissions = role_info.get('permissions', [])
+    
+    # Se ha permesso "all", può fare tutto
+    if 'all' in permissions:
+        return True
+    
+    # Verifica il permesso specifico
+    return permission in permissions
 
 def login_form():
     """Form di login per l'autenticazione"""
