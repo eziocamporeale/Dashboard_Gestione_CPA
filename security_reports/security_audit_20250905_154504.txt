@@ -1,0 +1,25 @@
+
+🔒 REPORT SICUREZZA - 05/09/2025 15:45
+==================================================
+
+📊 PUNTEGGIO TOTALE: 41/100
+
+✅ CONTROLLI SUPERATI: 1/7
+
+🚨 ISSUES CRITICHE: 2
+⚠️ WARNINGS: 4
+
+📋 RACCOMANDAZIONI:
+• 🚨 RISOLVI IMMEDIATAMENTE le ISSUES identificate
+• ⚠️ Rivedi i WARNINGS per migliorare la sicurezza
+• 🔴 Attenzione! La sicurezza necessita di interventi urgenti
+
+🚨 ISSUES CRITICHE:
+• 🚨 TROVATI 1 FILE DATABASE: ['cpa_database.db']
+• 🚨 Streamlit secrets.toml è tracciato da Git (RISCHIOSO!)
+
+⚠️ WARNINGS:
+• ⚠️ TROVATI 5 FILE POTENZIALMENTE SENSIBILI: ['config', 'auth_config.yaml', 'auth_config_correct.yaml', 'auth_config_broken.yaml', 'monitoring_config.py']
+• ⚠️ TROVATI 113 FILE CON PATTERN CREDENZIALI: [('auth_advanced_simple.py', 'key\\s*=\\s*["\\\'][^"\\\']+["\\\']'), ('app_backup_broken.py', 'key\\s*=\\s*["\\\'][^"\\\']+["\\\']'), ('auth_simple_working.py', 'key\\s*=\\s*["\\\'][^"\\\']+["\\\']')]
+• ⚠️ TROVATI 10 FILE DI BACKUP: ['app_backup_broken.py', 'confronto_backup_database_20250830_103657.xlsx', 'cpa_database.db.backup_20250829_095247', 'backup_supabase.py', 'verifica_backup.py']
+• ⚠️ TROVATI 3 FILE DI AMBIENTE: ['.env', 'env.monitoring.example', 'env.example']

@@ -105,6 +105,34 @@ backup_*.py
 verifica_backup.py
 confronto_backup_*.xlsx
 
+# Files with hardcoded credentials - CRITICO!
+auth_advanced_simple*.py
+create_missing_tables*.sql
+fix_rls_insert_policies.sql
+populate_users_system.py
+create_users_system_direct.py
+test_supabase_connection.py
+create_tables_direct.py
+create_users_system.sql
+create_users_tables.sql
+
+# Password hashes and sensitive data
+*password_hash*
+*hash*
+*credential*
+
+# Additional sensitive files
+cpa_database.db
+monitoring_config.py
+config/
+auth_config*.yaml
+app_backup.py
+schema_backup.sql
+verifica_backup.py
+env.monitoring.example
+env.example
+secrets.toml
+
 # IDE
 .vscode/
 .idea/
