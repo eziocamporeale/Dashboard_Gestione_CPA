@@ -132,6 +132,9 @@ verifica_backup.py
 env.monitoring.example
 env.example
 secrets.toml
+*.sql
+supabase_backup_*.json
+cpa_database.db.backup_*
 
 # IDE
 .vscode/
