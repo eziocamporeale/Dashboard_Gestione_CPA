@@ -93,6 +93,14 @@ except Exception as e:
     print(f"❌ Errore import utils.secure_backup: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="utils.secure_backup", error=e))
 
+# Import AI Assistant
+try:
+    from components.ai_assistant.ai_ui_components import render_ai_assistant
+    print("✅ AI Assistant importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import AI Assistant: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="AI Assistant", error=e))
+
 # Import sistema gestione utenti
 try:
     from components.user_navigation import render_user_navigation
@@ -432,9 +440,10 @@ selected = option_menu(
         t("navigation.crosses", "🔄 Incroci"), 
         t("navigation.broker", "🔗 Broker"), 
         t("navigation.summary", "📈 Riepilogo"), 
+        "🤖 AI Assistant",
         t("navigation.settings", "⚙️ Impostazioni")
     ],
-    icons=["house", "people", "arrows-collapse", "link", "bar-chart", "gear"],
+    icons=["house", "people", "arrows-collapse", "link", "bar-chart", "robot", "gear"],
     orientation="horizontal",
     styles={
         "container": {"padding": "0!important", "background-color": "#fafafa"},
@@ -819,6 +828,14 @@ elif selected == t("navigation.summary", "📈 Riepilogo"):
         )
     else:
         st.info("Nessun cliente presente nel database. Aggiungi clienti per visualizzare i dati!")
+
+elif selected == "🤖 AI Assistant":
+    # Mostra l'interfaccia AI Assistant
+    try:
+        render_ai_assistant(supabase_manager)
+    except Exception as e:
+        st.error(f"❌ Errore caricamento AI Assistant: {e}")
+        logger.error(f"❌ Errore caricamento AI Assistant: {e}")
 
 elif selected == t("navigation.settings", "⚙️ Impostazioni"):
     st.header("⚙️ Impostazioni Sistema")
