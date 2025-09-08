@@ -832,10 +832,12 @@ elif selected == t("navigation.summary", "📈 Riepilogo"):
 elif selected == "🤖 AI Assistant":
     # Mostra l'interfaccia AI Assistant
     try:
+        from supabase_manager import SupabaseManager
+        supabase_manager = SupabaseManager()
         render_ai_assistant(supabase_manager)
     except Exception as e:
         st.error(f"❌ Errore caricamento AI Assistant: {e}")
-        logger.error(f"❌ Errore caricamento AI Assistant: {e}")
+        print(f"❌ Errore caricamento AI Assistant: {e}")
 
 elif selected == t("navigation.settings", "⚙️ Impostazioni"):
     st.header("⚙️ Impostazioni Sistema")
