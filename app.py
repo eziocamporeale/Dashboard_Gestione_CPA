@@ -125,6 +125,17 @@ except Exception as e:
     print(f"❌ Errore import sistema gestione permessi: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione permessi", error=e))
 
+# Import sistema gestione wallet
+try:
+    from components.wallet_transactions_manager import WalletTransactionsManager
+    from components.wallet_transaction_form import WalletTransactionForm
+    from components.wallet_transaction_table import WalletTransactionTable
+    from components.wallet_management import WalletManagement
+    print("✅ Sistema gestione wallet importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import sistema gestione wallet: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione wallet", error=e))
+
 # Configurazione pagina
 st.set_page_config(
     page_title=t("dashboard.title", "Dashboard Gestione CPA"),
@@ -148,12 +159,17 @@ def init_components(db):
         if not all([Charts, ClientForm, ClientTable, IncrociTab, BrokerLinksManager]):
             raise Exception("Uno o più componenti non sono disponibili")
         
+        wallet_manager = WalletTransactionsManager()
         components_dict = {
             'client_form': ClientForm(),
             'client_table': ClientTable(),
             'charts': Charts(),
             'incroci_tab': IncrociTab(IncrociManager(), db),
-            'broker_links_manager': BrokerLinksManager()
+            'broker_links_manager': BrokerLinksManager(),
+            'wallet_manager': wallet_manager,
+            'wallet_form': WalletTransactionForm(wallet_manager),
+            'wallet_table': WalletTransactionTable(wallet_manager),
+            'wallet_management': WalletManagement(wallet_manager)
         }
         
         print("✅ Componenti inizializzati correttamente")
@@ -439,11 +455,12 @@ selected = option_menu(
         t("navigation.clients", "👥 Gestione Clienti"), 
         t("navigation.crosses", "🔄 Incroci"), 
         t("navigation.broker", "🔗 Broker"), 
+        "💰 Wallet",
         t("navigation.summary", "📈 Riepilogo"), 
         "🤖 AI Assistant",
         t("navigation.settings", "⚙️ Impostazioni")
     ],
-    icons=["house", "people", "arrows-collapse", "link", "bar-chart", "robot", "gear"],
+    icons=["house", "people", "arrows-collapse", "link", "wallet", "bar-chart", "robot", "gear"],
     orientation="horizontal",
     styles={
         "container": {"padding": "0!important", "background-color": "#fafafa"},
@@ -804,6 +821,44 @@ elif selected == t("navigation.crosses", "🔄 Incroci"):
 elif selected == t("navigation.broker", "🔗 Broker"):
     # Mostra la gestione dei link broker
     components['broker_links_manager'].render_broker_links_page()
+
+elif selected == "💰 Wallet":
+    st.header("💰 Gestione Transazioni Wallet")
+    st.write("Gestisci le transazioni tra i wallet dei collaboratori")
+    
+    # Verifica se l'utente è admin per mostrare la gestione wallet
+    is_admin = False
+    try:
+        from utils.supabase_permissions import has_role
+        is_admin = has_role('admin')
+    except:
+        pass
+    
+    # Tab per organizzare le funzionalità wallet
+    if is_admin:
+        tab_transactions, tab_balances, tab_form, tab_management = st.tabs([
+            "📋 Transazioni", "💰 Saldi", "➕ Nuova Transazione", "🔧 Gestione Wallet"
+        ])
+        
+        # TAB 4: Gestione Wallet (solo admin)
+        with tab_management:
+            components['wallet_management'].render_wallet_management()
+    else:
+        tab_transactions, tab_balances, tab_form = st.tabs([
+            "📋 Transazioni", "💰 Saldi", "➕ Nuova Transazione"
+        ])
+    
+    # TAB 1: Transazioni esistenti
+    with tab_transactions:
+        components['wallet_table'].render_table()
+    
+    # TAB 2: Saldi wallet
+    with tab_balances:
+        components['wallet_table'].render_wallet_balances()
+    
+    # TAB 3: Form nuova transazione
+    with tab_form:
+        components['wallet_form'].render_form()
 
 elif selected == t("navigation.summary", "📈 Riepilogo"):
     st.header("Riepilogo Dati")
