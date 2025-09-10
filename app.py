@@ -850,7 +850,10 @@ elif selected == "💰 Wallet":
     
     # TAB 1: Transazioni esistenti
     with tab_transactions:
-        components['wallet_table'].render_table()
+        components['wallet_table'].render_table(
+            on_edit=lambda x: None,  # Abilita modifica (gestito internamente)
+            on_delete=lambda x: None  # Abilita eliminazione (gestito internamente)
+        )
     
     # TAB 2: Saldi wallet
     with tab_balances:
