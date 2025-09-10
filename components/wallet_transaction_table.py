@@ -389,7 +389,7 @@ class WalletTransactionTable:
         st.markdown("---")
         st.subheader("✏️ Modifica Transazione")
         
-        with st.form("edit_transaction_form"):
+        with st.form(f"edit_transaction_form_{unique_id}"):
             col1, col2 = st.columns(2)
             
             with col1:
