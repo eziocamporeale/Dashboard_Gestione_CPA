@@ -27,8 +27,8 @@ class WalletManagement:
         st.info("👑 **Accesso Amministratore**: Gestisci wallet, saldi e configurazioni")
         
         # Tab per organizzare le funzionalità
-        tab_wallets, tab_add_wallet, tab_edit_saldo = st.tabs([
-            "📋 Lista Wallet", "➕ Aggiungi Wallet", "💰 Modifica Saldi"
+        tab_wallets, tab_add_wallet, tab_edit_saldo, tab_transactions = st.tabs([
+            "📋 Lista Wallet", "➕ Aggiungi Wallet", "💰 Modifica Saldi", "🔄 Gestione Transazioni"
         ])
         
         # TAB 1: Lista Wallet
@@ -42,6 +42,10 @@ class WalletManagement:
         # TAB 3: Modifica Saldi
         with tab_edit_saldo:
             self._render_edit_saldo_form()
+        
+        # TAB 4: Gestione Transazioni
+        with tab_transactions:
+            self._render_transaction_management()
     
     def _render_wallet_list(self):
         """Rende la lista dei wallet con azioni admin"""
@@ -519,3 +523,127 @@ class WalletManagement:
         except Exception as e:
             logger.error(f"❌ Errore eliminazione wallet: {e}")
             return False, f"❌ Errore: {e}"
+    
+    def _render_transaction_management(self):
+        """Rende l'interfaccia di gestione transazioni per admin"""
+        
+        st.subheader("🔄 Gestione Transazioni (Admin)")
+        st.info("👑 **Accesso Amministratore**: Modifica ed elimina transazioni esistenti")
+        
+        # Importa la tabella delle transazioni
+        from wallet_transaction_table import WalletTransactionTable
+        
+        # Crea istanza della tabella
+        transaction_table = WalletTransactionTable(self.wallet_manager)
+        
+        # Mostra la tabella con funzionalità di modifica ed eliminazione
+        transaction_table.render_table(
+            on_edit=lambda x: None,  # Gestito internamente dalla tabella
+            on_delete=lambda x: None  # Gestito internamente dalla tabella
+        )
+        
+        # Statistiche aggiuntive per admin
+        st.subheader("📊 Statistiche Transazioni")
+        
+        try:
+            stats = self.wallet_manager.get_transaction_statistics()
+            
+            if stats:
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("📋 Totale Transazioni", stats.get('totale_transazioni', 0))
+                
+                with col2:
+                    st.metric("💵 Importo Totale", f"{stats.get('importo_totale', 0):.2f} USD")
+                
+                with col3:
+                    st.metric("✅ Completate", stats.get('transazioni_completed', 0))
+                
+                with col4:
+                    st.metric("⏳ In Attesa", stats.get('transazioni_pending', 0))
+                
+                # Grafico a torta per stati
+                if stats.get('totale_transazioni', 0) > 0:
+                    import plotly.express as px
+                    
+                    stato_data = {
+                        'Completate': stats.get('transazioni_completed', 0),
+                        'In Attesa': stats.get('transazioni_pending', 0),
+                        'Fallite': stats.get('transazioni_failed', 0)
+                    }
+                    
+                    fig = px.pie(
+                        values=list(stato_data.values()),
+                        names=list(stato_data.keys()),
+                        title="📊 Distribuzione Stati Transazioni",
+                        color_discrete_map={
+                            'Completate': '#00FF00',
+                            'In Attesa': '#FFA500',
+                            'Fallite': '#FF0000'
+                        }
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("📋 Nessuna statistica disponibile")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore recupero statistiche: {e}")
+            st.error(f"❌ Errore recupero statistiche: {e}")
+        
+        # Azioni rapide per admin
+        st.subheader("⚡ Azioni Rapide")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("🔄 Aggiorna Dati", use_container_width=True):
+                st.rerun()
+        
+        with col2:
+            if st.button("📊 Esporta Report", use_container_width=True):
+                self._export_transaction_report()
+        
+        with col3:
+            if st.button("🧹 Pulizia Cache", use_container_width=True):
+                # Pulisce le variabili di sessione
+                keys_to_clear = [key for key in st.session_state.keys() if 'editing_transaction' in key or 'show_delete_confirm' in key]
+                for key in keys_to_clear:
+                    del st.session_state[key]
+                st.success("✅ Cache pulita!")
+                st.rerun()
+    
+    def _export_transaction_report(self):
+        """Esporta un report delle transazioni"""
+        try:
+            transactions = self.wallet_manager.get_wallet_transactions(limit=1000)
+            
+            if not transactions:
+                st.warning("📋 Nessuna transazione da esportare")
+                return
+            
+            # Crea DataFrame
+            import pandas as pd
+            df = pd.DataFrame(transactions)
+            
+            # Formatta le date
+            if not df.empty and 'created_at' in df.columns:
+                df['created_at'] = pd.to_datetime(df['created_at']).dt.strftime('%d/%m/%Y %H:%M')
+            
+            # Esporta come CSV
+            csv = df.to_csv(index=False)
+            
+            st.download_button(
+                label="📥 Scarica Report CSV",
+                data=csv,
+                file_name=f"transazioni_wallet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+            
+            st.success(f"✅ Report pronto per il download ({len(transactions)} transazioni)")
+            
+        except Exception as e:
+            logger.error(f"❌ Errore esportazione report: {e}")
+            st.error(f"❌ Errore esportazione: {e}")
