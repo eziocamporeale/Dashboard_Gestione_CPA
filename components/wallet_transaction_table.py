@@ -63,7 +63,7 @@ class WalletTransactionTable:
         with col_filter1:
             # Filtro per stato
             stati_disponibili = ['Tutti'] + list(df['stato'].unique()) if not df.empty else ['Tutti']
-            stato_selezionato = st.selectbox("📊 Stato", stati_disponibili)
+            stato_selezionato = st.selectbox("📊 Stato", stati_disponibili, key="filter_stato_wallet_table")
             
             if stato_selezionato != 'Tutti' and not df.empty:
                 df = df[df['stato'] == stato_selezionato]
@@ -71,7 +71,7 @@ class WalletTransactionTable:
         with col_filter2:
             # Filtro per wallet mittente
             wallet_mittenti = ['Tutti'] + list(df['wallet_mittente'].unique()) if not df.empty else ['Tutti']
-            mittente_selezionato = st.selectbox("💰 Wallet Mittente", wallet_mittenti)
+            mittente_selezionato = st.selectbox("💰 Wallet Mittente", wallet_mittenti, key="filter_mittente_wallet_table")
             
             if mittente_selezionato != 'Tutti' and not df.empty:
                 df = df[df['wallet_mittente'] == mittente_selezionato]
@@ -82,7 +82,8 @@ class WalletTransactionTable:
                 date_range = st.date_input(
                     "📅 Periodo",
                     value=(datetime.now() - timedelta(days=30), datetime.now()),
-                    max_value=datetime.now()
+                    max_value=datetime.now(),
+                    key="filter_date_wallet_table"
                 )
                 
                 if len(date_range) == 2:
@@ -390,7 +391,8 @@ class WalletTransactionTable:
                     "💰 Wallet Mittente",
                     options=wallet_list,
                     index=wallet_list.index(transaction_data['wallet_mittente']) if transaction_data['wallet_mittente'] in wallet_list else 0,
-                    help="Wallet da cui parte la transazione"
+                    help="Wallet da cui parte la transazione",
+                    key=f"edit_mittente_{transaction_data['id']}"
                 )
                 
                 # Wallet destinatario
@@ -398,7 +400,8 @@ class WalletTransactionTable:
                     "🎯 Wallet Destinatario",
                     options=wallet_list,
                     index=wallet_list.index(transaction_data['wallet_destinatario']) if transaction_data['wallet_destinatario'] in wallet_list else 0,
-                    help="Wallet destinatario della transazione"
+                    help="Wallet destinatario della transazione",
+                    key=f"edit_destinatario_{transaction_data['id']}"
                 )
                 
                 # Importo
@@ -409,7 +412,8 @@ class WalletTransactionTable:
                     step=0.01,
                     value=float(transaction_data['importo']),
                     format="%.2f",
-                    help="Importo della transazione"
+                    help="Importo della transazione",
+                    key=f"edit_importo_{transaction_data['id']}"
                 )
             
             with col2:
@@ -418,7 +422,8 @@ class WalletTransactionTable:
                     "💱 Valuta",
                     options=["USD", "EUR", "GBP", "BTC", "ETH"],
                     index=["USD", "EUR", "GBP", "BTC", "ETH"].index(transaction_data.get('valuta', 'USD')),
-                    help="Valuta della transazione"
+                    help="Valuta della transazione",
+                    key=f"edit_valuta_{transaction_data['id']}"
                 )
                 
                 # Tipo transazione
@@ -431,7 +436,8 @@ class WalletTransactionTable:
                         "deposit": "📥 Deposito",
                         "withdrawal": "📤 Prelievo"
                     }[x],
-                    help="Tipo di transazione"
+                    help="Tipo di transazione",
+                    key=f"edit_tipo_{transaction_data['id']}"
                 )
                 
                 # Stato
@@ -445,7 +451,8 @@ class WalletTransactionTable:
                         "failed": "❌ Fallita",
                         "cancelled": "🚫 Cancellata"
                     }[x],
-                    help="Stato della transazione"
+                    help="Stato della transazione",
+                    key=f"edit_stato_{transaction_data['id']}"
                 )
             
             # Commissione
@@ -456,7 +463,8 @@ class WalletTransactionTable:
                 step=0.01,
                 value=float(transaction_data.get('commissione', 0.0)),
                 format="%.2f",
-                help="Commissione della transazione"
+                help="Commissione della transazione",
+                key=f"edit_commissione_{transaction_data['id']}"
             )
             
             # Note
@@ -464,7 +472,8 @@ class WalletTransactionTable:
                 "📝 Note",
                 value=transaction_data.get('note', ''),
                 placeholder="Note aggiuntive sulla transazione...",
-                help="Note opzionali"
+                help="Note opzionali",
+                key=f"edit_note_{transaction_data['id']}"
             )
             
             # Pulsanti
@@ -474,19 +483,22 @@ class WalletTransactionTable:
                 submit_button = st.form_submit_button(
                     "💾 Salva Modifiche",
                     type="primary",
-                    use_container_width=True
+                    use_container_width=True,
+                    key=f"edit_save_{transaction_data['id']}"
                 )
             
             with col_btn2:
                 cancel_button = st.form_submit_button(
                     "❌ Annulla",
-                    use_container_width=True
+                    use_container_width=True,
+                    key=f"edit_cancel_{transaction_data['id']}"
                 )
             
             with col_btn3:
                 delete_button = st.form_submit_button(
                     "🗑️ Elimina Transazione",
-                    use_container_width=True
+                    use_container_width=True,
+                    key=f"edit_delete_{transaction_data['id']}"
                 )
             
             # Gestione submit
@@ -529,7 +541,7 @@ class WalletTransactionTable:
                 st.write(f"- Importo: {importo} {valuta}")
                 st.write(f"- Data: {transaction_data.get('data_transazione', 'N/A')}")
                 
-                if st.checkbox("✅ Confermo l'eliminazione definitiva"):
+                if st.checkbox("✅ Confermo l'eliminazione definitiva", key=f"edit_confirm_delete_{transaction_data['id']}"):
                     success, message = self.wallet_manager.delete_wallet_transaction(transaction_data['id'])
                     if success:
                         st.success(message)
