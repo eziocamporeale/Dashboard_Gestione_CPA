@@ -151,7 +151,7 @@ class WalletTransactionTable:
                 
                 with col4:
                     if on_edit:
-                        if st.button("✏️", key=f"edit_{row['id']}", help="Modifica transazione"):
+                        if st.button("✏️", key=f"edit_{row['id']}_{unique_id}", help="Modifica transazione"):
                             st.session_state.editing_transaction = row.to_dict()
                             st.rerun()
                 
@@ -161,7 +161,7 @@ class WalletTransactionTable:
                         col_confirm, col_cancel = st.columns(2)
                         
                         with col_confirm:
-                            if st.button("✅ Conferma", key=f"confirm_{row['id']}", help="Conferma transazione"):
+                            if st.button("✅ Conferma", key=f"confirm_{row['id']}_{unique_id}", help="Conferma transazione"):
                                 success, message = self.wallet_manager.update_wallet_transaction(
                                     row['id'], 
                                     {'stato': 'completed'}
@@ -173,7 +173,7 @@ class WalletTransactionTable:
                                     st.error(f"❌ Errore: {message}")
                         
                         with col_cancel:
-                            if st.button("❌ Annulla", key=f"cancel_{row['id']}", help="Annulla transazione"):
+                            if st.button("❌ Annulla", key=f"cancel_{row['id']}_{unique_id}", help="Annulla transazione"):
                                 success, message = self.wallet_manager.update_wallet_transaction(
                                     row['id'], 
                                     {'stato': 'cancelled'}
@@ -186,15 +186,15 @@ class WalletTransactionTable:
                     
                     # Pulsante per eliminare (solo per transazioni non pending)
                     elif on_delete and row['stato'] != 'pending':
-                        delete_key = f"delete_{row['id']}"
-                        confirm_key = f"confirm_delete_{row['id']}"
+                        delete_key = f"delete_{row['id']}_{unique_id}"
+                        confirm_key = f"confirm_delete_{row['id']}_{unique_id}"
                         
                         if st.button("🗑️", key=delete_key, help="Elimina transazione"):
-                            st.session_state[f"show_delete_confirm_{row['id']}"] = True
+                            st.session_state[f"show_delete_confirm_{row['id']}_{unique_id}"] = True
                             st.rerun()
                         
                         # Mostra conferma eliminazione se necessario
-                        if st.session_state.get(f"show_delete_confirm_{row['id']}", False):
+                        if st.session_state.get(f"show_delete_confirm_{row['id']}_{unique_id}", False):
                             st.warning("⚠️ **ATTENZIONE**: Eliminazione definitiva!")
                             st.write(f"**Transazione:** {row['wallet_mittente']} → {row['wallet_destinatario']}")
                             st.write(f"**Importo:** {row['importo_formatted']}")
@@ -203,14 +203,14 @@ class WalletTransactionTable:
                                 success, message = self.wallet_manager.delete_wallet_transaction(row['id'])
                                 if success:
                                     st.success(message)
-                                    st.session_state[f"show_delete_confirm_{row['id']}"] = False
+                                    st.session_state[f"show_delete_confirm_{row['id']}_{unique_id}"] = False
                                     st.rerun()
                                 else:
                                     st.error(message)
-                                    st.session_state[f"show_delete_confirm_{row['id']}"] = False
+                                    st.session_state[f"show_delete_confirm_{row['id']}_{unique_id}"] = False
                             
-                            if st.button("❌ Annulla", key=f"cancel_delete_{row['id']}"):
-                                st.session_state[f"show_delete_confirm_{row['id']}"] = False
+                            if st.button("❌ Annulla", key=f"cancel_delete_{row['id']}_{unique_id}"):
+                                st.session_state[f"show_delete_confirm_{row['id']}_{unique_id}"] = False
                                 st.rerun()
                 
                 # Note (se presenti)
@@ -221,7 +221,7 @@ class WalletTransactionTable:
         
         # Form modifica transazione
         if 'editing_transaction' in st.session_state:
-            self._render_edit_transaction_form(st.session_state.editing_transaction)
+            self._render_edit_transaction_form(st.session_state.editing_transaction, unique_id)
         
         # Grafici
         self._render_charts(df, unique_id)
@@ -383,7 +383,7 @@ class WalletTransactionTable:
             
             st.plotly_chart(fig_balances, use_container_width=True, key=f"chart_balances_wallet_table_{unique_id}")
     
-    def _render_edit_transaction_form(self, transaction_data: Dict[str, Any]):
+    def _render_edit_transaction_form(self, transaction_data: Dict[str, Any], unique_id: int):
         """Rende il form per modificare una transazione esistente"""
         
         st.markdown("---")
@@ -400,7 +400,7 @@ class WalletTransactionTable:
                     options=wallet_list,
                     index=wallet_list.index(transaction_data['wallet_mittente']) if transaction_data['wallet_mittente'] in wallet_list else 0,
                     help="Wallet da cui parte la transazione",
-                    key=f"edit_mittente_{transaction_data['id']}"
+                    key=f"edit_mittente_{transaction_data['id']}_{unique_id}"
                 )
                 
                 # Wallet destinatario
@@ -409,7 +409,7 @@ class WalletTransactionTable:
                     options=wallet_list,
                     index=wallet_list.index(transaction_data['wallet_destinatario']) if transaction_data['wallet_destinatario'] in wallet_list else 0,
                     help="Wallet destinatario della transazione",
-                    key=f"edit_destinatario_{transaction_data['id']}"
+                    key=f"edit_destinatario_{transaction_data['id']}_{unique_id}"
                 )
                 
                 # Importo
@@ -421,7 +421,7 @@ class WalletTransactionTable:
                     value=float(transaction_data['importo']),
                     format="%.2f",
                     help="Importo della transazione",
-                    key=f"edit_importo_{transaction_data['id']}"
+                    key=f"edit_importo_{transaction_data['id']}_{unique_id}"
                 )
             
             with col2:
@@ -431,7 +431,7 @@ class WalletTransactionTable:
                     options=["USD", "EUR", "GBP", "BTC", "ETH"],
                     index=["USD", "EUR", "GBP", "BTC", "ETH"].index(transaction_data.get('valuta', 'USD')),
                     help="Valuta della transazione",
-                    key=f"edit_valuta_{transaction_data['id']}"
+                    key=f"edit_valuta_{transaction_data['id']}_{unique_id}"
                 )
                 
                 # Tipo transazione
@@ -445,7 +445,7 @@ class WalletTransactionTable:
                         "withdrawal": "📤 Prelievo"
                     }[x],
                     help="Tipo di transazione",
-                    key=f"edit_tipo_{transaction_data['id']}"
+                    key=f"edit_tipo_{transaction_data['id']}_{unique_id}"
                 )
                 
                 # Stato
@@ -460,7 +460,7 @@ class WalletTransactionTable:
                         "cancelled": "🚫 Cancellata"
                     }[x],
                     help="Stato della transazione",
-                    key=f"edit_stato_{transaction_data['id']}"
+                    key=f"edit_stato_{transaction_data['id']}_{unique_id}"
                 )
             
             # Commissione
@@ -472,7 +472,7 @@ class WalletTransactionTable:
                 value=float(transaction_data.get('commissione', 0.0)),
                 format="%.2f",
                 help="Commissione della transazione",
-                key=f"edit_commissione_{transaction_data['id']}"
+                key=f"edit_commissione_{transaction_data['id']}_{unique_id}"
             )
             
             # Note
@@ -481,7 +481,7 @@ class WalletTransactionTable:
                 value=transaction_data.get('note', ''),
                 placeholder="Note aggiuntive sulla transazione...",
                 help="Note opzionali",
-                key=f"edit_note_{transaction_data['id']}"
+                key=f"edit_note_{transaction_data['id']}_{unique_id}"
             )
             
             # Pulsanti
@@ -492,21 +492,21 @@ class WalletTransactionTable:
                     "💾 Salva Modifiche",
                     type="primary",
                     use_container_width=True,
-                    key=f"edit_save_{transaction_data['id']}"
+                    key=f"edit_save_{transaction_data['id']}_{unique_id}"
                 )
             
             with col_btn2:
                 cancel_button = st.form_submit_button(
                     "❌ Annulla",
                     use_container_width=True,
-                    key=f"edit_cancel_{transaction_data['id']}"
+                    key=f"edit_cancel_{transaction_data['id']}_{unique_id}"
                 )
             
             with col_btn3:
                 delete_button = st.form_submit_button(
                     "🗑️ Elimina Transazione",
                     use_container_width=True,
-                    key=f"edit_delete_{transaction_data['id']}"
+                    key=f"edit_delete_{transaction_data['id']}_{unique_id}"
                 )
             
             # Gestione submit
@@ -549,7 +549,7 @@ class WalletTransactionTable:
                 st.write(f"- Importo: {importo} {valuta}")
                 st.write(f"- Data: {transaction_data.get('data_transazione', 'N/A')}")
                 
-                if st.checkbox("✅ Confermo l'eliminazione definitiva", key=f"edit_confirm_delete_{transaction_data['id']}"):
+                if st.checkbox("✅ Confermo l'eliminazione definitiva", key=f"edit_confirm_delete_{transaction_data['id']}_{unique_id}"):
                     success, message = self.wallet_manager.delete_wallet_transaction(transaction_data['id'])
                     if success:
                         st.success(message)
