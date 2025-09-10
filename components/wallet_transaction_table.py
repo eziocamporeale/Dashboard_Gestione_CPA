@@ -20,6 +20,10 @@ class WalletTransactionTable:
     def render_table(self, on_edit: Optional[Callable] = None, on_delete: Optional[Callable] = None):
         """Rende la tabella delle transazioni wallet"""
         
+        # Genera un ID unico per questa istanza
+        import time
+        unique_id = int(time.time() * 1000) % 100000  # ID unico basato su timestamp
+        
         # Ottieni transazioni
         transactions = self.wallet_manager.get_wallet_transactions(limit=100)
         
@@ -63,7 +67,7 @@ class WalletTransactionTable:
         with col_filter1:
             # Filtro per stato
             stati_disponibili = ['Tutti'] + list(df['stato'].unique()) if not df.empty else ['Tutti']
-            stato_selezionato = st.selectbox("📊 Stato", stati_disponibili, key="filter_stato_wallet_table")
+            stato_selezionato = st.selectbox("📊 Stato", stati_disponibili, key=f"filter_stato_wallet_table_{unique_id}")
             
             if stato_selezionato != 'Tutti' and not df.empty:
                 df = df[df['stato'] == stato_selezionato]
@@ -71,7 +75,7 @@ class WalletTransactionTable:
         with col_filter2:
             # Filtro per wallet mittente
             wallet_mittenti = ['Tutti'] + list(df['wallet_mittente'].unique()) if not df.empty else ['Tutti']
-            mittente_selezionato = st.selectbox("💰 Wallet Mittente", wallet_mittenti, key="filter_mittente_wallet_table")
+            mittente_selezionato = st.selectbox("💰 Wallet Mittente", wallet_mittenti, key=f"filter_mittente_wallet_table_{unique_id}")
             
             if mittente_selezionato != 'Tutti' and not df.empty:
                 df = df[df['wallet_mittente'] == mittente_selezionato]
@@ -83,7 +87,7 @@ class WalletTransactionTable:
                     "📅 Periodo",
                     value=(datetime.now() - timedelta(days=30), datetime.now()),
                     max_value=datetime.now(),
-                    key="filter_date_wallet_table"
+                    key=f"filter_date_wallet_table_{unique_id}"
                 )
                 
                 if len(date_range) == 2:
@@ -220,9 +224,9 @@ class WalletTransactionTable:
             self._render_edit_transaction_form(st.session_state.editing_transaction)
         
         # Grafici
-        self._render_charts(df)
+        self._render_charts(df, unique_id)
     
-    def _render_charts(self, df: pd.DataFrame):
+    def _render_charts(self, df: pd.DataFrame, unique_id: int):
         """Rende i grafici delle transazioni"""
         if df.empty:
             return
@@ -247,7 +251,7 @@ class WalletTransactionTable:
                 }
             )
             
-            st.plotly_chart(fig_stato, use_container_width=True, key="chart_stato_wallet_table")
+            st.plotly_chart(fig_stato, use_container_width=True, key=f"chart_stato_wallet_table_{unique_id}")
         
         with col_chart2:
             # Grafico transazioni per tipo
@@ -260,7 +264,7 @@ class WalletTransactionTable:
                 labels={'x': 'Tipo Transazione', 'y': 'Numero Transazioni'}
             )
             
-            st.plotly_chart(fig_tipo, use_container_width=True, key="chart_tipo_wallet_table")
+            st.plotly_chart(fig_tipo, use_container_width=True, key=f"chart_tipo_wallet_table_{unique_id}")
         
         # Grafico timeline transazioni
         if len(df) > 1:
@@ -301,10 +305,14 @@ class WalletTransactionTable:
                 hovermode='closest'
             )
             
-            st.plotly_chart(fig_timeline, use_container_width=True, key="chart_timeline_wallet_table")
+            st.plotly_chart(fig_timeline, use_container_width=True, key=f"chart_timeline_wallet_table_{unique_id}")
     
     def render_wallet_balances(self):
         """Rende la tabella dei saldi wallet"""
+        # Genera un ID unico per questa istanza
+        import time
+        unique_id = int(time.time() * 1000) % 100000  # ID unico basato su timestamp
+        
         st.subheader("💰 Saldi Wallet")
         
         wallets = self.wallet_manager.get_wallet_collaboratori()
@@ -373,7 +381,7 @@ class WalletTransactionTable:
                 color_continuous_scale=['red', 'yellow', 'green']
             )
             
-            st.plotly_chart(fig_balances, use_container_width=True, key="chart_balances_wallet_table")
+            st.plotly_chart(fig_balances, use_container_width=True, key=f"chart_balances_wallet_table_{unique_id}")
     
     def _render_edit_transaction_form(self, transaction_data: Dict[str, Any]):
         """Rende il form per modificare una transazione esistente"""
