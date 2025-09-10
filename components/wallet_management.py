@@ -584,7 +584,7 @@ class WalletManagement:
                         }
                     )
                     
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="chart_stats_wallet_management")
             else:
                 st.info("📋 Nessuna statistica disponibile")
                 

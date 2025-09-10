@@ -247,7 +247,7 @@ class WalletTransactionTable:
                 }
             )
             
-            st.plotly_chart(fig_stato, use_container_width=True)
+            st.plotly_chart(fig_stato, use_container_width=True, key="chart_stato_wallet_table")
         
         with col_chart2:
             # Grafico transazioni per tipo
@@ -260,7 +260,7 @@ class WalletTransactionTable:
                 labels={'x': 'Tipo Transazione', 'y': 'Numero Transazioni'}
             )
             
-            st.plotly_chart(fig_tipo, use_container_width=True)
+            st.plotly_chart(fig_tipo, use_container_width=True, key="chart_tipo_wallet_table")
         
         # Grafico timeline transazioni
         if len(df) > 1:
@@ -301,7 +301,7 @@ class WalletTransactionTable:
                 hovermode='closest'
             )
             
-            st.plotly_chart(fig_timeline, use_container_width=True)
+            st.plotly_chart(fig_timeline, use_container_width=True, key="chart_timeline_wallet_table")
     
     def render_wallet_balances(self):
         """Rende la tabella dei saldi wallet"""
@@ -373,7 +373,7 @@ class WalletTransactionTable:
                 color_continuous_scale=['red', 'yellow', 'green']
             )
             
-            st.plotly_chart(fig_balances, use_container_width=True)
+            st.plotly_chart(fig_balances, use_container_width=True, key="chart_balances_wallet_table")
     
     def _render_edit_transaction_form(self, transaction_data: Dict[str, Any]):
         """Rende il form per modificare una transazione esistente"""
