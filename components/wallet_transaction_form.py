@@ -34,10 +34,11 @@ class WalletTransactionForm:
             col1, col2 = st.columns(2)
             
             with col1:
-                # Wallet mittente
+                # Wallet mittente (ordinato alfabeticamente)
+                wallet_list_sorted = sorted(wallet_list)
                 wallet_mittente = st.selectbox(
                     "💰 Wallet Mittente",
-                    options=wallet_list,
+                    options=wallet_list_sorted,
                     index=0,
                     help="Seleziona il wallet da cui trasferire i fondi"
                 )
@@ -52,26 +53,29 @@ class WalletTransactionForm:
                     help="Importo da trasferire"
                 )
                 
-                # Valuta
+                # Valuta (ordinata alfabeticamente)
+                valute_options = ["BTC", "ETH", "EUR", "GBP", "USD"]
                 valuta = st.selectbox(
                     "💱 Valuta",
-                    options=["USD", "EUR", "GBP", "BTC", "ETH"],
+                    options=valute_options,
                     index=0,
                     help="Valuta della transazione"
                 )
             
             with col2:
-                # Wallet destinatario
+                # Wallet destinatario (ordinato alfabeticamente)
+                wallet_destinatario_options = sorted([w for w in wallet_list_sorted if w != wallet_mittente])
                 wallet_destinatario = st.selectbox(
                     "🎯 Wallet Destinatario",
-                    options=[w for w in wallet_list if w != wallet_mittente],
+                    options=wallet_destinatario_options,
                     help="Seleziona il wallet destinatario"
                 )
                 
-                # Tipo transazione
+                # Tipo transazione (ordinato alfabeticamente)
+                tipi_transazione = ["deposit", "transfer", "withdrawal"]
                 tipo_transazione = st.selectbox(
                     "📋 Tipo Transazione",
-                    options=["transfer", "deposit", "withdrawal"],
+                    options=tipi_transazione,
                     format_func=lambda x: {
                         "transfer": "🔄 Trasferimento",
                         "deposit": "📥 Deposito",
@@ -99,9 +103,11 @@ class WalletTransactionForm:
             
             # Stato (solo per modifica)
             if is_edit:
+                # Stato transazione (ordinato alfabeticamente)
+                stati_options = ["cancelled", "completed", "failed", "pending"]
                 stato = st.selectbox(
                     "📊 Stato Transazione",
-                    options=["pending", "completed", "failed", "cancelled"],
+                    options=stati_options,
                     format_func=lambda x: {
                         "pending": "⏳ In Attesa",
                         "completed": "✅ Completata",

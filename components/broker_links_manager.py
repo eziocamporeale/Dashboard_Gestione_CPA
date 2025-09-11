@@ -301,10 +301,12 @@ class BrokerLinksManager:
         """Rende le azioni per ogni link broker"""
         st.subheader("🔧 Azioni")
         
-        # Selezione link per azioni
+        # Selezione link per azioni (ordinata alfabeticamente)
+        broker_list = df['broker_name'].tolist()
+        broker_list.sort()
         selected_broker = st.selectbox(
             "Seleziona un link broker per le azioni:",
-            options=df['broker_name'].tolist(),
+            options=broker_list,
             index=0 if not df.empty else None
         )
         

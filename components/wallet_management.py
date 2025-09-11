@@ -140,9 +140,11 @@ class WalletManagement:
                     help="Nome del proprietario del wallet"
                 )
                 
+                # Lista tipi wallet ordinata alfabeticamente
+                tipi_wallet = ["cliente", "collaboratore", "principale"]
                 tipo_wallet = st.selectbox(
                     "📋 Tipo Wallet",
-                    options=["principale", "collaboratore", "cliente"],
+                    options=tipi_wallet,
                     format_func=lambda x: {
                         "principale": "🏠 Principale",
                         "collaboratore": "👥 Collaboratore", 
@@ -152,9 +154,11 @@ class WalletManagement:
                 )
             
             with col2:
+                # Lista valute ordinata alfabeticamente
+                valute_options = ["BTC", "ETH", "EUR", "GBP", "USD"]
                 valuta = st.selectbox(
                     "💱 Valuta",
-                    options=["USD", "EUR", "GBP", "BTC", "ETH"],
+                    options=valute_options,
                     index=0,
                     help="Valuta del wallet"
                 )
@@ -245,10 +249,17 @@ class WalletManagement:
                     help="Nome del proprietario del wallet"
                 )
                 
+                # Lista tipi wallet ordinata alfabeticamente
+                tipi_wallet = ["cliente", "collaboratore", "principale"]
+                try:
+                    tipo_index = tipi_wallet.index(wallet_data['tipo_wallet'])
+                except ValueError:
+                    tipo_index = 0
+                
                 tipo_wallet = st.selectbox(
                     "📋 Tipo Wallet",
-                    options=["principale", "collaboratore", "cliente"],
-                    index=["principale", "collaboratore", "cliente"].index(wallet_data['tipo_wallet']),
+                    options=tipi_wallet,
+                    index=tipo_index,
                     format_func=lambda x: {
                         "principale": "🏠 Principale",
                         "collaboratore": "👥 Collaboratore", 
@@ -258,10 +269,18 @@ class WalletManagement:
                 )
             
             with col2:
+                # Lista valute ordinata alfabeticamente
+                valute_options = ["BTC", "ETH", "EUR", "GBP", "USD"]
+                valuta_default = wallet_data.get('valuta', 'USD')
+                try:
+                    valuta_index = valute_options.index(valuta_default)
+                except ValueError:
+                    valuta_index = 0
+                
                 valuta = st.selectbox(
                     "💱 Valuta",
-                    options=["USD", "EUR", "GBP", "BTC", "ETH"],
-                    index=["USD", "EUR", "GBP", "BTC", "ETH"].index(wallet_data.get('valuta', 'USD')),
+                    options=valute_options,
+                    index=valuta_index,
                     help="Valuta del wallet"
                 )
                 
@@ -345,8 +364,9 @@ class WalletManagement:
             st.info("📋 Nessun wallet presente.")
             return
         
-        # Seleziona wallet
+        # Seleziona wallet (ordinato alfabeticamente)
         wallet_names = [w['nome_wallet'] for w in wallets if w.get('attivo', True)]
+        wallet_names.sort()
         selected_wallet = st.selectbox(
             "💰 Seleziona Wallet",
             options=wallet_names,
@@ -383,9 +403,11 @@ class WalletManagement:
                     )
                 
                 with col2:
+                    # Lista motivi ordinata alfabeticamente
+                    motivi_options = ["altro", "bonifico_esterno", "commissione", "correzione"]
                     motivo_modifica = st.selectbox(
                         "📋 Motivo Modifica",
-                        options=["correzione", "bonifico_esterno", "commissione", "altro"],
+                        options=motivi_options,
                         format_func=lambda x: {
                             "correzione": "🔧 Correzione",
                             "bonifico_esterno": "💸 Bonifico Esterno",

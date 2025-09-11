@@ -103,9 +103,12 @@ def _render_client_analysis_tab(client_analyzer):
             client_options = {f"{client['nome_cliente']} (ID: {client['id']})": client['id'] 
                             for client in clients}
             
+            # Clienti ordinati alfabeticamente
+            clienti_list = list(client_options.keys())
+            clienti_list.sort()
             selected_client = st.selectbox(
                 "Scegli un cliente:",
-                options=list(client_options.keys()),
+                options=clienti_list,
                 key="client_selection"
             )
             
@@ -284,9 +287,12 @@ def _render_risk_analysis_tab(risk_analyzer):
             client_options = {f"{client['nome_cliente']} (ID: {client['id']})": client['id'] 
                             for client in clients}
             
+            # Clienti ordinati alfabeticamente
+            clienti_list = list(client_options.keys())
+            clienti_list.sort()
             selected_client = st.selectbox(
                 "Scegli cliente per analisi rischi:",
-                options=list(client_options.keys()),
+                options=clienti_list,
                 key="risk_client_selection"
             )
             
@@ -316,9 +322,11 @@ def _render_report_generation_tab(report_generator):
     with col1:
         st.markdown("#### Report Esecutivo")
         
+        # Tipi report ordinati alfabeticamente
+        report_types = ["monthly", "quarterly", "yearly"]
         report_type = st.selectbox(
             "Tipo di report:",
-            options=["monthly", "quarterly", "yearly"],
+            options=report_types,
             key="report_type_selection"
         )
         
@@ -340,9 +348,12 @@ def _render_report_generation_tab(report_generator):
             client_options = {f"{client['nome_cliente']} (ID: {client['id']})": client['id'] 
                             for client in clients}
             
+            # Clienti ordinati alfabeticamente
+            clienti_list = list(client_options.keys())
+            clienti_list.sort()
             selected_client = st.selectbox(
                 "Scegli cliente per report:",
-                options=list(client_options.keys()),
+                options=clienti_list,
                 key="report_client_selection"
             )
             

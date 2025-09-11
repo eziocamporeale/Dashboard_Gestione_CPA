@@ -65,16 +65,20 @@ class WalletTransactionTable:
         col_filter1, col_filter2, col_filter3 = st.columns(3)
         
         with col_filter1:
-            # Filtro per stato
-            stati_disponibili = ['Tutti'] + list(df['stato'].unique()) if not df.empty else ['Tutti']
+            # Filtro per stato (ordinato alfabeticamente)
+            stati_list = list(df['stato'].unique()) if not df.empty else []
+            stati_list.sort()
+            stati_disponibili = ['Tutti'] + stati_list
             stato_selezionato = st.selectbox("📊 Stato", stati_disponibili, key=f"filter_stato_wallet_table_{unique_id}")
             
             if stato_selezionato != 'Tutti' and not df.empty:
                 df = df[df['stato'] == stato_selezionato]
         
         with col_filter2:
-            # Filtro per wallet mittente
-            wallet_mittenti = ['Tutti'] + list(df['wallet_mittente'].unique()) if not df.empty else ['Tutti']
+            # Filtro per wallet mittente (ordinato alfabeticamente)
+            wallet_mittenti_list = list(df['wallet_mittente'].unique()) if not df.empty else []
+            wallet_mittenti_list.sort()
+            wallet_mittenti = ['Tutti'] + wallet_mittenti_list
             mittente_selezionato = st.selectbox("💰 Wallet Mittente", wallet_mittenti, key=f"filter_mittente_wallet_table_{unique_id}")
             
             if mittente_selezionato != 'Tutti' and not df.empty:
@@ -393,21 +397,32 @@ class WalletTransactionTable:
             col1, col2 = st.columns(2)
             
             with col1:
-                # Wallet mittente
+                # Wallet mittente (ordinato alfabeticamente)
                 wallet_list = self.wallet_manager.get_wallet_list()
+                wallet_list_sorted = sorted(wallet_list)
+                try:
+                    wallet_mittente_index = wallet_list_sorted.index(transaction_data['wallet_mittente'])
+                except ValueError:
+                    wallet_mittente_index = 0
+                
                 wallet_mittente = st.selectbox(
                     "💰 Wallet Mittente",
-                    options=wallet_list,
-                    index=wallet_list.index(transaction_data['wallet_mittente']) if transaction_data['wallet_mittente'] in wallet_list else 0,
+                    options=wallet_list_sorted,
+                    index=wallet_mittente_index,
                     help="Wallet da cui parte la transazione",
                     key=f"edit_mittente_{transaction_data['id']}_{unique_id}"
                 )
                 
-                # Wallet destinatario
+                # Wallet destinatario (ordinato alfabeticamente)
+                try:
+                    wallet_destinatario_index = wallet_list_sorted.index(transaction_data['wallet_destinatario'])
+                except ValueError:
+                    wallet_destinatario_index = 0
+                
                 wallet_destinatario = st.selectbox(
                     "🎯 Wallet Destinatario",
-                    options=wallet_list,
-                    index=wallet_list.index(transaction_data['wallet_destinatario']) if transaction_data['wallet_destinatario'] in wallet_list else 0,
+                    options=wallet_list_sorted,
+                    index=wallet_destinatario_index,
                     help="Wallet destinatario della transazione",
                     key=f"edit_destinatario_{transaction_data['id']}_{unique_id}"
                 )
@@ -425,20 +440,32 @@ class WalletTransactionTable:
                 )
             
             with col2:
-                # Valuta
+                # Valuta (ordinata alfabeticamente)
+                valute_options = ["BTC", "ETH", "EUR", "GBP", "USD"]
+                try:
+                    valuta_index = valute_options.index(transaction_data.get('valuta', 'USD'))
+                except ValueError:
+                    valuta_index = 0
+                
                 valuta = st.selectbox(
                     "💱 Valuta",
-                    options=["USD", "EUR", "GBP", "BTC", "ETH"],
-                    index=["USD", "EUR", "GBP", "BTC", "ETH"].index(transaction_data.get('valuta', 'USD')),
+                    options=valute_options,
+                    index=valuta_index,
                     help="Valuta della transazione",
                     key=f"edit_valuta_{transaction_data['id']}_{unique_id}"
                 )
                 
-                # Tipo transazione
+                # Tipo transazione (ordinato alfabeticamente)
+                tipi_transazione = ["deposit", "transfer", "withdrawal"]
+                try:
+                    tipo_index = tipi_transazione.index(transaction_data.get('tipo_transazione', 'transfer'))
+                except ValueError:
+                    tipo_index = 0
+                
                 tipo_transazione = st.selectbox(
                     "📋 Tipo Transazione",
-                    options=["transfer", "deposit", "withdrawal"],
-                    index=["transfer", "deposit", "withdrawal"].index(transaction_data.get('tipo_transazione', 'transfer')),
+                    options=tipi_transazione,
+                    index=tipo_index,
                     format_func=lambda x: {
                         "transfer": "🔄 Trasferimento",
                         "deposit": "📥 Deposito",
@@ -448,11 +475,17 @@ class WalletTransactionTable:
                     key=f"edit_tipo_{transaction_data['id']}_{unique_id}"
                 )
                 
-                # Stato
+                # Stato (ordinato alfabeticamente)
+                stati_options = ["cancelled", "completed", "failed", "pending"]
+                try:
+                    stato_index = stati_options.index(transaction_data.get('stato', 'pending'))
+                except ValueError:
+                    stato_index = 0
+                
                 stato = st.selectbox(
                     "📊 Stato",
-                    options=["pending", "completed", "failed", "cancelled"],
-                    index=["pending", "completed", "failed", "cancelled"].index(transaction_data.get('stato', 'pending')),
+                    options=stati_options,
+                    index=stato_index,
                     format_func=lambda x: {
                         "pending": "⏳ In Attesa",
                         "completed": "✅ Completata",

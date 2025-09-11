@@ -163,9 +163,12 @@ class PermissionsManagement:
         # Filtri
         col1, col2, col3 = st.columns(3)
         with col1:
+            # Filtro azioni ordinato alfabeticamente
+            azioni_options = ["assign_role", "grant_permission", "revoke_permission", "revoke_role"]
+            azioni_options.sort()
             action_filter = st.selectbox(
                 t("permissions.audit.action_filter", "Filtra per Azione"),
-                ["Tutte", "assign_role", "revoke_role", "grant_permission", "revoke_permission"]
+                ["Tutte"] + azioni_options
             )
         
         with col2:
@@ -244,9 +247,12 @@ class PermissionsManagement:
             # Selezione ruoli
             roles = self.permission_manager.get_all_roles()
             role_options = {role['name']: role['id'] for role in roles}
+            # Ruoli ordinati alfabeticamente
+            ruoli_list = list(role_options.keys())
+            ruoli_list.sort()
             selected_roles = st.multiselect(
                 t("permissions.users.select_roles", "Seleziona Ruoli"),
-                options=list(role_options.keys())
+                options=ruoli_list
             )
             
             col1, col2 = st.columns(2)
@@ -297,13 +303,17 @@ class PermissionsManagement:
         with st.form("add_permission_form"):
             name = st.text_input(t("permissions.permissions.name", "Nome Permesso"), placeholder="es. export_data")
             description = st.text_area(t("permissions.permissions.description", "Descrizione"), placeholder="Permesso per esportare dati")
+            # Risorse ordinate alfabeticamente
+            risorse_options = ["clienti", "incroci", "reports", "settings", "system", "users"]
             resource = st.selectbox(
                 t("permissions.permissions.resource", "Risorsa"),
-                options=["clienti", "incroci", "reports", "system", "users", "settings"]
+                options=risorse_options
             )
+            # Azioni ordinate alfabeticamente
+            azioni_options = ["admin", "delete", "export", "import", "read", "write"]
             action = st.selectbox(
                 t("permissions.permissions.action", "Azione"),
-                options=["read", "write", "delete", "admin", "export", "import"]
+                options=azioni_options
             )
             
             col1, col2 = st.columns(2)
@@ -330,9 +340,12 @@ class PermissionsManagement:
             return
         
         user_options = {f"{u['username']} ({u['full_name']})": u['id'] for u in users}
+        # Utenti ordinati alfabeticamente
+        users_list = list(user_options.keys())
+        users_list.sort()
         selected_user = st.selectbox(
             t("permissions.users.select_user", "Seleziona Utente"),
-            options=list(user_options.keys())
+            options=users_list
         )
         
         if selected_user:
@@ -349,9 +362,12 @@ class PermissionsManagement:
             return
         
         role_options = {f"{r['name']} (Livello {r['level']})": r['id'] for r in roles}
+        # Ruoli ordinati alfabeticamente
+        ruoli_list = list(role_options.keys())
+        ruoli_list.sort()
         selected_role = st.selectbox(
             t("permissions.roles.select_role", "Seleziona Ruolo"),
-            options=list(role_options.keys())
+            options=ruoli_list
         )
         
         if selected_role:

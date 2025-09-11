@@ -196,12 +196,18 @@ class ClientTable:
             filtro_nome = st.text_input(t("clients.table.filter_name", "Filtra per Nome"), placeholder="Nome cliente...")
         
         with col_filtro2:
+            # Ordina alfabeticamente i broker per il filtro
+            broker_list = list(df_clienti['broker'].unique()) if 'broker' in df_clienti.columns else []
+            broker_list.sort()
             filtro_broker = st.selectbox(t("clients.table.filter_broker", "Filtra per Broker"), 
-                                       ["Tutti"] + list(df_clienti['broker'].unique()) if 'broker' in df_clienti.columns else ["Tutti"])
+                                       ["Tutti"] + broker_list)
         
         with col_filtro3:
+            # Ordina alfabeticamente le piattaforme per il filtro
+            piattaforme_list = list(df_clienti['piattaforma'].unique()) if 'piattaforma' in df_clienti.columns else []
+            piattaforme_list.sort()
             filtro_piattaforma = st.selectbox(t("clients.table.filter_platform", "Filtra per Piattaforma"), 
-                                            ["Tutte"] + list(df_clienti['piattaforma'].unique()) if 'piattaforma' in df_clienti.columns else ["Tutte"])
+                                            ["Tutte"] + piattaforme_list)
         
         # Applicazione filtri
         df_filtrato = df_clienti.copy()
@@ -278,10 +284,12 @@ class ClientTable:
         if len(df_filtrato) > 0:
             st.subheader(t("clients.table.client_details", "👤 Dettagli Cliente"))
             
-            # Selezione cliente per visualizzare i dettagli
+            # Selezione cliente per visualizzare i dettagli (ordinata alfabeticamente)
+            clienti_list = df_filtrato['nome_cliente'].tolist()
+            clienti_list.sort()
             cliente_selezionato = st.selectbox(
                 t("clients.table.select_client", "Seleziona un cliente per visualizzare i dettagli completi:"),
-                options=df_filtrato['nome_cliente'].tolist(),
+                options=clienti_list,
                 index=0
             )
             

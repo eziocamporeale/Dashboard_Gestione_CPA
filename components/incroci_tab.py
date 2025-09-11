@@ -226,7 +226,9 @@ class IncrociTab:
             # Informazioni generali
             st.write("**Informazioni Generali**")
             nome_incrocio = st.text_input("Nome Incrocio", placeholder="es. Incrocio EURUSD Gennaio")
-            pair_trading = st.selectbox("Pair Trading", ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD", "USD/CAD", "Altro"])
+            # Pair trading ordinati alfabeticamente
+            pair_options = ["AUD/USD", "EUR/USD", "GBP/USD", "USD/CAD", "USD/JPY", "Altro"]
+            pair_trading = st.selectbox("Pair Trading", pair_options)
             volume_trading = st.number_input("Volume Trading (lotti)", min_value=0.01, value=1.0, step=0.01)
             data_apertura = st.date_input("Data Apertura", value=date.today())
             note = st.text_area("Note", placeholder="Note aggiuntive sull'incrocio")
@@ -256,7 +258,9 @@ class IncrociTab:
                         st.session_state.long_conto = cliente_info['numero_conto']
                 
                 broker_long_input = st.text_input("Broker Long", value=st.session_state.get('long_broker', ''), key="long_broker_input", disabled=True)
-                piattaforma_long = st.selectbox("Piattaforma Long", ["MT4", "MT5", "cTrader", "Altro"], index=0, key="long_piattaforma")
+                # Piattaforme ordinate alfabeticamente
+                piattaforme_options = ["cTrader", "MT4", "MT5", "Altro"]
+                piattaforma_long = st.selectbox("Piattaforma Long", piattaforme_options, index=0, key="long_piattaforma")
             
             with col_long2:
                 conto_long_input = st.text_input("Numero Conto Long", value=st.session_state.get('long_conto', ''), key="long_conto_input", disabled=True)
@@ -284,7 +288,9 @@ class IncrociTab:
                         st.session_state.short_conto = cliente_info['numero_conto']
                 
                 broker_short_input = st.text_input("Broker Short", value=st.session_state.get('short_broker', ''), key="short_broker_input", disabled=True)
-                piattaforma_short = st.selectbox("Piattaforma Short", ["MT4", "MT5", "cTrader", "Altro"], index=0, key="short_piattaforma")
+                # Piattaforme ordinate alfabeticamente
+                piattaforme_options = ["cTrader", "MT4", "MT5", "Altro"]
+                piattaforma_short = st.selectbox("Piattaforma Short", piattaforme_options, index=0, key="short_piattaforma")
             
             with col_short2:
                 conto_short_input = st.text_input("Numero Conto Short", value=st.session_state.get('short_conto', ''), key="short_conto_input", disabled=True)
@@ -305,7 +311,9 @@ class IncrociTab:
                 importo_bonus = st.number_input("Importo Bonus", min_value=0.01, value=100.0, step=0.01, key="bonus_importo")
             
             with col_bonus3:
-                valuta_bonus = st.selectbox("Valuta", ["USD", "EUR", "GBP"], key="bonus_valuta")
+                # Valute ordinate alfabeticamente
+                valute_options = ["EUR", "GBP", "USD"]
+                valuta_bonus = st.selectbox("Valuta", valute_options, key="bonus_valuta")
             
             # Mostra bonus configurato se compilato
             bonus_list = []

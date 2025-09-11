@@ -22,12 +22,17 @@ class ClientForm:
                 if broker_links:
                     # Estrae solo i nomi dei broker attivi
                     broker_names = [link.get('broker_name', '') for link in broker_links if link.get('broker_name')]
-                    # Aggiunge "Altro" per inserire nuovi broker
+                    # Ordina alfabeticamente i broker
+                    broker_names.sort()
+                    # Aggiunge "Altro" per inserire nuovi broker (sempre in fondo)
                     broker_names.append("Altro")
                     return broker_names
             
             # Fallback alla lista predefinita se non ci sono broker nel database
-            return ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"]
+            fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
+            fallback_brokers.sort()
+            fallback_brokers.append("Altro")
+            return fallback_brokers
             
         except Exception as e:
             # Log dell'errore per debug
@@ -35,7 +40,10 @@ class ClientForm:
             logging.getLogger(__name__).warning(f"Errore recupero broker da database: {e}")
             
             # Fallback alla lista predefinita in caso di errore
-            return ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM", "Altro"]
+            fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
+            fallback_brokers.sort()
+            fallback_brokers.append("Altro")
+            return fallback_brokers
     
     def render_form(self, dati_cliente=None, is_edit=False):
         """Rende il form per inserimento/modifica cliente"""
@@ -110,10 +118,18 @@ class ClientForm:
                     help=t("clients.help.deposit", "Importo del deposito iniziale")
                 )
                 
+                # Lista piattaforme ordinata alfabeticamente
+                piattaforme_options = ["cTrader", "MT4", "MT5", "Altro"]
+                piattaforma_default = dati_cliente.get('piattaforma', 'MT4') if dati_cliente else 'MT4'
+                try:
+                    piattaforma_index = piattaforme_options.index(piattaforma_default)
+                except ValueError:
+                    piattaforma_index = 0  # Default a cTrader se non trovato
+                
                 piattaforma = st.selectbox(
                     t("clients.form.platform", "Piattaforma *"), 
-                    ["MT4", "MT5", "cTrader", "Altro"],
-                    index=["MT4", "MT5", "cTrader", "Altro"].index(dati_cliente.get('piattaforma', 'MT4')) if dati_cliente else 0,
+                    piattaforme_options,
+                    index=piattaforma_index,
                     help=t("clients.help.platform", "Piattaforma di trading utilizzata")
                 )
                 

@@ -241,6 +241,8 @@ class UserManagement:
                 roles = self.get_roles()
                 if roles:
                     role_options = [role['name'] for role in roles]
+                    # Ordina alfabeticamente i ruoli
+                    role_options.sort()
                     current_role = user_data.get('role', 'User')
                     
                     try:

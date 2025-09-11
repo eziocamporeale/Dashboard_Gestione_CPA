@@ -1186,9 +1186,11 @@ with st.sidebar:
     
     # Selettore lingua compatto
     st.markdown("---")
+    # Lingue ordinate alfabeticamente
+    lingue_options = ["es", "it"]
     selected_language = st.selectbox(
         "🌐 Lingua",
-        options=["it", "es"],
+        options=lingue_options,
         format_func=lambda x: "🇮🇹 IT" if x == "it" else "🇪🇸 ES",
         index=0 if st.session_state.get("language", "it") == "it" else 1,
         key="language_selector"

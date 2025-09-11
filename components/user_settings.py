@@ -320,10 +320,12 @@ class UserSettings:
             
             users_df = pd.DataFrame(response.data)
             
-            # Selezione utente
+            # Selezione utente (ordinata alfabeticamente)
+            users_list = users_df['username'].tolist()
+            users_list.sort()
             selected_user = st.selectbox(
                 "👤 Seleziona utente per cambio password:",
-                options=users_df['username'].tolist(),
+                options=users_list,
                 key="admin_user_select"
             )
             
