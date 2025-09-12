@@ -343,7 +343,7 @@ def manage_brokers():
                         st.success(f"Broker '{broker}' rimosso e salvato!")
                     else:
                         st.error("Errore nel salvataggio!")
-                    st.rerun()
+                    # Rimuoviamo st.rerun() per evitare loop infinito
     
     # Form per modificare broker esistente
     if 'editing_broker_index' in st.session_state:
@@ -367,7 +367,7 @@ def manage_brokers():
                         st.error("Errore nel salvataggio!")
                     del st.session_state.editing_broker_index
                     del st.session_state.editing_broker_name
-                    st.rerun()
+                    # Rimuoviamo st.rerun() per evitare loop infinito
                 else:
                     st.error("Il nome del broker non può essere vuoto!")
         
@@ -375,7 +375,7 @@ def manage_brokers():
             if st.button("❌ Annulla"):
                 del st.session_state.editing_broker_index
                 del st.session_state.editing_broker_name
-                st.rerun()
+                # Rimuoviamo st.rerun() per evitare loop infinito
     
     # Form per aggiungere nuovo broker
     st.markdown("---")
@@ -390,7 +390,7 @@ def manage_brokers():
                 st.success(f"Broker '{new_broker.strip()}' aggiunto e salvato con successo!")
             else:
                 st.error("Errore nel salvataggio!")
-            st.rerun()
+            # Rimuoviamo st.rerun() per evitare loop infinito
         elif new_broker.strip() in broker_list:
             st.warning("Questo broker è già presente nella lista!")
         else:
@@ -413,7 +413,7 @@ def manage_brokers():
                 st.success("Lista broker ripristinata e salvata!")
             else:
                 st.error("Errore nel salvataggio!")
-            st.rerun()
+            # Rimuoviamo st.rerun() per evitare loop infinito
 
 # 🔧 DEBUG: Forza aggiornamento Streamlit Cloud - 2025-08-30 09:24 - FUNZIONE create_database_tables SPOSTATA PRIMA DELL'INIZIALIZZAZIONE
 
@@ -456,11 +456,12 @@ selected = option_menu(
         t("navigation.crosses", "🔄 Incroci"), 
         t("navigation.broker", "🔗 Broker"), 
         "💰 Wallet",
+        "📁 Storage",
         t("navigation.summary", "📈 Riepilogo"), 
         "🤖 AI Assistant",
         t("navigation.settings", "⚙️ Impostazioni")
     ],
-    icons=["house", "people", "arrows-collapse", "link", "wallet", "bar-chart", "robot", "gear"],
+    icons=["house", "people", "arrows-collapse", "link", "wallet", "folder", "bar-chart", "robot", "gear"],
     orientation="horizontal",
     styles={
         "container": {"padding": "0!important", "background-color": "#fafafa"},
@@ -863,6 +864,15 @@ elif selected == "💰 Wallet":
     with tab_form:
         components['wallet_form'].render_form()
 
+elif selected == "📁 Storage":
+    # Mostra la sezione storage
+    try:
+        from components.storage.storage_ui import render_storage_wrapper
+        render_storage_wrapper()
+    except Exception as e:
+        st.error(f"❌ Errore nel caricamento della sezione Storage: {str(e)}")
+        st.info("💡 Assicurati che le tabelle storage siano state create in Supabase")
+
 elif selected == t("navigation.summary", "📈 Riepilogo"):
     st.header("Riepilogo Dati")
     st.write("Visualizza i dati in formato tabellare e grafico")
@@ -1112,7 +1122,7 @@ def fix_supabase_and_duplicates():
                     
                     conn.commit()
                     st.success(f"✅ **Duplicati risolti per:** {email}")
-                    st.rerun()
+                    # Rimuoviamo st.rerun() per evitare loop infinito
         else:
             st.success("✅ **Nessuna email duplicata**")
         
@@ -1198,7 +1208,7 @@ with st.sidebar:
     
     if selected_language != st.session_state.get("language", "it"):
         st.session_state["language"] = selected_language
-        st.rerun()
+        # Rimuoviamo st.rerun() per evitare loop infinito
     
     # Versione compatta
     st.caption("v2.0.0")
