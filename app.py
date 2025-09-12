@@ -1162,26 +1162,32 @@ elif page == "⚙️ Impostazioni":
                     with col1:
                         st.metric("✅ Controlli OK", report['checks_passed'])
                     with col2:
-                        st.metric("⚠️ Avvisi", report['warnings'])
+                        st.metric("⚠️ Avvisi", len(report['warnings']) if isinstance(report['warnings'], list) else report['warnings'])
                     with col3:
-                        st.metric("❌ Errori", report['errors'])
+                        st.metric("❌ Errori", len(report['issues']) if isinstance(report['issues'], list) else report['issues'])
                     with col4:
                         st.metric("🔍 Totale Controlli", report['total_checks'])
                     
-                    # Categorie di sicurezza
-                    st.markdown("---")
-                    st.subheader("📊 Categorie di Sicurezza")
-                    for category, data in report['categories'].items():
-                        st.write(f"**{category}**: {data['score']}/100 ({data['passed']}/{data['total']} controlli)")
+                    # Issues critiche
+                    if report['issues']:
+                        st.markdown("---")
+                        st.subheader("🚨 Issues Critiche")
+                        for issue in report['issues']:
+                            st.error(f"❌ {issue}")
                     
-                    # Dettagli completi
-                    st.markdown("---")
-                    st.subheader("📋 Dettagli Completi")
-                    for check in report['details']:
-                        status_icon = "✅" if check['passed'] else "❌"
-                        st.write(f"{status_icon} **{check['name']}**: {check['message']}")
-                        if check.get('recommendations'):
-                            st.write(f"   💡 **Raccomandazioni**: {check['recommendations']}")
+                    # Warnings
+                    if report['warnings']:
+                        st.markdown("---")
+                        st.subheader("⚠️ Warnings")
+                        for warning in report['warnings']:
+                            st.warning(f"⚠️ {warning}")
+                    
+                    # Raccomandazioni
+                    if report['recommendations']:
+                        st.markdown("---")
+                        st.subheader("💡 Raccomandazioni")
+                        for rec in report['recommendations']:
+                            st.info(f"💡 {rec}")
                         
                 except Exception as e:
                     st.error(f"❌ **Errore durante l'audit completo:** {e}")
