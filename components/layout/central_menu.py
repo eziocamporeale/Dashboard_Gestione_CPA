@@ -91,10 +91,9 @@ def render_central_menu(current_page: str = "🏠 Dashboard") -> str:
         ("⚙️ Impostazioni", "⚙️ Impostazioni")
     ]
     
-    # Solo Admin può vedere le statistiche sistema e audit
+    # Solo Admin può vedere le statistiche sistema
     if current_user and current_user.get('role') == 'admin':
         menu_options.insert(6, ("📊 Statistiche Sistema", "📊 Statistiche Sistema"))
-        menu_options.insert(7, ("🔍 Audit Sicurezza", "🔍 Audit Sicurezza"))
     
     # Crea i pulsanti del menu direttamente
     cols = st.columns(len(menu_options))

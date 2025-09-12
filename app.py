@@ -1090,6 +1090,147 @@ elif page == "⚙️ Impostazioni":
         st.subheader("🔑 Gestione Password")
         st.info("💡 **SICUREZZA**: Le password sono hashate con algoritmi sicuri")
         
+        # Audit di sicurezza
+        st.markdown("---")
+        st.subheader("🔍 Audit di Sicurezza")
+        st.info("🔒 **VERIFICA AUTOMATICA**: Controllo completo della sicurezza del sistema")
+        
+        # Tab per organizzare l'audit
+        tab_quick_audit, tab_full_audit, tab_security_report = st.tabs([
+            "⚡ Audit Rapido", "🔍 Audit Completo", "📊 Report Sicurezza"
+        ])
+        
+        # TAB 1: Audit Rapido
+        with tab_quick_audit:
+            st.subheader("⚡ Audit Rapido")
+            st.info("🚀 **CONTROLLI CRITICI**: Verifica rapida dei problemi di sicurezza principali")
+            
+            if st.button("🔍 Esegui Audit Rapido", type="primary"):
+                try:
+                    from utils.security_audit import SecurityAuditor
+                    auditor = SecurityAuditor()
+                    report = auditor.run_quick_audit()
+                    
+                    # Mostra risultati
+                    st.success(f"✅ **Audit completato!** Punteggio: {report['overall_score']}/100")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("✅ Controlli OK", report['checks_passed'])
+                    with col2:
+                        st.metric("⚠️ Warnings", len(report['warnings']))
+                    with col3:
+                        st.metric("🚨 Issues", len(report['issues']))
+                    
+                    # Mostra issues critiche
+                    if report['issues']:
+                        st.error("🚨 **ISSUES CRITICHE TROVATE:**")
+                        for issue in report['issues']:
+                            st.write(f"• {issue}")
+                    
+                    # Mostra warnings
+                    if report['warnings']:
+                        st.warning("⚠️ **WARNINGS:**")
+                        for warning in report['warnings']:
+                            st.write(f"• {warning}")
+                    
+                    # Salva report
+                    if st.button("💾 Salva Report"):
+                        report_file = auditor.save_report()
+                        st.success(f"✅ Report salvato in: {report_file}")
+                        
+                except Exception as e:
+                    st.error(f"❌ **Errore durante l'audit:** {e}")
+                    st.info("💡 Controlla che il modulo `utils.security_audit` sia disponibile")
+        
+        # TAB 2: Audit Completo
+        with tab_full_audit:
+            st.subheader("🔍 Audit Completo")
+            st.info("🔬 **ANALISI APPROFONDITA**: Controllo completo di tutti gli aspetti di sicurezza")
+            
+            if st.button("🔍 Esegui Audit Completo", type="primary"):
+                try:
+                    from utils.security_audit import SecurityAuditor
+                    auditor = SecurityAuditor()
+                    report = auditor.run_full_audit()
+                    
+                    # Mostra risultati completi
+                    st.success(f"✅ **Audit completo terminato!** Punteggio: {report['overall_score']}/100")
+                    
+                    # Metriche principali
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("✅ Controlli OK", report['checks_passed'])
+                    with col2:
+                        st.metric("⚠️ Avvisi", report['warnings'])
+                    with col3:
+                        st.metric("❌ Errori", report['errors'])
+                    with col4:
+                        st.metric("🔍 Totale Controlli", report['total_checks'])
+                    
+                    # Categorie di sicurezza
+                    st.markdown("---")
+                    st.subheader("📊 Categorie di Sicurezza")
+                    for category, data in report['categories'].items():
+                        st.write(f"**{category}**: {data['score']}/100 ({data['passed']}/{data['total']} controlli)")
+                    
+                    # Dettagli completi
+                    st.markdown("---")
+                    st.subheader("📋 Dettagli Completi")
+                    for check in report['details']:
+                        status_icon = "✅" if check['passed'] else "❌"
+                        st.write(f"{status_icon} **{check['name']}**: {check['message']}")
+                        if check.get('recommendations'):
+                            st.write(f"   💡 **Raccomandazioni**: {check['recommendations']}")
+                        
+                except Exception as e:
+                    st.error(f"❌ **Errore durante l'audit completo:** {e}")
+                    st.info("💡 Controlla che il modulo `utils.security_audit` sia disponibile")
+        
+        # TAB 3: Report Sicurezza
+        with tab_security_report:
+            st.subheader("📊 Report Sicurezza")
+            st.info("📈 **REPORT DETTAGLIATO**: Analisi storica e trend di sicurezza")
+            
+            # Genera report
+            if st.button("📊 Genera Report Sicurezza", type="primary"):
+                try:
+                    from utils.security_audit import SecurityAuditor
+                    auditor = SecurityAuditor()
+                    report = auditor.generate_security_report()
+                    
+                    # Mostra report
+                    st.success("✅ **Report generato con successo!**")
+                    
+                    # Grafico del punteggio nel tempo
+                    st.markdown("---")
+                    st.subheader("📈 Trend Punteggio Sicurezza")
+                    if 'score_history' in report:
+                        import pandas as pd
+                        df = pd.DataFrame(report['score_history'])
+                        st.line_chart(df.set_index('date')['score'])
+                    
+                    # Statistiche generali
+                    st.markdown("---")
+                    st.subheader("📊 Statistiche Generali")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Punteggio Medio", f"{report['average_score']}/100")
+                        st.metric("Miglior Punteggio", f"{report['best_score']}/100")
+                    with col2:
+                        st.metric("Peggior Punteggio", f"{report['worst_score']}/100")
+                        st.metric("Controlli Totali", report['total_checks'])
+                    
+                    # Raccomandazioni
+                    st.markdown("---")
+                    st.subheader("💡 Raccomandazioni")
+                    for rec in report['recommendations']:
+                        st.write(f"• {rec}")
+                        
+                except Exception as e:
+                    st.error(f"❌ **Errore durante la generazione del report:** {e}")
+                    st.info("💡 Controlla che il modulo `utils.security_audit` sia disponibile")
+        
         if st.button("🔄 Rigenera Hash Password", type="secondary"):
             st.info("🔄 **Funzionalità in sviluppo** - Prossima versione")
     
@@ -1288,8 +1429,7 @@ elif page == "🔍 Audit Sicurezza":
     st.header("🔍 Audit Sicurezza")
     st.info("🔒 **SICUREZZA AVANZATA**: Verifica automatica della sicurezza del sistema")
     
-    # Usa il sistema di navigazione utente per l'audit
-    render_user_navigation()
+    # Audit di sicurezza senza navigazione utente
     
     # Tab per organizzare l'audit
     tab_quick_audit, tab_full_audit, tab_security_report = st.tabs([
