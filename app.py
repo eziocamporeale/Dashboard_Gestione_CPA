@@ -687,14 +687,12 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                         # Crea nuovo wallet nel sistema dedicato
                                         wallet_data = {
                                             'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
-                                            'wallet_address': dati_cliente['wallet'].strip(),
                                             'tipo_wallet': 'cliente',
                                             'saldo_attuale': 0.0,
                                             'valuta': 'USDT',
                                             'proprietario': dati_cliente['nome_cliente'],
                                             'attivo': True,
-                                            'note': f"Wallet automatico per cliente {dati_cliente['nome_cliente']}",
-                                            'cliente_id': cliente_id,
+                                            'note': f"Wallet: {dati_cliente['wallet'].strip()} | Cliente: {dati_cliente['nome_cliente']} (ID: {cliente_id})",
                                             'created_at': datetime.now().isoformat(),
                                             'updated_at': datetime.now().isoformat()
                                         }
@@ -857,11 +855,10 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                         if wallet_to_update.get('cliente_id') != cliente_supabase['id']:
                                             # Aggiorna il collegamento al cliente
                                             wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').update({
-                                                'cliente_id': cliente_supabase['id'],
                                                 'proprietario': dati_cliente['nome_cliente'],
                                                 'updated_at': datetime.now().isoformat(),
                                                 'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
-                                                'descrizione': f"Wallet automatico per cliente {dati_cliente['nome_cliente']}"
+                                                'note': f"Wallet: {dati_cliente['wallet'].strip()} | Cliente: {dati_cliente['nome_cliente']} (ID: {cliente_supabase['id']})"
                                             }).eq('id', wallet_to_update['id']).execute()
                                             st.info(f"💰 Wallet aggiornato nel sistema dedicato per {dati_cliente['nome_cliente']}")
                                         else:
