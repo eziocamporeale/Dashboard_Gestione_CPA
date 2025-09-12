@@ -71,9 +71,27 @@ class SupabasePermissionManager:
                 logger.error("❌ DEBUG get_user_roles: Supabase non disponibile")
                 return []
             
-            # Ottieni il ruolo dalla tabella users
-            result = supabase.table('users').select('role').eq('id', user_id).execute()
-            logger.info(f"🔍 DEBUG get_user_roles: Risultato query={result.data}")
+            # Gestisci sia UUID che integer per compatibilità
+            try:
+                # Prova prima con UUID (formato Supabase standard)
+                result = supabase.table('users').select('role').eq('id', user_id).execute()
+                logger.info(f"🔍 DEBUG get_user_roles: Risultato query UUID={result.data}")
+            except Exception as e:
+                # Se fallisce con UUID, prova con integer (sistema auth_simple)
+                logger.info(f"🔍 DEBUG get_user_roles: Fallback a integer per user_id={user_id}")
+                try:
+                    result = supabase.table('users').select('role').eq('id', int(user_id)).execute()
+                    logger.info(f"🔍 DEBUG get_user_roles: Risultato query integer={result.data}")
+                except Exception as e2:
+                    # Se anche integer fallisce, usa il ruolo dalla sessione
+                    logger.info(f"🔍 DEBUG get_user_roles: Usando ruolo dalla sessione per user_id={user_id}")
+                    if 'user_info' in st.session_state:
+                        user_info = st.session_state.user_info
+                        role = user_info.get('role')
+                        if role:
+                            logger.info(f"🔍 DEBUG get_user_roles: Ruolo dalla sessione={role}")
+                            return [role]
+                    return []
             
             if result.data and result.data[0]['role']:
                 roles = [result.data[0]['role']]
