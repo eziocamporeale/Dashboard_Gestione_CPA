@@ -8,42 +8,53 @@ class ClientForm:
         pass
     
     def get_broker_options_from_database(self):
-        """Recupera i broker dal database Supabase"""
-        try:
-            from supabase_manager import SupabaseManager
-            
-            # Inizializza SupabaseManager
-            supabase_manager = SupabaseManager()
-            
-            if supabase_manager.is_configured:
-                # Recupera i broker attivi dal database
-                broker_links = supabase_manager.get_broker_links(active_only=True)
+        """Recupera i broker dal database Supabase con cache per evitare richieste ripetute"""
+        
+        # Usa session_state per cacheare i broker e evitare richieste HTTP ripetute
+        if 'cached_broker_options' not in st.session_state:
+            try:
+                from supabase_manager import SupabaseManager
                 
-                if broker_links:
-                    # Estrae solo i nomi dei broker attivi
-                    broker_names = [link.get('broker_name', '') for link in broker_links if link.get('broker_name')]
-                    # Ordina alfabeticamente i broker
-                    broker_names.sort()
-                    # Aggiunge "Altro" per inserire nuovi broker (sempre in fondo)
-                    broker_names.append("Altro")
-                    return broker_names
-            
-            # Fallback alla lista predefinita se non ci sono broker nel database
-            fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
-            fallback_brokers.sort()
-            fallback_brokers.append("Altro")
-            return fallback_brokers
-            
-        except Exception as e:
-            # Log dell'errore per debug
-            import logging
-            logging.getLogger(__name__).warning(f"Errore recupero broker da database: {e}")
-            
-            # Fallback alla lista predefinita in caso di errore
-            fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
-            fallback_brokers.sort()
-            fallback_brokers.append("Altro")
-            return fallback_brokers
+                # Inizializza SupabaseManager
+                supabase_manager = SupabaseManager()
+                
+                if supabase_manager.is_configured:
+                    # Recupera i broker attivi dal database
+                    broker_links = supabase_manager.get_broker_links(active_only=True)
+                    
+                    if broker_links:
+                        # Estrae solo i nomi dei broker attivi
+                        broker_names = [link.get('broker_name', '') for link in broker_links if link.get('broker_name')]
+                        # Ordina alfabeticamente i broker
+                        broker_names.sort()
+                        # Aggiunge "Altro" per inserire nuovi broker (sempre in fondo)
+                        broker_names.append("Altro")
+                        st.session_state.cached_broker_options = broker_names
+                    else:
+                        # Fallback alla lista predefinita se non ci sono broker nel database
+                        fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
+                        fallback_brokers.sort()
+                        fallback_brokers.append("Altro")
+                        st.session_state.cached_broker_options = fallback_brokers
+                else:
+                    # Fallback alla lista predefinita se Supabase non è configurato
+                    fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
+                    fallback_brokers.sort()
+                    fallback_brokers.append("Altro")
+                    st.session_state.cached_broker_options = fallback_brokers
+                    
+            except Exception as e:
+                # Log dell'errore per debug
+                import logging
+                logging.getLogger(__name__).warning(f"Errore recupero broker da database: {e}")
+                
+                # Fallback alla lista predefinita in caso di errore
+                fallback_brokers = ["Ultima Markets", "Puprime", "Axi", "Global Prime", "FxCess", "Vtmarkets", "Tauro Markets", "FPG", "TMGM"]
+                fallback_brokers.sort()
+                fallback_brokers.append("Altro")
+                st.session_state.cached_broker_options = fallback_brokers
+        
+        return st.session_state.cached_broker_options
     
     def render_form(self, dati_cliente=None, is_edit=False):
         """Rende il form per inserimento/modifica cliente"""
@@ -80,6 +91,12 @@ class ClientForm:
                 # Se è una modifica e il broker non è nella lista, aggiungilo
                 if dati_cliente and dati_cliente.get('broker') and dati_cliente.get('broker') not in broker_options:
                     broker_options.insert(-1, dati_cliente.get('broker'))
+                
+                # Pulsante per aggiornare la cache dei broker (solo se necessario)
+                if st.button("🔄 Aggiorna Broker", help="Aggiorna la lista dei broker dal database"):
+                    if 'cached_broker_options' in st.session_state:
+                        del st.session_state.cached_broker_options
+                    st.experimental_rerun()
                 
                 # Determina l'indice di default
                 default_index = 0
