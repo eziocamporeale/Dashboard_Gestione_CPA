@@ -311,7 +311,14 @@ class ClientTable:
                     st.write(f"**{t('clients.details.platform', 'Piattaforma')}:** {cliente_dettagli['piattaforma']}")
                     st.write(f"**{t('clients.details.account_number', 'Numero Conto')}:** {cliente_dettagli['numero_conto']}")
                     st.write(f"**{t('clients.details.vps_ip', 'IP VPS')}:** {cliente_dettagli.get('vps_ip', not_specified)}")
-                    st.write(f"**{t('clients.details.wallet', 'Wallet')}:** {cliente_dettagli.get('wallet', not_specified)}")
+                    # Mostra wallet dal sistema dedicato se disponibile
+                    wallet_info = self._get_wallet_info_from_dedicated_system(cliente_dettagli.get('wallet', ''))
+                    if wallet_info:
+                        st.write(f"**{t('clients.details.wallet', 'Wallet')}:** {wallet_info['wallet_address']}")
+                        st.write(f"**Saldo Wallet:** ${wallet_info.get('saldo_calcolato', 0):,.2f}")
+                        st.write(f"**Tipo:** {wallet_info.get('tipo_wallet', 'Cliente')}")
+                    else:
+                        st.write(f"**{t('clients.details.wallet', 'Wallet')}:** {cliente_dettagli.get('wallet', not_specified)}")
                     st.write(f"**{t('clients.details.vps_username', 'Username VPS')}:** {cliente_dettagli.get('vps_username', not_specified)}")
                 
                 # Campi aggiuntivi se presenti
@@ -350,3 +357,29 @@ class ClientTable:
                     if st.button(t("clients.actions.copy_data", "📋 Copia Dati"), key=f"copy_simple_{cliente_dettagli['id']}", help=t("clients.help.copy_data", "Copia dati")):
                         # Copia i dati negli appunti (simulato)
                         st.success(t("clients.actions.data_copied", "Dati copiati negli appunti!"))
+    
+    def _get_wallet_info_from_dedicated_system(self, wallet_address: str):
+        """Recupera le informazioni del wallet dal sistema dedicato"""
+        if not wallet_address or not wallet_address.strip():
+            return None
+        
+        try:
+            from components.wallet_transactions_manager import WalletTransactionsManager
+            wallet_manager = WalletTransactionsManager()
+            
+            if not wallet_manager.supabase_manager:
+                return None
+            
+            # Cerca il wallet nel sistema dedicato
+            wallets = wallet_manager.get_wallet_collaboratori()
+            for wallet in wallets:
+                if wallet.get('wallet_address') == wallet_address.strip():
+                    # Calcola il saldo attuale
+                    saldo = wallet_manager.calculate_wallet_balance(wallet_address.strip())
+                    wallet['saldo_calcolato'] = saldo
+                    return wallet
+            
+            return None
+        except Exception as e:
+            # In caso di errore, ritorna None per mostrare il wallet generico
+            return None

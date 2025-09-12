@@ -237,6 +237,7 @@ class ClientForm:
                         'piattaforma': piattaforma,
                         'numero_conto': numero_conto,
                         'password_conto': password_conto,
+                        'wallet': wallet,  # Campo wallet del cliente
                         'vps_ip': vps_ip,
                         'vps_username': vps_username,
                         'vps_password': vps_password
