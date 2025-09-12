@@ -926,6 +926,205 @@ elif page == "🤖 AI Assistant":
 elif page == "⚙️ Impostazioni":
     st.header("⚙️ Impostazioni Sistema")
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
+    
+    # Tab per organizzare le impostazioni
+    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente"
+    ])
+    
+    # TAB 1: Supabase
+    with tab_supabase:
+        st.subheader("🚀 Gestione Supabase")
+        st.info("📊 **DATABASE REMOTO**: Tutti i dati sono sincronizzati automaticamente con Supabase")
+        
+        # Stato Supabase
+        try:
+            from supabase_manager import SupabaseManager
+            supabase_manager = SupabaseManager()
+            
+            if supabase_manager.is_configured:
+                st.success("✅ **SUPABASE ATTIVO** - Configurazione corretta")
+                
+                # Statistiche Supabase
+                clienti_supabase = supabase_manager.get_clienti()
+                incroci_supabase = supabase_manager.get_incroci()
+                
+                col_stats1, col_stats2, col_stats3 = st.columns(3)
+                with col_stats1:
+                    st.metric("👥 Clienti", len(clienti_supabase))
+                with col_stats2:
+                    st.metric("🔄 Incroci", len(incroci_supabase))
+                with col_stats3:
+                    st.metric("🌐 Status", "Online")
+                
+                # Informazioni connessione (SICURE)
+                st.markdown("---")
+                st.subheader("🔗 Stato Connessione")
+                st.write(f"**🌐 Status:** Connesso a Supabase")
+                st.write(f"**🔒 Sicurezza:** Configurazione protetta")
+                st.write(f"**📅 Ultimo aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+                
+            else:
+                st.error("❌ **SUPABASE NON CONFIGURATO** - Controlla le variabili d'ambiente")
+                
+        except Exception as e:
+            st.error(f"❌ **Errore connessione Supabase:** {e}")
+        
+        # Test connessione
+        st.markdown("---")
+        st.subheader("🧪 Test Connessione")
+        if st.button("🔍 Test Supabase", type="primary"):
+            try:
+                if supabase_manager.is_configured:
+                    # Test lettura clienti
+                    clienti = supabase_manager.get_clienti()
+                    st.success(f"✅ **Test riuscito!** Trovati {len(clienti)} clienti")
+                    
+                    # Test scrittura (opzionale)
+                    if st.button("📝 Test Scrittura"):
+                        # Test inserimento temporaneo
+                        test_data = {
+                            'nome_cliente': 'Test Connessione',
+                            'email': 'test@connessione.com',
+                            'telefono': '0000000000',
+                            'broker': 'Test Broker',
+                            'deposito': 0,
+                            'piattaforma': 'Test Platform',
+                            'note': 'Test automatico - da eliminare'
+                        }
+                        
+                        result = supabase_manager.create_cliente(test_data)
+                        if result:
+                            st.success("✅ **Test scrittura riuscito!**")
+                            # Elimina il record di test
+                            supabase_manager.delete_cliente(result['id'])
+                            st.info("🧹 Record di test eliminato")
+                        else:
+                            st.error("❌ **Test scrittura fallito**")
+                else:
+                    st.error("❌ Supabase non configurato")
+            except Exception as e:
+                st.error(f"❌ **Errore test:** {e}")
+    
+    # TAB 2: Sistema
+    with tab_system:
+        st.subheader("ℹ️ Informazioni Sistema")
+        
+        # Informazioni versione
+        st.info("📋 **VERSIONE**: Dashboard CPA v2.0.0")
+        
+        # Statistiche generali
+        try:
+            from supabase_manager import SupabaseManager
+            supabase_manager = SupabaseManager()
+            
+            if supabase_manager.is_configured:
+                clienti = supabase_manager.get_clienti()
+                incroci = supabase_manager.get_incroci()
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("👥 Clienti Totali", len(clienti))
+                with col2:
+                    st.metric("🔄 Incroci Totali", len(incroci))
+                with col3:
+                    st.metric("🌐 Status", "Online")
+                
+                # Informazioni dettagliate
+                st.markdown("---")
+                st.subheader("📊 Dettagli Sistema")
+                st.write(f"**🗄️ Database:** Supabase (Cloud)")
+                st.write(f"**🔒 Sicurezza:** Autenticazione avanzata")
+                st.write(f"**📅 Ultimo aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+                st.write(f"**🌐 Ambiente:** Produzione")
+                
+            else:
+                st.warning("⚠️ **SUPABASE NON CONFIGURATO** - Modalità offline")
+                
+        except Exception as e:
+            st.error(f"❌ **Errore sistema:** {e}")
+    
+    # TAB 3: Sicurezza
+    with tab_security:
+        st.subheader("🔒 Gestione Sicurezza")
+        st.info("🛡️ **SICUREZZA AVANZATA**: Configurazione protetta e monitoraggio accessi")
+        
+        # Stato sicurezza
+        st.success("✅ **SISTEMA SICURO** - Tutte le protezioni attive")
+        
+        # Informazioni sicurezza
+        st.markdown("---")
+        st.subheader("🔐 Protezioni Attive")
+        st.write("✅ **Autenticazione:** Sistema avanzato con hash password")
+        st.write("✅ **Autorizzazione:** Controllo ruoli e permessi")
+        st.write("✅ **Sessione:** Gestione sicura delle sessioni")
+        st.write("✅ **Database:** Connessione crittografata")
+        st.write("✅ **Log:** Tracciamento completo delle attività")
+        
+        # Gestione password
+        st.markdown("---")
+        st.subheader("🔑 Gestione Password")
+        st.info("💡 **SICUREZZA**: Le password sono hashate con algoritmi sicuri")
+        
+        if st.button("🔄 Rigenera Hash Password", type="secondary"):
+            st.info("🔄 **Funzionalità in sviluppo** - Prossima versione")
+    
+    # TAB 4: Permessi
+    with tab_permissions:
+        st.subheader("🛡️ Gestione Permessi")
+        st.info("👑 **CONTROLLO ACCESSI**: Gestisci ruoli e permessi utenti")
+        
+        # Stato permessi
+        current_user = get_current_user()
+        if current_user:
+            user_role = current_user.get('role', 'user')
+            st.success(f"✅ **RUOLO ATTIVO**: {user_role.upper()}")
+            
+            # Permessi utente corrente
+            st.markdown("---")
+            st.subheader("👤 I Tuoi Permessi")
+            if user_role == 'admin':
+                st.write("✅ **Amministratore**: Accesso completo a tutte le funzioni")
+                st.write("✅ **Gestione Utenti**: Crea, modifica, elimina utenti")
+                st.write("✅ **Gestione Dati**: Accesso completo ai dati")
+                st.write("✅ **Configurazione**: Modifica impostazioni sistema")
+            elif user_role == 'manager':
+                st.write("✅ **Manager**: Accesso alle funzioni di gestione")
+                st.write("✅ **Gestione Clienti**: Visualizza e modifica clienti")
+                st.write("✅ **Report**: Genera report e statistiche")
+                st.write("❌ **Gestione Utenti**: Non autorizzato")
+            else:
+                st.write("✅ **Utente**: Accesso base alle funzioni")
+                st.write("✅ **Visualizzazione**: Visualizza dati autorizzati")
+                st.write("❌ **Modifica**: Limitato")
+                st.write("❌ **Gestione**: Non autorizzato")
+        else:
+            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+    
+    # TAB 5: Impostazioni Utente
+    with tab_user_settings:
+        st.subheader("👤 Impostazioni Utente")
+        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
+        
+        # Impostazioni utente corrente
+        current_user = get_current_user()
+        if current_user:
+            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
+            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
+            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+            
+            # Pulsante per forzare il logout
+            st.markdown("---")
+            st.subheader("🚪 Gestione Sessione")
+            if st.button("🚪 Forza Logout", type="secondary"):
+                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
+                if st.button("✅ Conferma Logout Forzato", type="primary"):
+                    # Pulisci session state per logout
+                    for key in list(st.session_state.keys()):
+                        del st.session_state[key]
+                    st.rerun()
+        else:
+            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
 
 elif page == "📊 Statistiche Sistema":
     # Mostra le statistiche del sistema per admin
@@ -935,12 +1134,8 @@ elif page == "📊 Statistiche Sistema":
     # Usa il sistema di navigazione utente per le statistiche
     render_user_navigation()
     
-    # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente"
-    ])
-    
-    # TAB 1: Supabase
+    # Contenuto delle statistiche sistema (da implementare)
+    st.info("📊 **STATISTICHE AVANZATE**: Questa sezione mostrerà metriche e analisi dettagliate del sistema")
     with tab_supabase:
         st.subheader("🚀 Gestione Supabase")
         st.info("📊 **DATABASE REMOTO**: Tutti i dati sono sincronizzati automaticamente con Supabase")
