@@ -169,7 +169,8 @@ def login_form():
                 submit_button = st.form_submit_button("🚀 **Accedi**", type="primary")
             with col2:
                 if st.form_submit_button("🔄 **Reset**"):
-                    st.rerun()
+                    # Reset senza rerun per evitare loop
+                    st.session_state.clear()
         
         # Gestione login
         if submit_button and username and password:
@@ -189,8 +190,7 @@ def login_form():
                 logger.info(f"🔍 DEBUG: user_info impostato nella sessione (senza dati sensibili)")
                 st.success(f'✅ Benvenuto {user_info["name"]}!')
                 
-                # Riavvia l'app
-                st.rerun()
+                # Login completato senza rerun per evitare loop
                 return True
             else:
                 # Login fallito
@@ -235,7 +235,6 @@ def logout_user():
         
         logger.info(f"✅ Logout completo completato per {username}")
         st.success("✅ Logout completato!")
-        st.rerun()
         return True
         
     except Exception as e:
@@ -326,7 +325,8 @@ def login_form():
                 submit_button = st.form_submit_button("🚀 **Accedi**", type="primary")
             with col2:
                 if st.form_submit_button("🔄 **Reset**"):
-                    st.rerun()
+                    # Reset senza rerun per evitare loop
+                    st.session_state.clear()
             
             if submit_button:
                 if username and password:
@@ -345,8 +345,7 @@ def login_form():
                         logger.info(f"✅ Login riuscito per utente: {username}")
                         st.success(f'✅ Benvenuto {user_info["name"]}!')
                         
-                        # Riavvia l'app
-                        st.rerun()
+                        # Login completato senza rerun per evitare loop
                         return True
                     else:
                         # Login fallito
