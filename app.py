@@ -334,6 +334,7 @@ def manage_brokers():
             if st.button("✏️", key=f"edit_{i}", help="Modifica nome broker"):
                 st.session_state.editing_broker_index = i
                 st.session_state.editing_broker_name = broker
+                st.rerun()  # Necessario per entrare in modalità modifica
         
         with col3:
             if st.button("🗑️", key=f"delete_{i}", help="Rimuovi broker"):
@@ -639,7 +640,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
             st.warning(f"⚠️ Cliente salvato in LOCALE ma errore sincronizzazione SUPABASE: {e}")
         
         st.session_state.editing_client = None
-        # RIMOSSO st.rerun() per fermare il loop
+        st.rerun()  # Necessario per tornare alla lista
 
 def handle_edit_client(cliente_data):
     """Gestisce la modifica di un cliente esistente"""
@@ -648,7 +649,7 @@ def handle_edit_client(cliente_data):
         st.session_state.editing_client = cliente_data.to_dict()
     else:
         st.session_state.editing_client = cliente_data
-    # RIMOSSO st.rerun() per fermare il loop
+    st.rerun()  # Necessario per entrare in modalità modifica
 
 def handle_delete_client(cliente_id):
     """Gestisce l'eliminazione di un cliente da Supabase"""
@@ -751,7 +752,7 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
             st.warning(f"⚠️ Cliente aggiornato in LOCALE ma errore sincronizzazione SUPABASE: {e}")
         
         st.session_state.editing_client = None
-        # RIMOSSO st.rerun() per fermare il loop
+        st.rerun()  # Necessario per tornare alla lista
     else:
         show_error_message("Errore nell'aggiornamento del cliente")
 
@@ -781,6 +782,7 @@ elif selected == t("navigation.clients", "👥 Gestione Clienti"):
         # Pulsante per tornare indietro
         if st.button("← Torna alla Lista"):
             st.session_state.editing_client = None
+            st.rerun()  # Necessario per la navigazione
         
         # Form di modifica
         success, dati_cliente, campi_aggiuntivi = components['client_form'].render_form(
@@ -1189,9 +1191,11 @@ with st.sidebar:
     if st.button("➕ Nuovo Cliente", use_container_width=True):
         st.session_state.editing_client = None
         st.session_state.show_client_form = True
+        st.rerun()  # Necessario per la navigazione
     
     if st.button("⚙️ Gestisci Broker", use_container_width=True):
         st.session_state.show_broker_management = True
+        st.rerun()  # Necessario per la navigazione
     
     
     # Selettore lingua compatto
