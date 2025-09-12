@@ -24,7 +24,7 @@ class SimpleAuthSystem:
             'admin': {
                 'user_id': 1,
                 'username': 'admin',
-                'password_hash': 'admin',  # Password semplice per test
+                'password_hash': 'admin123',  # Password corretta per progetto CPA
                 'email': 'admin@cpadashboard.com',
                 'name': 'Amministratore CPA Dashboard',
                 'role': 'admin',
