@@ -141,3 +141,22 @@ cpa_database.db.backup_*
 .idea/
 *.swp
 *.swo
+
+# File identificati dall'audit di sicurezza
+config_dev.py
+supabase_users_export_*.xlsx
+*.xlsx
+*.xls
+*.csv
+
+# File di configurazione sensibili
+config_*.py
+*_config.py
+*_dev.py
+*_prod.py
+*_local.py
+
+# File con pattern credenziali
+*_advanced_simple*.py
+*_old.py
+*_backup.py
