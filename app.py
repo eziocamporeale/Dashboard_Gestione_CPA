@@ -20,9 +20,22 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
-from components.auth.auth_simple import require_auth, get_current_user, render_login_form, render_logout_section
-print("✅ auth_simple importato correttamente")
-AUTH_SYSTEM = "simple"
+try:
+    from components.auth.auth_simple import require_auth, get_current_user, render_login_form, render_logout_section
+    print("✅ auth_simple importato correttamente")
+    AUTH_SYSTEM = "simple"
+except ImportError as e:
+    print(f"❌ Errore import auth_simple: {e}")
+    # Fallback: definiamo funzioni vuote
+    def require_auth(func):
+        return func
+    def get_current_user():
+        return None
+    def render_login_form():
+        st.error("❌ Sistema di autenticazione non disponibile")
+    def render_logout_section():
+        st.error("❌ Sistema di autenticazione non disponibile")
+    AUTH_SYSTEM = "disabled"
 
 try:
     from components.charts import Charts
