@@ -30,6 +30,7 @@ try:
 except Exception as e:
     print(f"❌ Errore import Charts: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="Charts", error=e))
+    Charts = None
 
 try:
     from components.client_form import ClientForm
@@ -37,6 +38,7 @@ try:
 except Exception as e:
     print(f"❌ Errore import ClientForm: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="ClientForm", error=e))
+    ClientForm = None
 
 try:
     from components.client_table import ClientTable
@@ -44,6 +46,7 @@ try:
 except Exception as e:
     print(f"❌ Errore import ClientTable: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="ClientTable", error=e))
+    ClientTable = None
 
 try:
     from components.incroci_tab import IncrociTab
@@ -51,6 +54,7 @@ try:
 except Exception as e:
     print(f"❌ Errore import IncrociTab: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="IncrociTab", error=e))
+    IncrociTab = None
 
 try:
     from components.broker_links_manager import BrokerLinksManager
@@ -58,6 +62,7 @@ try:
 except Exception as e:
     print(f"❌ Errore import BrokerLinksManager: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="BrokerLinksManager", error=e))
+    BrokerLinksManager = None
 
 try:
     from database.database import DatabaseManager
@@ -128,6 +133,10 @@ try:
 except Exception as e:
     print(f"❌ Errore import sistema gestione wallet: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione wallet", error=e))
+    WalletTransactionsManager = None
+    WalletTransactionForm = None
+    WalletTransactionTable = None
+    WalletManagement = None
 
 # Configurazione pagina
 st.set_page_config(
@@ -148,22 +157,30 @@ def init_components(db):
     try:
         print("🔧 Inizializzazione componenti...")
         
-        # Verifica che tutti i componenti siano disponibili
-        if not all([Charts, ClientForm, ClientTable, IncrociTab, BrokerLinksManager]):
-            raise Exception("Uno o più componenti non sono disponibili")
+        components_dict = {}
         
-        wallet_manager = WalletTransactionsManager()
-        components_dict = {
-            'client_form': ClientForm(),
-            'client_table': ClientTable(),
-            'charts': Charts(),
-            'incroci_tab': IncrociTab(IncrociManager(), db),
-            'broker_links_manager': BrokerLinksManager(),
-            'wallet_manager': wallet_manager,
-            'wallet_form': WalletTransactionForm(wallet_manager),
-            'wallet_table': WalletTransactionTable(wallet_manager),
-            'wallet_management': WalletManagement(wallet_manager)
-        }
+        # Inizializza solo i componenti disponibili
+        if ClientForm:
+            components_dict['client_form'] = ClientForm()
+        if ClientTable:
+            components_dict['client_table'] = ClientTable()
+        if Charts:
+            components_dict['charts'] = Charts()
+        if IncrociTab and IncrociManager:
+            components_dict['incroci_tab'] = IncrociTab(IncrociManager(), db)
+        if BrokerLinksManager:
+            components_dict['broker_links_manager'] = BrokerLinksManager()
+        
+        # Componenti wallet
+        if WalletTransactionsManager:
+            wallet_manager = WalletTransactionsManager()
+            components_dict['wallet_manager'] = wallet_manager
+            if WalletTransactionForm:
+                components_dict['wallet_form'] = WalletTransactionForm(wallet_manager)
+            if WalletTransactionTable:
+                components_dict['wallet_table'] = WalletTransactionTable(wallet_manager)
+            if WalletManagement:
+                components_dict['wallet_management'] = WalletManagement(wallet_manager)
         
         print("✅ Componenti inizializzati correttamente")
         return components_dict
@@ -775,6 +792,12 @@ elif page == "👥 Gestione Clienti":
     st.header("Gestione Clienti CPA")
     st.write("Gestisci i clienti e le loro informazioni")
     
+    # Controlla se i componenti sono disponibili
+    if 'client_table' not in components or components['client_table'] is None:
+        st.error("❌ **Componente ClientTable non disponibile**")
+        st.info("💡 Controlla che il componente sia stato importato correttamente")
+        return
+    
     # Ottieni dati da Supabase tramite ClientTable
     df_clienti = components['client_table'].get_clienti()
     
@@ -821,10 +844,22 @@ elif page == "👥 Gestione Clienti":
             st.info("Nessun cliente presente. Aggiungi il primo cliente usando il form sopra!")
 
 elif page == "🔄 Incroci":
+    # Controlla se il componente è disponibile
+    if 'incroci_tab' not in components or components['incroci_tab'] is None:
+        st.error("❌ **Componente IncrociTab non disponibile**")
+        st.info("💡 Controlla che il componente sia stato importato correttamente")
+        return
+    
     # Mostra il tab degli incroci
     components['incroci_tab'].render()
 
 elif page == "🔗 Broker":
+    # Controlla se il componente è disponibile
+    if 'broker_links_manager' not in components or components['broker_links_manager'] is None:
+        st.error("❌ **Componente BrokerLinksManager non disponibile**")
+        st.info("💡 Controlla che il componente sia stato importato correttamente")
+        return
+    
     # Mostra la gestione dei link broker
     components['broker_links_manager'].render_broker_links_page()
 
