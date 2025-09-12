@@ -343,3 +343,33 @@ class WalletTransactionsManager:
         except Exception as e:
             logger.error(f"❌ Errore creazione prelievo: {e}")
             return False, f"❌ Errore creazione prelievo: {e}"
+    
+    def calculate_wallet_balance(self, wallet_name: str) -> float:
+        """
+        Calcola il saldo attuale di un wallet basato sulle transazioni
+        
+        Args:
+            wallet_name: Nome del wallet
+            
+        Returns:
+            Saldo attuale del wallet
+        """
+        if not self.supabase_manager:
+            return 0.0
+        
+        try:
+            # Transazioni in uscita (mittente)
+            outgoing_response = self.supabase_manager.supabase.table('wallet_transactions').select('importo').eq('wallet_mittente', wallet_name).eq('stato', 'completed').execute()
+            outgoing_amount = sum(float(t['importo']) for t in outgoing_response.data) if outgoing_response.data else 0
+            
+            # Transazioni in entrata (destinatario)
+            incoming_response = self.supabase_manager.supabase.table('wallet_transactions').select('importo').eq('wallet_destinatario', wallet_name).eq('stato', 'completed').execute()
+            incoming_amount = sum(float(t['importo']) for t in incoming_response.data) if incoming_response.data else 0
+            
+            # Saldo = entrate - uscite
+            balance = incoming_amount - outgoing_amount
+            return balance
+            
+        except Exception as e:
+            logger.error(f"❌ Errore calcolo saldo wallet {wallet_name}: {e}")
+            return 0.0
