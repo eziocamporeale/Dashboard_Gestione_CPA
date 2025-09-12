@@ -37,14 +37,19 @@ class BrokerLinksManager:
         """Verifica se l'utente ha i permessi per gestire i broker links"""
         try:
             # Importa le funzioni di autenticazione
-            from auth_simple_no_cookie import has_permission, get_current_role
+            from components.auth.auth_simple import get_current_user
             
             # Verifica se l'utente è autenticato
             if not st.session_state.get('authenticated', False):
                 return False
             
+            # Ottieni le informazioni dell'utente corrente
+            current_user = get_current_user()
+            if not current_user:
+                return False
+            
             # Verifica permessi usando la nuova struttura ruoli
-            current_role = get_current_role()
+            current_role = current_user.get('role', 'user')
             
             # Admin e Manager possono gestire i broker links
             if current_role in ['admin', 'manager']:

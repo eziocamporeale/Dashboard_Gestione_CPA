@@ -56,8 +56,10 @@ class UserNavigation:
             
             # Pulsante logout nella sezione utente
             if st.button("🚪 Logout", type="secondary", use_container_width=True, key="logout_user_section"):
-                from auth_simple_no_cookie import logout_user
-                logout_user()
+                # Pulisci session state per logout
+                for key in list(st.session_state.keys()):
+                    del st.session_state[key]
+                st.rerun()
             
             st.markdown("---")
     

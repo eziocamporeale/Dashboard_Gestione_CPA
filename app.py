@@ -20,7 +20,7 @@ sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
 from components.auth.auth_simple import require_auth, get_current_user, render_login_form, render_logout_section, login_form, show_user_info, init_auth
-print("✅ auth_simple_no_cookie importato correttamente")
+print("✅ auth_simple importato correttamente")
 AUTH_SYSTEM = "simple"
 
 try:

@@ -302,9 +302,10 @@ class UserSettings:
         if st.button("🚪 Forza Logout", type="secondary"):
             st.warning("⚠️ Sei sicuro di voler forzare il logout?")
             if st.button("✅ Conferma Logout Forzato", type="primary"):
-                # Importa la funzione di logout
-                from auth_simple_no_cookie import logout_user
-                logout_user()
+                # Pulisci session state per logout
+                for key in list(st.session_state.keys()):
+                    del st.session_state[key]
+                st.rerun()
     
     def render_admin_password_management(self):
         """Rende l'interfaccia per la gestione password degli utenti (solo admin)"""
