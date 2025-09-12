@@ -114,21 +114,9 @@ except Exception as e:
     render_central_menu = None
     render_compact_sidebar = None
 
-# Import sistema impostazioni utente
-try:
-    from components.user_settings import render_user_settings
-    print("✅ Sistema impostazioni utente importato correttamente")
-except Exception as e:
-    print(f"❌ Errore import sistema impostazioni utente: {e}")
-    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema impostazioni utente", error=e))
+# Sistema impostazioni utente integrato direttamente nell'app
 
-# Import sistema gestione permessi
-try:
-    from components.permissions_management import permissions_management
-    print("✅ Sistema gestione permessi importato correttamente")
-except Exception as e:
-    print(f"❌ Errore import sistema gestione permessi: {e}")
-    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione permessi", error=e))
+# Sistema gestione permessi integrato direttamente nell'app
 
 # Import sistema gestione wallet
 try:
