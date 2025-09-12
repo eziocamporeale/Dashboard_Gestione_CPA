@@ -20,7 +20,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 # Import diretti dei componenti con gestione errori
-from components.auth.auth_simple import require_auth, get_current_user, render_login_form, render_logout_section, login_form, show_user_info, init_auth
+from components.auth.auth_simple import require_auth, get_current_user, render_login_form, render_logout_section
 print("✅ auth_simple importato correttamente")
 AUTH_SYSTEM = "simple"
 
@@ -247,7 +247,7 @@ def create_database_tables():
 # Inizializzazione
 try:
     print("🔧 Inizializzazione sistema di autenticazione...")
-    init_auth()
+    # Sistema di autenticazione già inizializzato con l'import
     print(f"✅ Sistema di autenticazione inizializzato correttamente ({AUTH_SYSTEM})")
     
     # Mostra informazione all'utente
@@ -444,14 +444,14 @@ if not st.session_state.get('authenticated', False):
     st.info("👋 **Benvenuto!** Effettua l'accesso per utilizzare il sistema.")
     
     # Form di login
-    login_form()
+    render_login_form()
     
     st.stop()
 
 # Titolo principale (solo per utenti autenticati)
 
 # Mostra informazioni utente nella sidebar
-show_user_info()
+render_logout_section()
 
 # Menu di navigazione
 # Titolo principale sopra il menu
