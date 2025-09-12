@@ -146,7 +146,8 @@ def render_login_form():
                 st.session_state.authenticated = True
                 st.session_state.username = username
                 st.session_state.name = user_info['name']
-                st.session_state.roles = user_info['role']
+                st.session_state.role = user_info['role']
+                st.session_state.user_id = user_info['user_id']
                 # IMPORTANTE: Imposta user_info completo con tutti i dati inclusi l'id
                 st.session_state.user_info = user_info
                 
@@ -176,7 +177,7 @@ def render_logout_section():
         if st.session_state.get('authenticated', False):
             username = st.session_state.get('username', 'Utente')
             name = st.session_state.get('name', username)
-            role = st.session_state.get('roles', 'user')
+            role = st.session_state.get('role', 'user')
             
             st.sidebar.markdown("---")
             st.sidebar.markdown("### 👤 **Utente Corrente**")

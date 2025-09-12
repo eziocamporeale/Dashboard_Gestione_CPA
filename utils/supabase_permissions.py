@@ -480,7 +480,7 @@ def has_role(role_name: str) -> bool:
         return False
     
     user_info = st.session_state.user_info
-    user_id = user_info.get('id')
+    user_id = user_info.get('user_id') or user_info.get('id')
     username = user_info.get('username')
     role = user_info.get('role')
     
