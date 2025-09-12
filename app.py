@@ -104,10 +104,14 @@ except Exception as e:
 # Import sistema gestione utenti
 try:
     from components.user_navigation import render_user_navigation
+    from components.layout.central_menu import render_central_menu, render_compact_sidebar
     print("✅ Sistema gestione utenti importato correttamente")
 except Exception as e:
     print(f"❌ Errore import sistema gestione utenti: {e}")
     st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="sistema gestione utenti", error=e))
+    render_user_navigation = None
+    render_central_menu = None
+    render_compact_sidebar = None
 
 # Import sistema impostazioni utente
 try:
@@ -449,15 +453,13 @@ st.title(t("dashboard.title", "🏠 Dashboard CPA - Gestione Clienti e Incroci")
 st.markdown("---")
 # Titolo principale sopra il menu
 st.markdown("---")
-# Gestione navigazione sincronizzata
-if 'selected_page' in st.session_state:
-    # Usa la pagina selezionata dai bottoni di navigazione
-    selected = st.session_state['selected_page']
-    # Rimuovi selected_page per evitare loop
-    del st.session_state['selected_page']
+
+# Menu centrale sempre visibile (come in DASH_GESTIONE_LEAD)
+if render_central_menu:
+    page = render_central_menu(st.session_state.get('current_page', '🏠 Dashboard'))
 else:
-    # Usa il menu normale
-    selected = option_menu(
+    # Fallback al menu originale
+    page = option_menu(
         menu_title=None,
         options=[
             t("navigation.dashboard", "🏠 Dashboard"), 
@@ -479,6 +481,10 @@ else:
             "nav-link-selected": {"background-color": "#02ab21"},
         }
     )
+
+# Sidebar compatta solo con info utente
+if render_compact_sidebar:
+    render_compact_sidebar()
 
 # Funzioni per la gestione dei clienti
 def sync_all_data_to_supabase():
@@ -765,7 +771,7 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
         show_error_message("Errore nell'aggiornamento del cliente")
 
 # Contenuto principale - SISTEMA UTENTI INTEGRATO
-if selected == "🏠 Dashboard":
+if page == "🏠 Dashboard":
     # Usa il nuovo sistema di navigazione utente
     render_user_navigation()
     # Pulisci il contenuto precedente quando si torna alla dashboard
@@ -776,7 +782,7 @@ if selected == "🏠 Dashboard":
     if "editing_client" in st.session_state:
         del st.session_state["editing_client"]
     
-elif selected == t("navigation.clients", "👥 Gestione Clienti"):
+elif page == "👥 Gestione Clienti":
     st.header("Gestione Clienti CPA")
     st.write("Gestisci i clienti e le loro informazioni")
     
@@ -825,15 +831,15 @@ elif selected == t("navigation.clients", "👥 Gestione Clienti"):
         else:
             st.info("Nessun cliente presente. Aggiungi il primo cliente usando il form sopra!")
 
-elif selected == t("navigation.crosses", "🔄 Incroci"):
+elif page == "🔄 Incroci":
     # Mostra il tab degli incroci
     components['incroci_tab'].render()
 
-elif selected == t("navigation.broker", "🔗 Broker"):
+elif page == "🔗 Broker":
     # Mostra la gestione dei link broker
     components['broker_links_manager'].render_broker_links_page()
 
-elif selected == "💰 Wallet":
+elif page == "💰 Wallet":
     st.header("💰 Gestione Transazioni Wallet")
     st.write("Gestisci le transazioni tra i wallet dei collaboratori")
     
@@ -874,7 +880,7 @@ elif selected == "💰 Wallet":
     with tab_form:
         components['wallet_form'].render_form()
 
-elif selected == "📁 Storage":
+elif page == "📁 Storage":
     # Mostra la sezione storage
     try:
         from components.storage.storage_ui import render_storage_wrapper
@@ -883,7 +889,7 @@ elif selected == "📁 Storage":
         st.error(f"❌ Errore nel caricamento della sezione Storage: {str(e)}")
         st.info("💡 Assicurati che le tabelle storage siano state create in Supabase")
 
-elif selected == t("navigation.summary", "📈 Riepilogo"):
+elif page == "📈 Riepilogo":
     st.header("Riepilogo Dati")
     st.write("Visualizza i dati in formato tabellare e grafico")
     
@@ -907,7 +913,7 @@ elif selected == t("navigation.summary", "📈 Riepilogo"):
     else:
         st.info("Nessun cliente presente nel database. Aggiungi clienti per visualizzare i dati!")
 
-elif selected == "🤖 AI Assistant":
+elif page == "🤖 AI Assistant":
     # Mostra l'interfaccia AI Assistant
     try:
         from supabase_manager import SupabaseManager
@@ -917,11 +923,11 @@ elif selected == "🤖 AI Assistant":
         st.error(f"❌ Errore caricamento AI Assistant: {e}")
         print(f"❌ Errore caricamento AI Assistant: {e}")
 
-elif selected == t("navigation.settings", "⚙️ Impostazioni"):
+elif page == "⚙️ Impostazioni":
     st.header("⚙️ Impostazioni Sistema")
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
 
-elif selected == "📊 Statistiche Sistema":
+elif page == "📊 Statistiche Sistema":
     # Mostra le statistiche del sistema per admin
     st.header("📊 Statistiche Sistema")
     st.info("📈 **STATISTICHE AVANZATE**: Visualizza metriche e analisi del sistema")
