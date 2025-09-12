@@ -136,13 +136,15 @@ class ClientForm:
                 numero_conto = st.text_input(
                     t("clients.form.account_number", "Numero Conto *"), 
                     value=dati_cliente.get('numero_conto', '') if dati_cliente else '',
-                    help=t("clients.help.account_number", "Numero del conto di trading")
+                    help=t("clients.help.account_number", "Numero del conto di trading"),
+                    key="numero_conto_input"  # Aggiunge una chiave unica per evitare conflitti
                 )
                 
                 wallet = st.text_input(
                     t("clients.form.wallet", "Wallet *"), 
                     value=dati_cliente.get("wallet", "") if dati_cliente else "",
-                    help=t("clients.help.wallet", "Indirizzo wallet del cliente")
+                    help=t("clients.help.wallet", "Indirizzo wallet del cliente"),
+                    key="wallet_input"  # Aggiunge una chiave unica per evitare conflitti
                 )
 
                 password_conto = st.text_input(
@@ -215,12 +217,14 @@ class ClientForm:
                 with col_del:
                     if st.button(t("common.delete", "🗑️"), key=f"del_{i}", help=t("clients.help.delete_field", "Elimina questo campo")):
                         st.session_state.campi_aggiuntivi.pop(i)
-                        st.rerun()
+                        # Usa st.experimental_rerun() invece di st.rerun() per evitare loop infiniti
+                        st.experimental_rerun()
             
             # Pulsante per aggiungere nuovi campi
             if st.button(t("clients.form.add_field", "➕ Aggiungi Campo"), help=t("clients.help.add_field", "Aggiungi un nuovo campo personalizzato")):
                 st.session_state.campi_aggiuntivi.append({'nome': '', 'valore': ''})
-                st.rerun()
+                # Usa st.experimental_rerun() invece di st.rerun() per evitare loop infiniti
+                st.experimental_rerun()
             
             # Pulsante salva
             button_text = t("clients.form.update_client", "💾 Aggiorna Cliente") if is_edit else t("clients.form.save_client", "💾 Salva Cliente")
