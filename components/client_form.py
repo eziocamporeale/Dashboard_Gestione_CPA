@@ -128,12 +128,13 @@ class ClientForm:
             
             with col2:
                 deposito = st.number_input(
-                    t("clients.form.deposit", "Deposito (€) *"), 
+                    t("clients.form.deposit", "Deposito (€)"), 
                     min_value=0.0, 
                     step=0.01,
                     value=float(dati_cliente.get('deposito', 0.0) or 0.0) if dati_cliente else 0.0,
-                    help=t("clients.help.deposit", "Importo del deposito iniziale")
+                    help=t("clients.help.deposit", "Importo del deposito iniziale (opzionale - gestito tramite transazioni wallet)")
                 )
+                st.caption("💡 Il deposito viene gestito tramite il sistema di transazioni wallet")
                 
                 # Lista piattaforme ordinata alfabeticamente
                 piattaforme_options = ["cTrader", "MT4", "MT5", "Altro"]
@@ -246,7 +247,8 @@ class ClientForm:
             # Pulsante salva
             button_text = t("clients.form.update_client", "💾 Aggiorna Cliente") if is_edit else t("clients.form.save_client", "💾 Salva Cliente")
             if st.button(button_text, type="primary", help=t("clients.help.save_client", "Salva le informazioni del cliente")):
-                if nome_cliente and email and broker and data_registrazione and deposito and piattaforma and numero_conto:
+                # MODIFICA: Deposito non più obbligatorio - gestito tramite transazioni wallet
+                if nome_cliente and email and broker and data_registrazione and piattaforma and numero_conto:
                     # Preparazione dati per il salvataggio
                     dati_salvataggio = {
                         'nome_cliente': nome_cliente,
