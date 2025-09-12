@@ -9,15 +9,23 @@ import pandas as pd
 from datetime import datetime, date
 from typing import Dict, List, Tuple, Optional
 import logging
-from supabase_manager import SupabaseManager
+
+try:
+    from supabase_manager import SupabaseManager
+except ImportError:
+    SupabaseManager = None
 
 class IncrociManager:
     """Gestisce gli incroci tra account CPA usando Supabase"""
     
     def __init__(self):
         """Inizializza il manager degli incroci con Supabase"""
-        self.supabase = SupabaseManager()
-        logging.info("IncrociManager inizializzato con Supabase")
+        if SupabaseManager:
+            self.supabase = SupabaseManager()
+            logging.info("IncrociManager inizializzato con Supabase")
+        else:
+            self.supabase = None
+            logging.warning("IncrociManager inizializzato senza Supabase")
     
     def ottieni_incroci(self, stato: Optional[str] = None) -> pd.DataFrame:
         """
@@ -30,6 +38,10 @@ class IncrociManager:
             DataFrame con gli incroci
         """
         try:
+            if not self.supabase:
+                logging.warning("Supabase non disponibile per ottieni_incroci")
+                return pd.DataFrame()
+            
             # Query base per incroci
             query = self.supabase.supabase.table('incroci').select('*')
             
@@ -195,6 +207,10 @@ class IncrociManager:
             (success, incrocio_id o messaggio errore)
         """
         try:
+            if not self.supabase:
+                logging.warning("Supabase non disponibile per crea_incrocio")
+                return False, "Supabase non disponibile"
+            
             # Crea incrocio principale
             incrocio_data = {
                 'nome_incrocio': dati_incrocio['nome_incrocio'],
