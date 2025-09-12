@@ -190,7 +190,8 @@ def login_form():
                 logger.info(f"🔍 DEBUG: user_info impostato nella sessione (senza dati sensibili)")
                 st.success(f'✅ Benvenuto {user_info["name"]}!')
                 
-                # Login completato senza rerun per evitare loop
+                # Rerun necessario per aggiornare la pagina dopo il login
+                st.rerun()
                 return True
             else:
                 # Login fallito
@@ -307,60 +308,7 @@ def has_role_permission(permission: str) -> bool:
     # Verifica il permesso specifico
     return permission in permissions
 
-def login_form():
-    """Form di login per l'autenticazione"""
-    try:
-        # Crea un'istanza del sistema di autenticazione
-        auth_system = SimpleAuthSystem()
-        
-        # Form di login
-        with st.form("login_form"):
-            st.markdown("### 🔐 **Accesso Sistema**")
-            
-            username = st.text_input("👤 **Username**", placeholder="Inserisci username")
-            password = st.text_input("🔒 **Password**", type="password", placeholder="Inserisci password")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                submit_button = st.form_submit_button("🚀 **Accedi**", type="primary")
-            with col2:
-                if st.form_submit_button("🔄 **Reset**"):
-                    # Reset senza rerun per evitare loop
-                    st.session_state.clear()
-            
-            if submit_button:
-                if username and password:
-                    # Prova il login usando authenticate_user
-                    if auth_system.authenticate_user(username, password):
-                        # Login riuscito
-                        user_info = auth_system.get_user_info(username)
-                        
-                        # Imposta lo stato di sessione
-                        st.session_state.authenticated = True
-                        st.session_state.username = username
-                        st.session_state.name = user_info['name']
-                        st.session_state.roles = user_info['role']
-                        st.session_state.user_info = user_info
-                        
-                        logger.info(f"✅ Login riuscito per utente: {username}")
-                        st.success(f'✅ Benvenuto {user_info["name"]}!')
-                        
-                        # Login completato senza rerun per evitare loop
-                        return True
-                    else:
-                        # Login fallito
-                        st.error('❌ Username o password non corretti')
-                        logger.warning(f"❌ Login fallito per utente: {username}")
-                        return False
-                else:
-                    st.error("❌ Inserisci username e password")
-        
-        return False
-        
-    except Exception as e:
-        logger.error(f"❌ Errore form di login: {e}")
-        st.error(f"❌ Errore sistema di autenticazione: {e}")
-        return False
+# Funzione duplicata rimossa - utilizziamo solo la prima login_form()
 
 def init_auth():
     """Inizializza il sistema di autenticazione"""

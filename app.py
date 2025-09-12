@@ -449,28 +449,36 @@ st.title(t("dashboard.title", "🏠 Dashboard CPA - Gestione Clienti e Incroci")
 st.markdown("---")
 # Titolo principale sopra il menu
 st.markdown("---")
-selected = option_menu(
-    menu_title=None,
-    options=[
-        t("navigation.dashboard", "🏠 Dashboard"), 
-        t("navigation.clients", "👥 Gestione Clienti"), 
-        t("navigation.crosses", "🔄 Incroci"), 
-        t("navigation.broker", "🔗 Broker"), 
-        "💰 Wallet",
-        "📁 Storage",
-        t("navigation.summary", "📈 Riepilogo"), 
-        "🤖 AI Assistant",
-        t("navigation.settings", "⚙️ Impostazioni")
-    ],
-    icons=["house", "people", "arrows-collapse", "link", "wallet", "folder", "bar-chart", "robot", "gear"],
-    orientation="horizontal",
-    styles={
-        "container": {"padding": "0!important", "background-color": "#fafafa"},
-        "icon": {"color": "orange", "font-size": "18px"},
-        "nav-link": {"font-size": "16px", "text-align": "left", "margin": "0px", "--hover-color": "#eee"},
-        "nav-link-selected": {"background-color": "#02ab21"},
-    }
-)
+# Gestione navigazione sincronizzata
+if 'selected_page' in st.session_state:
+    # Usa la pagina selezionata dai bottoni di navigazione
+    selected = st.session_state['selected_page']
+    # Rimuovi selected_page per evitare loop
+    del st.session_state['selected_page']
+else:
+    # Usa il menu normale
+    selected = option_menu(
+        menu_title=None,
+        options=[
+            t("navigation.dashboard", "🏠 Dashboard"), 
+            t("navigation.clients", "👥 Gestione Clienti"), 
+            t("navigation.crosses", "🔄 Incroci"), 
+            t("navigation.broker", "🔗 Broker"), 
+            "💰 Wallet",
+            "📁 Storage",
+            t("navigation.summary", "📈 Riepilogo"), 
+            "🤖 AI Assistant",
+            t("navigation.settings", "⚙️ Impostazioni")
+        ],
+        icons=["house", "people", "arrows-collapse", "link", "wallet", "folder", "bar-chart", "robot", "gear"],
+        orientation="horizontal",
+        styles={
+            "container": {"padding": "0!important", "background-color": "#fafafa"},
+            "icon": {"color": "orange", "font-size": "18px"},
+            "nav-link": {"font-size": "16px", "text-align": "left", "margin": "0px", "--hover-color": "#eee"},
+            "nav-link-selected": {"background-color": "#02ab21"},
+        }
+    )
 
 # Funzioni per la gestione dei clienti
 def sync_all_data_to_supabase():
@@ -912,6 +920,14 @@ elif selected == "🤖 AI Assistant":
 elif selected == t("navigation.settings", "⚙️ Impostazioni"):
     st.header("⚙️ Impostazioni Sistema")
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
+
+elif selected == "📊 Statistiche Sistema":
+    # Mostra le statistiche del sistema per admin
+    st.header("📊 Statistiche Sistema")
+    st.info("📈 **STATISTICHE AVANZATE**: Visualizza metriche e analisi del sistema")
+    
+    # Usa il sistema di navigazione utente per le statistiche
+    render_user_navigation()
     
     # Tab per organizzare le impostazioni
     tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings = st.tabs([
