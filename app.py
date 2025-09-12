@@ -3,6 +3,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from datetime import datetime
+from pathlib import Path
 import plotly.express as px
 from utils.translations import t, translation_manager
 from streamlit_option_menu import option_menu
@@ -1239,34 +1240,218 @@ elif page == "📊 Statistiche Sistema":
     
     # TAB 4: Permessi
     with tab_permissions:
-        st.subheader("🛡️ " + t("permissions.management.title", "Gestione Permessi e Ruoli"))
-        st.info("🔐 **SISTEMA PERMESSI AVANZATO**: Gestisci utenti, ruoli e permessi del sistema")
+        st.subheader("🛡️ Gestione Permessi")
+        st.info("👑 **CONTROLLO ACCESSI**: Gestisci ruoli e permessi utenti")
         
-        # Verifica se l'utente è autenticato e admin
-        try:
-            from utils.supabase_permissions import has_role
+        # Stato permessi
+        current_user = get_current_user()
+        if current_user:
+            user_role = current_user.get('role', 'user')
+            st.success(f"✅ **RUOLO ATTIVO**: {user_role.upper()}")
             
-            # Prima verifica se l'utente è autenticato
-            if not st.session_state.get('authenticated', False):
-                st.info("ℹ️ " + t("permissions.login_required", "Effettua il login per accedere alla gestione permessi."))
-                pass
+            # Permessi utente corrente
+            st.markdown("---")
+            st.subheader("👤 I Tuoi Permessi")
+            if user_role == 'admin':
+                st.write("✅ **Amministratore**: Accesso completo a tutte le funzioni")
+                st.write("✅ **Gestione Utenti**: Crea, modifica, elimina utenti")
+                st.write("✅ **Gestione Dati**: Accesso completo ai dati")
+                st.write("✅ **Configurazione**: Modifica impostazioni sistema")
+            elif user_role == 'manager':
+                st.write("✅ **Manager**: Accesso alle funzioni di gestione")
+                st.write("✅ **Gestione Clienti**: Visualizza e modifica clienti")
+                st.write("✅ **Report**: Genera report e statistiche")
+                st.write("❌ **Gestione Utenti**: Non autorizzato")
             else:
-                # Poi verifica se è admin
-                if has_role('admin'):
-                    permissions_management.render()
-                else:
-                    st.error("❌ " + t("permissions.admin_only", "Solo gli amministratori possono accedere alla gestione permessi."))
-        except Exception as e:
-            st.error(f"❌ Errore caricamento sistema permessi: {e}")
-            st.info("ℹ️ Assicurati che Supabase sia configurato correttamente.")
+                st.write("✅ **Utente**: Accesso base alle funzioni")
+                st.write("✅ **Visualizzazione**: Visualizza dati autorizzati")
+                st.write("❌ **Modifica**: Limitato")
+                st.write("❌ **Gestione**: Non autorizzato")
+        else:
+            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
     
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
+        st.subheader("👤 Impostazioni Utente")
+        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
+        
+        # Impostazioni utente corrente
+        current_user = get_current_user()
+        if current_user:
+            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
+            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
+            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+            
+            # Pulsante per forzare il logout
+            st.markdown("---")
+            st.subheader("🚪 Gestione Sessione")
+            if st.button("🚪 Forza Logout", type="secondary"):
+                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
+                if st.button("✅ Conferma Logout Forzato", type="primary"):
+                    # Pulisci session state per logout
+                    for key in list(st.session_state.keys()):
+                        del st.session_state[key]
+                    st.rerun()
+        else:
+            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+
+elif page == "🔍 Audit Sicurezza":
+    # Mostra l'audit di sicurezza per admin
+    st.header("🔍 Audit Sicurezza")
+    st.info("🔒 **SICUREZZA AVANZATA**: Verifica automatica della sicurezza del sistema")
+    
+    # Usa il sistema di navigazione utente per l'audit
+    render_user_navigation()
+    
+    # Tab per organizzare l'audit
+    tab_quick_audit, tab_full_audit, tab_security_report = st.tabs([
+        "⚡ Audit Rapido", "🔍 Audit Completo", "📊 Report Sicurezza"
+    ])
+    
+    # TAB 1: Audit Rapido
+    with tab_quick_audit:
+        st.subheader("⚡ Audit Rapido")
+        st.info("🚀 **CONTROLLI CRITICI**: Verifica rapida dei problemi di sicurezza principali")
+        
+        if st.button("🔍 Esegui Audit Rapido", type="primary"):
+            try:
+                from utils.security_audit import SecurityAuditor
+                auditor = SecurityAuditor()
+                report = auditor.run_quick_audit()
+                
+                # Mostra risultati
+                st.success(f"✅ **Audit completato!** Punteggio: {report['overall_score']}/100")
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("✅ Controlli OK", report['checks_passed'])
+                with col2:
+                    st.metric("⚠️ Warnings", len(report['warnings']))
+                with col3:
+                    st.metric("🚨 Issues", len(report['issues']))
+                
+                # Mostra issues critiche
+                if report['issues']:
+                    st.error("🚨 **ISSUES CRITICHE TROVATE:**")
+                    for issue in report['issues']:
+                        st.write(f"• {issue}")
+                
+                # Mostra warnings
+                if report['warnings']:
+                    st.warning("⚠️ **WARNINGS:**")
+                    for warning in report['warnings']:
+                        st.write(f"• {warning}")
+                
+                # Salva report
+                if st.button("💾 Salva Report"):
+                    report_file = auditor.save_report()
+                    if report_file:
+                        st.success(f"📁 Report salvato in: {report_file}")
+                
+            except Exception as e:
+                st.error(f"❌ **Errore durante l'audit:** {e}")
+                st.info("💡 Assicurati che il modulo `utils.security_audit` sia disponibile")
+    
+    # TAB 2: Audit Completo
+    with tab_full_audit:
+        st.subheader("🔍 Audit Completo")
+        st.info("🔒 **CONTROLLI ESTENSIVI**: Verifica completa di tutti gli aspetti di sicurezza")
+        
+        if st.button("🔍 Esegui Audit Completo", type="primary"):
+            try:
+                from utils.security_audit import SecurityAuditor
+                auditor = SecurityAuditor()
+                
+                with st.spinner("🔍 Esecuzione audit completo in corso..."):
+                    report = auditor.run_full_audit()
+                
+                # Mostra risultati dettagliati
+                st.success(f"✅ **Audit completo terminato!** Punteggio: {report['overall_score']}/100")
+                
+                # Metriche principali
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("📊 Punteggio", f"{report['overall_score']}/100")
+                with col2:
+                    st.metric("✅ Controlli OK", report['checks_passed'])
+                with col3:
+                    st.metric("⚠️ Warnings", len(report['warnings']))
+                with col4:
+                    st.metric("🚨 Issues", len(report['issues']))
+                
+                # Dettagli completi
+                st.markdown("---")
+                st.subheader("📋 Dettagli Audit")
+                
+                if report['issues']:
+                    st.error("🚨 **ISSUES CRITICHE:**")
+                    for issue in report['issues']:
+                        st.write(f"• {issue}")
+                
+                if report['warnings']:
+                    st.warning("⚠️ **WARNINGS:**")
+                    for warning in report['warnings']:
+                        st.write(f"• {warning}")
+                
+                if report['recommendations']:
+                    st.info("💡 **RACCOMANDAZIONI:**")
+                    for rec in report['recommendations']:
+                        st.write(f"• {rec}")
+                
+                # Salva report completo
+                if st.button("💾 Salva Report Completo"):
+                    report_file = auditor.save_report()
+                    if report_file:
+                        st.success(f"📁 Report completo salvato in: {report_file}")
+                
+            except Exception as e:
+                st.error(f"❌ **Errore durante l'audit completo:** {e}")
+                st.info("💡 Controlla che tutte le dipendenze siano installate")
+    
+    # TAB 3: Report Sicurezza
+    with tab_security_report:
+        st.subheader("📊 Report Sicurezza")
+        st.info("📈 **ANALISI SICUREZZA**: Visualizza report e statistiche di sicurezza")
+        
+        # Mostra ultimo report se disponibile
         try:
-            render_user_settings()
+            from utils.security_audit import SecurityAuditor
+            auditor = SecurityAuditor()
+            
+            # Cerca report esistenti
+            reports_dir = Path("security_reports")
+            if reports_dir.exists():
+                report_files = list(reports_dir.glob("*.txt"))
+                if report_files:
+                    # Mostra ultimo report
+                    latest_report = max(report_files, key=lambda x: x.stat().st_mtime)
+                    
+                    st.success(f"📁 **Ultimo report:** {latest_report.name}")
+                    st.write(f"📅 **Data:** {datetime.fromtimestamp(latest_report.stat().st_mtime).strftime('%d/%m/%Y %H:%M')}")
+                    
+                    # Mostra contenuto del report
+                    with open(latest_report, 'r', encoding='utf-8') as f:
+                        report_content = f.read()
+                    
+                    st.markdown("---")
+                    st.subheader("📋 Contenuto Report")
+                    st.text(report_content)
+                    
+                    # Download del report
+                    if st.button("⬇️ Scarica Report"):
+                        st.download_button(
+                            label="📥 Download Report",
+                            data=report_content,
+                            file_name=latest_report.name,
+                            mime="text/plain"
+                        )
+                else:
+                    st.info("ℹ️ Nessun report di sicurezza disponibile. Esegui un audit per generare il primo report.")
+            else:
+                st.info("ℹ️ Cartella report non trovata. Esegui un audit per creare il primo report.")
+                
         except Exception as e:
-            st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
-            st.info("🔧 Controlla che il file `components/user_settings.py` sia presente")
+            st.error(f"❌ **Errore caricamento report:** {e}")
 
 # Funzione di test rimossa - non più necessaria
 
