@@ -50,15 +50,25 @@ class SecurityAutoFixer:
             for db_file in db_files:
                 try:
                     # Rimuovi dal tracking Git se tracciato
-                    if self.repo and db_file.name in [f.name for f in self.repo.index.entries]:
-                        self.repo.index.remove([str(db_file)])
-                        logger.info(f"✅ Rimosso {db_file.name} dal tracking Git")
-                        fixes.append(f"Rimosso {db_file.name} dal tracking Git")
+                    if self.repo:
+                        try:
+                            # Controlla se il file è tracciato da Git
+                            tracked_files = [item.name for item in self.repo.index.entries]
+                            if db_file.name in tracked_files:
+                                self.repo.index.remove([str(db_file)])
+                                logger.info(f"✅ Rimosso {db_file.name} dal tracking Git")
+                                fixes.append(f"Rimosso {db_file.name} dal tracking Git")
+                        except Exception as git_error:
+                            logger.warning(f"⚠️ File {db_file.name} non tracciato da Git: {git_error}")
                     
                     # Elimina il file fisicamente
-                    db_file.unlink()
-                    logger.info(f"✅ Eliminato file database: {db_file.name}")
-                    fixes.append(f"Eliminato file database: {db_file.name}")
+                    if db_file.exists():
+                        db_file.unlink()
+                        logger.info(f"✅ Eliminato file database: {db_file.name}")
+                        fixes.append(f"Eliminato file database: {db_file.name}")
+                    else:
+                        logger.info(f"ℹ️ File {db_file.name} già eliminato")
+                        fixes.append(f"File {db_file.name} già eliminato")
                     
                 except Exception as e:
                     error_msg = f"Errore rimozione {db_file.name}: {e}"
@@ -91,12 +101,20 @@ class SecurityAutoFixer:
             
             # Controlla se secrets.toml è tracciato
             secrets_file = self.project_root / ".streamlit" / "secrets.toml"
+            
+            # Controlla se il file esiste
             if secrets_file.exists():
                 try:
-                    # Rimuovi dal tracking Git
-                    self.repo.index.remove([str(secrets_file)])
-                    logger.info("✅ Rimosso secrets.toml dal tracking Git")
-                    fixes.append("Rimosso secrets.toml dal tracking Git")
+                    # Controlla se è tracciato da Git
+                    tracked_files = [item.name for item in self.repo.index.entries]
+                    if "secrets.toml" in tracked_files:
+                        # Rimuovi dal tracking Git
+                        self.repo.index.remove([str(secrets_file)])
+                        logger.info("✅ Rimosso secrets.toml dal tracking Git")
+                        fixes.append("Rimosso secrets.toml dal tracking Git")
+                    else:
+                        logger.info("ℹ️ secrets.toml non tracciato da Git")
+                        fixes.append("secrets.toml non tracciato da Git")
                     
                     # Verifica che sia nel .gitignore
                     gitignore_file = self.project_root / ".gitignore"
@@ -108,12 +126,15 @@ class SecurityAutoFixer:
                             gitignore_file.write_text(content)
                             fixes.append("Aggiunto secrets.toml al .gitignore")
                             logger.info("✅ Aggiunto secrets.toml al .gitignore")
+                        else:
+                            fixes.append("secrets.toml già nel .gitignore")
                     
                 except Exception as e:
-                    error_msg = f"Errore rimozione secrets.toml: {e}"
+                    error_msg = f"Errore gestione secrets.toml: {e}"
                     logger.error(f"❌ {error_msg}")
                     errors.append(error_msg)
             else:
+                logger.info("ℹ️ secrets.toml non trovato")
                 fixes.append("secrets.toml non trovato")
                 
         except Exception as e:
