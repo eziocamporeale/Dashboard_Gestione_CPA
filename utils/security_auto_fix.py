@@ -52,12 +52,14 @@ class SecurityAutoFixer:
                     # Rimuovi dal tracking Git se tracciato
                     if self.repo:
                         try:
-                            # Controlla se il file è tracciato da Git
-                            tracked_files = [item.name for item in self.repo.index.entries]
-                            if db_file.name in tracked_files:
+                            # Controlla se il file è tracciato da Git usando git status
+                            result = self.repo.git.status('--porcelain', str(db_file))
+                            if result.strip():  # Se c'è output, il file è tracciato
                                 self.repo.index.remove([str(db_file)])
                                 logger.info(f"✅ Rimosso {db_file.name} dal tracking Git")
                                 fixes.append(f"Rimosso {db_file.name} dal tracking Git")
+                            else:
+                                logger.info(f"ℹ️ File {db_file.name} non tracciato da Git")
                         except Exception as git_error:
                             logger.warning(f"⚠️ File {db_file.name} non tracciato da Git: {git_error}")
                     
@@ -105,14 +107,20 @@ class SecurityAutoFixer:
             # Controlla se il file esiste
             if secrets_file.exists():
                 try:
-                    # Controlla se è tracciato da Git
-                    tracked_files = [item.name for item in self.repo.index.entries]
-                    if "secrets.toml" in tracked_files:
-                        # Rimuovi dal tracking Git
-                        self.repo.index.remove([str(secrets_file)])
-                        logger.info("✅ Rimosso secrets.toml dal tracking Git")
-                        fixes.append("Rimosso secrets.toml dal tracking Git")
-                    else:
+                    # Controlla se è tracciato da Git usando git status
+                    try:
+                        # Usa git status per controllare se il file è tracciato
+                        result = self.repo.git.status('--porcelain', str(secrets_file))
+                        if result.strip():  # Se c'è output, il file è tracciato
+                            # Rimuovi dal tracking Git
+                            self.repo.index.remove([str(secrets_file)])
+                            logger.info("✅ Rimosso secrets.toml dal tracking Git")
+                            fixes.append("Rimosso secrets.toml dal tracking Git")
+                        else:
+                            logger.info("ℹ️ secrets.toml non tracciato da Git")
+                            fixes.append("secrets.toml non tracciato da Git")
+                    except Exception as git_check_error:
+                        logger.warning(f"⚠️ Errore controllo file tracciati: {git_check_error}")
                         logger.info("ℹ️ secrets.toml non tracciato da Git")
                         fixes.append("secrets.toml non tracciato da Git")
                     
