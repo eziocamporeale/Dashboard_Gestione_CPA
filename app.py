@@ -679,8 +679,8 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                 wallet_exists = any(w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() for w in existing_wallets if 'Wallet:' in w.get('note', ''))
                                 
                                 if not wallet_exists:
-                                    # Recupera l'ID del cliente appena creato da Supabase
-                                    clienti_response = wallet_manager.supabase_manager.supabase.table('clienti').select('id').eq('email', dati_cliente['email']).execute()
+                                    # Recupera l'ID del cliente appena creato da Supabase (più recente)
+                                    clienti_response = wallet_manager.supabase_manager.supabase.table('clienti').select('id').eq('email', dati_cliente['email']).eq('nome_cliente', dati_cliente['nome_cliente']).order('created_at', desc=True).limit(1).execute()
                                     cliente_id = clienti_response.data[0]['id'] if clienti_response.data else None
                                     
                                     if cliente_id:
