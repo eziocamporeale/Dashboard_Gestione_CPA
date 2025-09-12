@@ -112,10 +112,10 @@ class TranslationManager:
                 key="language_selector"
             )
             
-            # Se la lingua è cambiata, aggiorna
+            # Se la lingua è cambiata, aggiorna senza rerun per evitare loop
             if selected_language != current_lang:
                 self.set_language(selected_language)
-                st.rerun()
+                # Rimuoviamo st.rerun() per evitare loop infinito
 
 # Istanza globale del gestore traduzioni
 translation_manager = TranslationManager()

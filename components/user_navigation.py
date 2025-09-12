@@ -72,11 +72,11 @@ class UserNavigation:
             # Menu principale
             if st.button("🏠 Dashboard", use_container_width=True):
                 st.session_state['current_page'] = 'dashboard'
-                st.rerun()
+                # Rimuoviamo st.rerun() per evitare loop infinito
             
             if st.button("⚙️ Impostazioni", use_container_width=True):
                 st.session_state['current_page'] = 'settings'
-                st.rerun()
+                # Rimuoviamo st.rerun() per evitare loop infinito
             
             # Pulsante logout rimosso - ora gestito nella sezione utente
             
@@ -94,7 +94,7 @@ class UserNavigation:
                 
                 if st.button("📊 Statistiche Sistema", use_container_width=True):
                     st.session_state['current_page'] = 'system_stats'
-                    st.rerun()
+                    # Rimuoviamo st.rerun() per evitare loop infinito
             
             st.markdown("---")
             
@@ -364,7 +364,7 @@ class UserNavigation:
                 del st.session_state[key]
             
             st.success("✅ Logout effettuato con successo!")
-            st.rerun()
+            # Rimuoviamo st.rerun() per evitare loop infinito
             
         except Exception as e:
             st.error(f"❌ Errore durante il logout: {e}")
