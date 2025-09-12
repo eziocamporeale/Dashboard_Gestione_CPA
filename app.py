@@ -142,6 +142,7 @@ try:
     from components.wallet_transaction_form import WalletTransactionForm
     from components.wallet_transaction_table import WalletTransactionTable
     from components.wallet_management import WalletManagement
+    from components.deposit_management import DepositManagement
     print("✅ Sistema gestione wallet importato correttamente")
 except Exception as e:
     print(f"❌ Errore import sistema gestione wallet: {e}")
@@ -150,6 +151,7 @@ except Exception as e:
     WalletTransactionForm = None
     WalletTransactionTable = None
     WalletManagement = None
+    DepositManagement = None
 
 # Configurazione pagina
 st.set_page_config(
@@ -194,6 +196,8 @@ def init_components(db):
                 components_dict['wallet_table'] = WalletTransactionTable(wallet_manager)
             if WalletManagement:
                 components_dict['wallet_management'] = WalletManagement(wallet_manager)
+            if DepositManagement:
+                components_dict['deposit_management'] = DepositManagement(wallet_manager)
         
         print("✅ Componenti inizializzati correttamente")
         return components_dict
@@ -969,11 +973,15 @@ elif page == "💰 Wallet":
     
     # Tab per organizzare le funzionalità wallet
     if is_admin:
-        tab_transactions, tab_balances, tab_form, tab_management = st.tabs([
-            "📋 Transazioni", "💰 Saldi", "➕ Nuova Transazione", "🔧 Gestione Wallet"
+        tab_transactions, tab_balances, tab_form, tab_deposits, tab_management = st.tabs([
+            "📋 Transazioni", "💰 Saldi", "➕ Nuova Transazione", "💸 Depositi/Prelievi", "🔧 Gestione Wallet"
         ])
         
-        # TAB 4: Gestione Wallet (solo admin)
+        # TAB 4: Depositi e Prelievi (solo admin)
+        with tab_deposits:
+            components['deposit_management'].render_deposit_management()
+        
+        # TAB 5: Gestione Wallet (solo admin)
         with tab_management:
             components['wallet_management'].render_wallet_management()
     else:
