@@ -1096,8 +1096,8 @@ elif page == "⚙️ Impostazioni":
         st.info("🔒 **VERIFICA AUTOMATICA**: Controllo completo della sicurezza del sistema")
         
         # Tab per organizzare l'audit
-        tab_quick_audit, tab_full_audit, tab_security_report = st.tabs([
-            "⚡ Audit Rapido", "🔍 Audit Completo", "📊 Report Sicurezza"
+        tab_quick_audit, tab_full_audit, tab_security_report, tab_auto_fix = st.tabs([
+            "⚡ Audit Rapido", "🔍 Audit Completo", "📊 Report Sicurezza", "🔧 Correzione Automatica"
         ])
         
         # TAB 1: Audit Rapido
@@ -1236,6 +1236,96 @@ elif page == "⚙️ Impostazioni":
                 except Exception as e:
                     st.error(f"❌ **Errore durante la generazione del report:** {e}")
                     st.info("💡 Controlla che il modulo `utils.security_audit` sia disponibile")
+        
+        # TAB 4: Correzione Automatica
+        with tab_auto_fix:
+            st.subheader("🔧 Correzione Automatica")
+            st.info("🛠️ **CORREZIONI AUTOMATICHE**: Sistema per risolvere automaticamente i problemi di sicurezza")
+            
+            # Avviso importante
+            st.warning("⚠️ **ATTENZIONE**: Le correzioni automatiche modificheranno i file del progetto. Assicurati di avere un backup!")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("🔧 Esegui Correzioni Automatiche", type="primary"):
+                    try:
+                        from utils.security_auto_fix import SecurityAutoFixer
+                        
+                        with st.spinner("🔧 Applicando correzioni automatiche..."):
+                            fixer = SecurityAutoFixer()
+                            results = fixer.run_all_fixes()
+                        
+                        # Mostra risultati
+                        st.success(f"✅ **Correzioni completate!** {results['total_fixes']} correzioni applicate")
+                        
+                        # Statistiche
+                        col_stats1, col_stats2, col_stats3 = st.columns(3)
+                        with col_stats1:
+                            st.metric("✅ Correzioni", results['total_fixes'])
+                        with col_stats2:
+                            st.metric("❌ Errori", results['total_errors'])
+                        with col_stats3:
+                            st.metric("📊 Successo", f"{results['success_rate']:.1f}%")
+                        
+                        # Dettagli correzioni
+                        if results['fixes']:
+                            st.markdown("---")
+                            st.subheader("📋 Correzioni Applicate")
+                            for fix in results['fixes']:
+                                st.write(f"✅ {fix}")
+                        
+                        # Errori
+                        if results['errors']:
+                            st.markdown("---")
+                            st.subheader("❌ Errori")
+                            for error in results['errors']:
+                                st.error(f"❌ {error}")
+                        
+                        # Risultati per categoria
+                        st.markdown("---")
+                        st.subheader("📊 Risultati per Categoria")
+                        for category, result in results['results'].items():
+                            status = "✅" if result['success'] else "❌"
+                            st.write(f"{status} **{category}**: {len(result['fixes'])} correzioni")
+                        
+                    except Exception as e:
+                        st.error(f"❌ **Errore durante le correzioni:** {e}")
+                        st.info("💡 Controlla che il modulo `utils.security_auto_fix` sia disponibile")
+            
+            with col2:
+                if st.button("💾 Committa Correzioni", type="secondary"):
+                    try:
+                        from utils.security_auto_fix import SecurityAutoFixer
+                        
+                        fixer = SecurityAutoFixer()
+                        success = fixer.commit_fixes("🔧 SECURITY: Correzioni automatiche applicate")
+                        
+                        if success:
+                            st.success("✅ **Correzioni committate con successo!**")
+                            st.info("💡 Ricorda di fare push su GitHub per applicare le modifiche")
+                        else:
+                            st.error("❌ **Errore durante il commit**")
+                            
+                    except Exception as e:
+                        st.error(f"❌ **Errore durante il commit:** {e}")
+            
+            # Informazioni aggiuntive
+            st.markdown("---")
+            st.subheader("ℹ️ Informazioni")
+            st.info("""
+            **🔧 Correzioni Automatiche Disponibili:**
+            
+            • **File Database**: Rimuove file .db, .sqlite dal tracking Git
+            • **Secrets Tracking**: Verifica e corregge il tracking di secrets.toml
+            • **Credenziali Hardcoded**: Identifica e suggerisce correzioni
+            • **File Backup**: Rimuove file di backup non necessari
+            
+            **⚠️ Importante**: 
+            - Le correzioni modificano i file del progetto
+            - Assicurati di avere un backup prima di procedere
+            - Verifica sempre i risultati prima di committare
+            """)
         
         if st.button("🔄 Rigenera Hash Password", type="secondary"):
             st.info("🔄 **Funzionalità in sviluppo** - Prossima versione")
