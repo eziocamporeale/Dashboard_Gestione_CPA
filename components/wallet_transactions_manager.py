@@ -227,3 +227,119 @@ class WalletTransactionsManager:
         except Exception as e:
             logger.error(f"❌ Errore validazione transazione: {e}")
             return False, f"❌ Errore validazione: {e}"
+    
+    def get_team_wallets(self) -> List[Dict[str, Any]]:
+        """Recupera tutti i wallet del team (tipo 'collaboratore' o 'principale')"""
+        if not self.supabase_manager:
+            return []
+        
+        try:
+            response = self.supabase_manager.supabase.table('wallet_collaboratori').select('*').in_('tipo_wallet', ['collaboratore', 'principale']).order('created_at', desc=True).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"❌ Errore recupero wallet team: {e}")
+            return []
+    
+    def get_client_wallets(self) -> List[Dict[str, Any]]:
+        """Recupera tutti i wallet dei clienti"""
+        if not self.supabase_manager:
+            return []
+        
+        try:
+            response = self.supabase_manager.supabase.table('wallet_collaboratori').select('*').eq('tipo_wallet', 'cliente').order('created_at', desc=True).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"❌ Errore recupero wallet clienti: {e}")
+            return []
+    
+    def create_deposit_transaction(self, team_wallet: str, client_wallet: str, amount: float, motivo: str, hash_blockchain: str = None, commissione_network: float = 0.0) -> Tuple[bool, str]:
+        """
+        Crea una transazione di deposito da wallet team a wallet cliente
+        
+        Args:
+            team_wallet: Nome del wallet team
+            client_wallet: Nome del wallet cliente
+            amount: Importo in USDT
+            motivo: Motivo del deposito (deposit_iniziale, rideposito)
+            hash_blockchain: Hash della transazione blockchain
+            commissione_network: Commissione di rete
+            
+        Returns:
+            (success, transaction_id o messaggio errore)
+        """
+        if not self.supabase_manager:
+            return False, "❌ Supabase non configurato"
+        
+        try:
+            # Prepara dati transazione
+            transaction_data = {
+                'wallet_mittente': team_wallet,
+                'wallet_destinatario': client_wallet,
+                'importo': amount,
+                'valuta': 'USDT',
+                'tipo_transazione': motivo,
+                'stato': 'completed',  # Depositi automatici
+                'note': f"Deposito {motivo} da team a cliente",
+                'hash_transazione': hash_blockchain or f"deposit_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                'commissione': commissione_network,
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Inserisci transazione
+            response = self.supabase_manager.supabase.table('wallet_transactions').insert(transaction_data).execute()
+            
+            if response.data:
+                return True, f"✅ Deposito {motivo} creato con successo"
+            else:
+                return False, "❌ Errore creazione deposito"
+                
+        except Exception as e:
+            logger.error(f"❌ Errore creazione deposito: {e}")
+            return False, f"❌ Errore creazione deposito: {e}"
+    
+    def create_withdrawal_transaction(self, client_wallet: str, team_wallet: str, amount: float, motivo: str, hash_blockchain: str = None, commissione_network: float = 0.0) -> Tuple[bool, str]:
+        """
+        Crea una transazione di prelievo da wallet cliente a wallet team
+        
+        Args:
+            client_wallet: Nome del wallet cliente
+            team_wallet: Nome del wallet team
+            amount: Importo in USDT
+            motivo: Motivo del prelievo (prelievo)
+            hash_blockchain: Hash della transazione blockchain
+            commissione_network: Commissione di rete
+            
+        Returns:
+            (success, transaction_id o messaggio errore)
+        """
+        if not self.supabase_manager:
+            return False, "❌ Supabase non configurato"
+        
+        try:
+            # Prepara dati transazione
+            transaction_data = {
+                'wallet_mittente': client_wallet,
+                'wallet_destinatario': team_wallet,
+                'importo': amount,
+                'valuta': 'USDT',
+                'tipo_transazione': motivo,
+                'stato': 'completed',  # Prelievi automatici
+                'note': f"Prelievo {motivo} da cliente a team",
+                'hash_transazione': hash_blockchain or f"withdrawal_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                'commissione': commissione_network,
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Inserisci transazione
+            response = self.supabase_manager.supabase.table('wallet_transactions').insert(transaction_data).execute()
+            
+            if response.data:
+                return True, f"✅ Prelievo {motivo} creato con successo"
+            else:
+                return False, "❌ Errore creazione prelievo"
+                
+        except Exception as e:
+            logger.error(f"❌ Errore creazione prelievo: {e}")
+            return False, f"❌ Errore creazione prelievo: {e}"
