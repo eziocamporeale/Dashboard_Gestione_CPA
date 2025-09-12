@@ -101,60 +101,61 @@ class SecurityAuditor:
         logger.info("🔍 Controllo file database...")
         self.security_report['total_checks'] += 1
         
-        database_patterns = ['*.db', '*.sqlite', '*.sqlite3']
-        database_files = []
+        if not self.repo:
+            logger.warning("⚠️ Repository Git non disponibile")
+            self.security_report['warnings'].append("⚠️ Repository Git non disponibile")
+            return
         
-        for pattern in database_patterns:
-            database_files.extend(self.project_root.glob(pattern))
-        
-        # Controlla anche cartelle specifiche
-        database_dirs = ['backups', 'database_sync', 'data']
-        for dir_name in database_dirs:
-            dir_path = self.project_root / dir_name
-            if dir_path.exists():
-                database_files.extend(dir_path.glob('*.db'))
-                database_files.extend(dir_path.glob('*.sqlite'))
-        
-        if database_files:
-            issue_msg = f"🚨 TROVATI {len(database_files)} FILE DATABASE: {[f.name for f in database_files]}"
-            self.security_report['issues'].append(issue_msg)
-            logger.error(issue_msg)
-        else:
-            self.security_report['checks_passed'] += 1
-            logger.info("✅ Nessun file database trovato nella repo")
+        # Controlla solo file tracciati da Git (esposti pubblicamente)
+        try:
+            tracked_files = [item.name for item in self.repo.index.entries]
+            database_extensions = ['.db', '.sqlite', '.sqlite3']
+            database_files = [f for f in tracked_files if any(f.endswith(ext) for ext in database_extensions)]
+            
+            if database_files:
+                issue_msg = f"🚨 TROVATI {len(database_files)} FILE DATABASE TRACCIATI DA GIT: {database_files}"
+                logger.error(issue_msg)
+                self.security_report['issues'].append(issue_msg)
+            else:
+                logger.info("✅ Nessun file database tracciato da Git")
+                self.security_report['checks_passed'] += 1
+        except Exception as e:
+            logger.warning(f"⚠️ Errore controllo file tracciati: {e}")
+            self.security_report['warnings'].append(f"⚠️ Errore controllo file tracciati: {e}")
     
     def _check_sensitive_files(self):
         """Verifica presenza di file sensibili"""
         logger.info("🔍 Controllo file sensibili...")
         self.security_report['total_checks'] += 1
         
-        sensitive_patterns = [
-            '*.env*', '*secret*', '*key*', '*password*', 
-            '*credential*', '*token*', '*config*'
-        ]
+        if not self.repo:
+            logger.warning("⚠️ Repository Git non disponibile")
+            self.security_report['warnings'].append("⚠️ Repository Git non disponibile")
+            return
         
-        sensitive_files = []
-        for pattern in sensitive_patterns:
-            sensitive_files.extend(self.project_root.glob(pattern))
+        # Controlla solo file tracciati da Git (esposti pubblicamente)
+        try:
+            tracked_files = [item.name for item in self.repo.index.entries]
+            sensitive_patterns = ['env', 'secret', 'key', 'password', 'credential', 'token']
+            
+            actual_sensitive = []
+            for file_name in tracked_files:
+                if any(pattern in file_name.lower() for pattern in sensitive_patterns):
+                    # Escludi file sicuri
+                    safe_files = ['config.py', 'requirements.txt', 'README.md']
+                    if file_name not in safe_files:
+                        actual_sensitive.append(file_name)
         
-        # Filtra file sicuri
-        safe_files = [
-            '.gitignore', '.streamlit/config.toml', 'config.py',
-            'requirements.txt', 'README.md'
-        ]
-        
-        actual_sensitive = []
-        for file_path in sensitive_files:
-            if file_path.name not in safe_files and not file_path.name.startswith('.'):
-                actual_sensitive.append(file_path)
-        
-        if actual_sensitive:
-            warning_msg = f"⚠️ TROVATI {len(actual_sensitive)} FILE POTENZIALMENTE SENSIBILI: {[f.name for f in actual_sensitive]}"
-            self.security_report['warnings'].append(warning_msg)
-            logger.warning(warning_msg)
-        else:
-            self.security_report['checks_passed'] += 1
-            logger.info("✅ Nessun file sensibile identificato")
+            if actual_sensitive:
+                warning_msg = f"⚠️ TROVATI {len(actual_sensitive)} FILE POTENZIALMENTE SENSIBILI TRACCIATI DA GIT: {actual_sensitive}"
+                self.security_report['warnings'].append(warning_msg)
+                logger.warning(warning_msg)
+            else:
+                logger.info("✅ Nessun file sensibile tracciato da Git")
+                self.security_report['checks_passed'] += 1
+        except Exception as e:
+            logger.warning(f"⚠️ Errore controllo file sensibili: {e}")
+            self.security_report['warnings'].append(f"⚠️ Errore controllo file sensibili: {e}")
     
     def _check_git_history(self):
         """Verifica cronologia Git per file sensibili"""
@@ -190,34 +191,48 @@ class SecurityAuditor:
         logger.info("🔍 Controllo credenziali hardcoded...")
         self.security_report['total_checks'] += 1
         
-        python_files = list(self.project_root.glob('**/*.py'))
-        credential_patterns = [
-            r'password\s*=\s*["\'][^"\']+["\']',
-            r'key\s*=\s*["\'][^"\']+["\']',
-            r'token\s*=\s*["\'][^"\']+["\']',
-            r'secret\s*=\s*["\'][^"\']+["\']',
-            r'api_key\s*=\s*["\'][^"\']+["\']'
-        ]
+        if not self.repo:
+            logger.warning("⚠️ Repository Git non disponibile")
+            self.security_report['warnings'].append("⚠️ Repository Git non disponibile")
+            return
         
-        files_with_credentials = []
-        for py_file in python_files:
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    for pattern in credential_patterns:
-                        if re.search(pattern, content):
-                            files_with_credentials.append((py_file.name, pattern))
-                            break
-            except Exception as e:
-                logger.warning(f"Errore lettura file {py_file}: {e}")
+        # Controlla solo file Python tracciati da Git (esposti pubblicamente)
+        try:
+            tracked_files = [item.name for item in self.repo.index.entries]
+            python_files = [f for f in tracked_files if f.endswith('.py')]
+            
+            credential_patterns = [
+                r'password\s*=\s*["\'][^"\']+["\']',
+                r'key\s*=\s*["\'][^"\']+["\']',
+                r'token\s*=\s*["\'][^"\']+["\']',
+                r'secret\s*=\s*["\'][^"\']+["\']',
+                r'api_key\s*=\s*["\'][^"\']+["\']'
+            ]
+            
+            files_with_credentials = []
+            for py_file_name in python_files:
+                try:
+                    py_file_path = self.project_root / py_file_name
+                    with open(py_file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        for pattern in credential_patterns:
+                            if re.search(pattern, content):
+                                files_with_credentials.append((py_file_name, pattern))
+                                break
+                except Exception as e:
+                    logger.warning(f"Errore lettura file {py_file_name}: {e}")
+        except Exception as e:
+            logger.warning(f"⚠️ Errore controllo credenziali: {e}")
+            self.security_report['warnings'].append(f"⚠️ Errore controllo credenziali: {e}")
+            return
         
         if files_with_credentials:
-            warning_msg = f"⚠️ TROVATI {len(files_with_credentials)} FILE CON PATTERN CREDENZIALI: {files_with_credentials[:3]}"
+            warning_msg = f"⚠️ TROVATI {len(files_with_credentials)} FILE TRACCIATI DA GIT CON PATTERN CREDENZIALI: {files_with_credentials[:3]}"
             self.security_report['warnings'].append(warning_msg)
             logger.warning(warning_msg)
         else:
             self.security_report['checks_passed'] += 1
-            logger.info("✅ Nessuna credenziale hardcoded identificata")
+            logger.info("✅ Nessuna credenziale hardcoded nei file tracciati da Git")
     
     def _check_backup_files(self):
         """Verifica presenza di file di backup"""
