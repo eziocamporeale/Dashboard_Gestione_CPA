@@ -676,7 +676,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                             if wallet_manager.supabase_manager:
                                 # Verifica se il wallet esiste già
                                 existing_wallets = wallet_manager.get_wallet_collaboratori()
-                                wallet_exists = any(w['wallet_address'] == dati_cliente['wallet'].strip() for w in existing_wallets)
+                                wallet_exists = any(w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() for w in existing_wallets if 'Wallet:' in w.get('note', ''))
                                 
                                 if not wallet_exists:
                                     # Recupera l'ID del cliente appena creato da Supabase
@@ -829,18 +829,20 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                 if wallet_manager.supabase_manager:
                                     # Verifica se il wallet esiste già
                                     existing_wallets = wallet_manager.get_wallet_collaboratori()
-                                    wallet_exists = any(w['wallet_address'] == dati_cliente['wallet'].strip() for w in existing_wallets)
+                                    wallet_exists = any(w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() for w in existing_wallets if 'Wallet:' in w.get('note', ''))
                                     
                                     if not wallet_exists:
                                         # Crea nuovo wallet nel sistema dedicato
                                         wallet_data = {
                                             'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
-                                            'wallet_address': dati_cliente['wallet'].strip(),
-                                            'tipo_wallet': 'Cliente',
-                                            'saldo_iniziale': 0.0,
-                                            'descrizione': f"Wallet automatico per cliente {dati_cliente['nome_cliente']}",
-                                            'cliente_id': cliente_supabase['id'],
-                                            'created_at': datetime.now().isoformat()
+                                            'tipo_wallet': 'cliente',
+                                            'saldo_attuale': 0.0,
+                                            'valuta': 'USDT',
+                                            'proprietario': dati_cliente['nome_cliente'],
+                                            'attivo': True,
+                                            'note': f"Wallet: {dati_cliente['wallet'].strip()} | Cliente: {dati_cliente['nome_cliente']} (ID: {cliente_supabase['id']})",
+                                            'created_at': datetime.now().isoformat(),
+                                            'updated_at': datetime.now().isoformat()
                                         }
                                         
                                         response = wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').insert(wallet_data).execute()
@@ -851,8 +853,8 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                             st.warning(f"⚠️ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
                                     else:
                                         # Aggiorna wallet esistente se necessario
-                                        wallet_to_update = next(w for w in existing_wallets if w['wallet_address'] == dati_cliente['wallet'].strip())
-                                        if wallet_to_update.get('cliente_id') != cliente_supabase['id']:
+                                        wallet_to_update = next(w for w in existing_wallets if w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() if 'Wallet:' in w.get('note', ''))
+                                        if wallet_to_update and cliente_supabase['id'] not in wallet_to_update.get('note', ''):
                                             # Aggiorna il collegamento al cliente
                                             wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').update({
                                                 'proprietario': dati_cliente['nome_cliente'],
