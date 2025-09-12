@@ -1258,20 +1258,6 @@ elif page == "📊 Statistiche Sistema":
         st.write("• ✅ Componenti inizializzati correttamente")
         st.write("• ✅ Configurazione da Streamlit Cloud secrets")
     
-    # TAB 3: Sicurezza
-    with tab_security:
-        try:
-            from components.security_tab import SecurityTab
-            security_tab = SecurityTab()
-            security_tab.render()
-        except ImportError:
-            st.error("❌ **COMPONENTE SICUREZZA NON DISPONIBILE**")
-            st.info("💡 Installa le dipendenze: `pip install gitpython`")
-        except Exception as e:
-            st.error(f"❌ **Errore caricamento componente sicurezza:** {e}")
-            st.info("🔧 Controlla che il file `components/security_tab.py` sia presente")
-    
-    
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
         st.subheader("👤 Impostazioni Utente")

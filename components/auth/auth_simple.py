@@ -177,7 +177,11 @@ def render_logout_section():
         if st.session_state.get('authenticated', False):
             username = st.session_state.get('username', 'Utente')
             name = st.session_state.get('name', username)
-            role = st.session_state.get('role', 'user')
+            # Controlla prima user_info, poi session_state
+            if 'user_info' in st.session_state and st.session_state.user_info:
+                role = st.session_state.user_info.get('role', 'user')
+            else:
+                role = st.session_state.get('role', 'user')
             
             st.sidebar.markdown("---")
             st.sidebar.markdown("### 👤 **Utente Corrente**")
