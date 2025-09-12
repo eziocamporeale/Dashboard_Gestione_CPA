@@ -1060,35 +1060,45 @@ elif page == "⚙️ Impostazioni":
     
     # TAB 4: Permessi
     with tab_permissions:
-        st.subheader("🛡️ Gestione Permessi")
-        st.info("👑 **CONTROLLO ACCESSI**: Gestisci ruoli e permessi utenti")
-        
-        # Stato permessi
-        current_user = get_current_user()
-        if current_user:
-            user_role = current_user.get('role', 'user')
-            st.success(f"✅ **RUOLO ATTIVO**: {user_role.upper()}")
+        try:
+            from components.permissions_management import PermissionsManagement
+            permissions_manager = PermissionsManagement()
+            permissions_manager.render()
+        except ImportError:
+            st.error("❌ **COMPONENTE PERMESSI NON DISPONIBILE**")
+            st.info("💡 Controlla che il file `components/permissions_management.py` sia presente")
             
-            # Permessi utente corrente
-            st.markdown("---")
-            st.subheader("👤 I Tuoi Permessi")
-            if user_role == 'admin':
-                st.write("✅ **Amministratore**: Accesso completo a tutte le funzioni")
-                st.write("✅ **Gestione Utenti**: Crea, modifica, elimina utenti")
-                st.write("✅ **Gestione Dati**: Accesso completo ai dati")
-                st.write("✅ **Configurazione**: Modifica impostazioni sistema")
-            elif user_role == 'manager':
-                st.write("✅ **Manager**: Accesso alle funzioni di gestione")
-                st.write("✅ **Gestione Clienti**: Visualizza e modifica clienti")
-                st.write("✅ **Report**: Genera report e statistiche")
-                st.write("❌ **Gestione Utenti**: Non autorizzato")
+            # Fallback: mostra informazioni base
+            st.subheader("🛡️ Gestione Permessi")
+            st.info("👑 **CONTROLLO ACCESSI**: Gestisci ruoli e permessi utenti")
+            
+            current_user = get_current_user()
+            if current_user:
+                user_role = current_user.get('role', 'user')
+                st.success(f"✅ **RUOLO ATTIVO**: {user_role.upper()}")
+                
+                st.markdown("---")
+                st.subheader("👤 I Tuoi Permessi")
+                if user_role == 'admin':
+                    st.write("✅ **Amministratore**: Accesso completo a tutte le funzioni")
+                    st.write("✅ **Gestione Utenti**: Crea, modifica, elimina utenti")
+                    st.write("✅ **Gestione Dati**: Accesso completo ai dati")
+                    st.write("✅ **Configurazione**: Modifica impostazioni sistema")
+                elif user_role == 'manager':
+                    st.write("✅ **Manager**: Accesso alle funzioni di gestione")
+                    st.write("✅ **Gestione Clienti**: Visualizza e modifica clienti")
+                    st.write("✅ **Report**: Genera report e statistiche")
+                    st.write("❌ **Gestione Utenti**: Non autorizzato")
+                else:
+                    st.write("✅ **Utente**: Accesso base alle funzioni")
+                    st.write("✅ **Visualizzazione**: Visualizza dati autorizzati")
+                    st.write("❌ **Modifica**: Limitato")
+                    st.write("❌ **Gestione**: Non autorizzato")
             else:
-                st.write("✅ **Utente**: Accesso base alle funzioni")
-                st.write("✅ **Visualizzazione**: Visualizza dati autorizzati")
-                st.write("❌ **Modifica**: Limitato")
-                st.write("❌ **Gestione**: Non autorizzato")
-        else:
-            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+                st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento gestione permessi:** {e}")
+            st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
     
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
@@ -1226,37 +1236,6 @@ elif page == "📊 Statistiche Sistema":
             st.error(f"❌ **Errore caricamento componente sicurezza:** {e}")
             st.info("🔧 Controlla che il file `components/security_tab.py` sia presente")
     
-    # TAB 4: Permessi
-    with tab_permissions:
-        st.subheader("🛡️ Gestione Permessi")
-        st.info("👑 **CONTROLLO ACCESSI**: Gestisci ruoli e permessi utenti")
-        
-        # Stato permessi
-        current_user = get_current_user()
-        if current_user:
-            user_role = current_user.get('role', 'user')
-            st.success(f"✅ **RUOLO ATTIVO**: {user_role.upper()}")
-            
-            # Permessi utente corrente
-            st.markdown("---")
-            st.subheader("👤 I Tuoi Permessi")
-            if user_role == 'admin':
-                st.write("✅ **Amministratore**: Accesso completo a tutte le funzioni")
-                st.write("✅ **Gestione Utenti**: Crea, modifica, elimina utenti")
-                st.write("✅ **Gestione Dati**: Accesso completo ai dati")
-                st.write("✅ **Configurazione**: Modifica impostazioni sistema")
-            elif user_role == 'manager':
-                st.write("✅ **Manager**: Accesso alle funzioni di gestione")
-                st.write("✅ **Gestione Clienti**: Visualizza e modifica clienti")
-                st.write("✅ **Report**: Genera report e statistiche")
-                st.write("❌ **Gestione Utenti**: Non autorizzato")
-            else:
-                st.write("✅ **Utente**: Accesso base alle funzioni")
-                st.write("✅ **Visualizzazione**: Visualizza dati autorizzati")
-                st.write("❌ **Modifica**: Limitato")
-                st.write("❌ **Gestione**: Non autorizzato")
-        else:
-            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
     
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
