@@ -796,7 +796,7 @@ elif page == "👥 Gestione Clienti":
     if 'client_table' not in components or components['client_table'] is None:
         st.error("❌ **Componente ClientTable non disponibile**")
         st.info("💡 Controlla che il componente sia stato importato correttamente")
-        return
+        st.stop()
     
     # Ottieni dati da Supabase tramite ClientTable
     df_clienti = components['client_table'].get_clienti()
@@ -848,7 +848,7 @@ elif page == "🔄 Incroci":
     if 'incroci_tab' not in components or components['incroci_tab'] is None:
         st.error("❌ **Componente IncrociTab non disponibile**")
         st.info("💡 Controlla che il componente sia stato importato correttamente")
-        return
+        st.stop()
     
     # Mostra il tab degli incroci
     components['incroci_tab'].render()
@@ -858,7 +858,7 @@ elif page == "🔗 Broker":
     if 'broker_links_manager' not in components or components['broker_links_manager'] is None:
         st.error("❌ **Componente BrokerLinksManager non disponibile**")
         st.info("💡 Controlla che il componente sia stato importato correttamente")
-        return
+        st.stop()
     
     # Mostra la gestione dei link broker
     components['broker_links_manager'].render_broker_links_page()
