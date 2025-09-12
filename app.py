@@ -1937,21 +1937,21 @@ with st.sidebar:
         st.rerun()  # Necessario per la navigazione
     
     
-    # Selettore lingua compatto
-    st.markdown("---")
-    # Lingue ordinate alfabeticamente
-    lingue_options = ["es", "it"]
-    selected_language = st.selectbox(
-        "🌐 Lingua",
-        options=lingue_options,
-        format_func=lambda x: "🇮🇹 IT" if x == "it" else "🇪🇸 ES",
-        index=0 if st.session_state.get("language", "it") == "it" else 1,
-        key="language_selector"
-    )
-    
-    if selected_language != st.session_state.get("language", "it"):
-        st.session_state["language"] = selected_language
-        # Rimuoviamo st.rerun() per evitare loop infinito
+    # FIX TEMPORANEO: Disabilita selettore lingua per evitare loop infiniti
+    # st.markdown("---")
+    # # Lingue ordinate alfabeticamente
+    # lingue_options = ["es", "it"]
+    # selected_language = st.selectbox(
+    #     "🌐 Lingua",
+    #     options=lingue_options,
+    #     format_func=lambda x: "🇮🇹 IT" if x == "it" else "🇪🇸 ES",
+    #     index=0 if st.session_state.get("language", "it") == "it" else 1,
+    #     key="language_selector"
+    # )
+    # 
+    # if selected_language != st.session_state.get("language", "it"):
+    #     st.session_state["language"] = selected_language
+    #     # Rimuoviamo st.rerun() per evitare loop infinito
     
     # Versione compatta
     st.caption("v2.0.0")

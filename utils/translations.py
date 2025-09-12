@@ -57,37 +57,9 @@ class TranslationManager:
         Returns:
             Stringa tradotta
         """
-        try:
-            # Ottieni la lingua corrente
-            current_lang = self.get_language()
-            
-            # Se non c'è traduzione per questa lingua, usa l'italiano
-            if current_lang not in self.translations:
-                current_lang = self.default_language
-            
-            # Naviga nella struttura JSON usando la chiave
-            keys = key.split('.')
-            value = self.translations[current_lang]
-            
-            for k in keys:
-                if isinstance(value, dict) and k in value:
-                    value = value[k]
-                else:
-                    # Se non trova la traduzione, prova con l'italiano
-                    if current_lang != self.default_language:
-                        value = self.translations[self.default_language]
-                        for k2 in keys:
-                            if isinstance(value, dict) and k2 in value:
-                                value = value[k2]
-                            else:
-                                return default or key
-                    else:
-                        return default or key
-            
-            return value if isinstance(value, str) else (default or key)
-            
-        except Exception as e:
-            return default or key
+        # FIX TEMPORANEO: Disabilita traduzioni per evitare loop infiniti
+        # Usa sempre l'italiano come lingua di default
+        return default or key
     
     def get_available_languages(self) -> dict:
         """Restituisce le lingue disponibili"""
