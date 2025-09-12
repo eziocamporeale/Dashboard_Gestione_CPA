@@ -679,23 +679,34 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                 wallet_exists = any(w['wallet_address'] == dati_cliente['wallet'].strip() for w in existing_wallets)
                                 
                                 if not wallet_exists:
-                                    # Crea nuovo wallet nel sistema dedicato
-                                    wallet_data = {
-                                        'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
-                                        'wallet_address': dati_cliente['wallet'].strip(),
-                                        'tipo_wallet': 'Cliente',
-                                        'saldo_iniziale': 0.0,
-                                        'descrizione': f"Wallet automatico per cliente {dati_cliente['nome_cliente']}",
-                                        'cliente_id': supabase_data.get('id'),  # ID del cliente appena creato
-                                        'created_at': datetime.now().isoformat()
-                                    }
+                                    # Recupera l'ID del cliente appena creato da Supabase
+                                    clienti_response = wallet_manager.supabase_manager.supabase.table('clienti').select('id').eq('email', dati_cliente['email']).execute()
+                                    cliente_id = clienti_response.data[0]['id'] if clienti_response.data else None
                                     
-                                    response = wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').insert(wallet_data).execute()
-                                    
-                                    if response.data:
-                                        st.info(f"💰 Wallet automaticamente creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
+                                    if cliente_id:
+                                        # Crea nuovo wallet nel sistema dedicato
+                                        wallet_data = {
+                                            'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
+                                            'wallet_address': dati_cliente['wallet'].strip(),
+                                            'tipo_wallet': 'cliente',
+                                            'saldo_attuale': 0.0,
+                                            'valuta': 'USDT',
+                                            'proprietario': dati_cliente['nome_cliente'],
+                                            'attivo': True,
+                                            'note': f"Wallet automatico per cliente {dati_cliente['nome_cliente']}",
+                                            'cliente_id': cliente_id,
+                                            'created_at': datetime.now().isoformat(),
+                                            'updated_at': datetime.now().isoformat()
+                                        }
+                                        
+                                        response = wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').insert(wallet_data).execute()
+                                        
+                                        if response.data:
+                                            st.info(f"💰 Wallet automaticamente creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
+                                        else:
+                                            st.warning(f"⚠️ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
                                     else:
-                                        st.warning(f"⚠️ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
+                                        st.warning(f"⚠️ Impossibile recuperare ID cliente per creazione wallet")
                                 else:
                                     st.info(f"ℹ️ Wallet {dati_cliente['wallet']} già esistente nel sistema")
                         except Exception as wallet_error:
@@ -847,6 +858,8 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                             # Aggiorna il collegamento al cliente
                                             wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').update({
                                                 'cliente_id': cliente_supabase['id'],
+                                                'proprietario': dati_cliente['nome_cliente'],
+                                                'updated_at': datetime.now().isoformat(),
                                                 'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
                                                 'descrizione': f"Wallet automatico per cliente {dati_cliente['nome_cliente']}"
                                             }).eq('id', wallet_to_update['id']).execute()
@@ -971,38 +984,41 @@ elif page == "💰 Wallet":
     except:
         pass
     
-    # Tab per organizzare le funzionalità wallet
+    # Tab per organizzare le funzionalità wallet (struttura semplificata)
     if is_admin:
-        tab_transactions, tab_balances, tab_form, tab_deposits, tab_management = st.tabs([
-            "📋 Transazioni", "💰 Saldi", "➕ Nuova Transazione", "💸 Depositi/Prelievi", "🔧 Gestione Wallet"
+        tab_deposits, tab_transactions, tab_management = st.tabs([
+            "💸 Depositi/Prelievi", "📋 Transazioni", "🔧 Gestione Wallet"
         ])
         
-        # TAB 4: Depositi e Prelievi (solo admin)
+        # TAB 1: Depositi e Prelievi (funzionalità principale)
         with tab_deposits:
             components['deposit_management'].render_deposit_management()
         
-        # TAB 5: Gestione Wallet (solo admin)
+        # TAB 2: Transazioni esistenti
+        with tab_transactions:
+            components['wallet_table'].render_table(
+                on_edit=lambda x: None,  # Abilita modifica (gestito internamente)
+                on_delete=lambda x: None  # Abilita eliminazione (gestito internamente)
+            )
+        
+        # TAB 3: Gestione Wallet (solo admin)
         with tab_management:
             components['wallet_management'].render_wallet_management()
     else:
-        tab_transactions, tab_balances, tab_form = st.tabs([
-            "📋 Transazioni", "💰 Saldi", "➕ Nuova Transazione"
+        tab_transactions, tab_form = st.tabs([
+            "📋 Transazioni", "➕ Nuova Transazione"
         ])
-    
-    # TAB 1: Transazioni esistenti
-    with tab_transactions:
-        components['wallet_table'].render_table(
-            on_edit=lambda x: None,  # Abilita modifica (gestito internamente)
-            on_delete=lambda x: None  # Abilita eliminazione (gestito internamente)
-        )
-    
-    # TAB 2: Saldi wallet
-    with tab_balances:
-        components['wallet_table'].render_wallet_balances()
-    
-    # TAB 3: Form nuova transazione
-    with tab_form:
-        components['wallet_form'].render_form()
+        
+        # TAB 1: Transazioni esistenti
+        with tab_transactions:
+            components['wallet_table'].render_table(
+                on_edit=lambda x: None,  # Abilita modifica (gestito internamente)
+                on_delete=lambda x: None  # Abilita eliminazione (gestito internamente)
+            )
+        
+        # TAB 2: Form nuova transazione
+        with tab_form:
+            components['wallet_form'].render_form()
 
 elif page == "📁 Storage":
     # Mostra la sezione storage
