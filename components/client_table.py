@@ -312,7 +312,10 @@ class ClientTable:
                     st.write(f"**{t('clients.details.account_number', 'Numero Conto')}:** {cliente_dettagli['numero_conto']}")
                     st.write(f"**{t('clients.details.vps_ip', 'IP VPS')}:** {cliente_dettagli.get('vps_ip', not_specified)}")
                     # Mostra wallet dal sistema dedicato se disponibile
-                    wallet_info = self._get_wallet_info_from_dedicated_system(cliente_dettagli.get('wallet', ''))
+                    wallet_info = self._get_wallet_info_from_dedicated_system(
+                        cliente_dettagli.get('wallet', ''), 
+                        cliente_dettagli.get('id', '')
+                    )
                     if wallet_info:
                         st.write(f"**{t('clients.details.wallet', 'Wallet')}:** {wallet_info['wallet_address']}")
                         st.write(f"**Saldo Wallet:** ${wallet_info.get('saldo_calcolato', 0):,.2f}")
@@ -358,7 +361,7 @@ class ClientTable:
                         # Copia i dati negli appunti (simulato)
                         st.success(t("clients.actions.data_copied", "Dati copiati negli appunti!"))
     
-    def _get_wallet_info_from_dedicated_system(self, wallet_address: str):
+    def _get_wallet_info_from_dedicated_system(self, wallet_address: str, cliente_id: str = None):
         """Recupera le informazioni del wallet dal sistema dedicato"""
         if not wallet_address or not wallet_address.strip():
             return None
@@ -373,11 +376,24 @@ class ClientTable:
             # Cerca il wallet nel sistema dedicato
             wallets = wallet_manager.get_wallet_collaboratori()
             for wallet in wallets:
-                if wallet.get('wallet_address') == wallet_address.strip():
-                    # Calcola il saldo attuale
-                    saldo = wallet_manager.calculate_wallet_balance(wallet_address.strip())
-                    wallet['saldo_calcolato'] = saldo
-                    return wallet
+                # Cerca nel campo note che contiene il wallet address
+                note = wallet.get('note', '')
+                if note and 'Wallet:' in note:
+                    note_wallet_address = note.split('Wallet:')[1].split('|')[0].strip()
+                    if note_wallet_address == wallet_address.strip():
+                        # Se abbiamo l'ID del cliente, verifica che corrisponda
+                        if cliente_id and cliente_id in note:
+                            # Calcola il saldo attuale
+                            saldo = wallet_manager.calculate_wallet_balance(wallet_address.strip())
+                            wallet['saldo_calcolato'] = saldo
+                            wallet['wallet_address'] = wallet_address.strip()  # Aggiungi per compatibilità
+                            return wallet
+                        elif not cliente_id:
+                            # Se non abbiamo l'ID del cliente, restituisci il primo match
+                            saldo = wallet_manager.calculate_wallet_balance(wallet_address.strip())
+                            wallet['saldo_calcolato'] = saldo
+                            wallet['wallet_address'] = wallet_address.strip()  # Aggiungi per compatibilità
+                            return wallet
             
             return None
         except Exception as e:
