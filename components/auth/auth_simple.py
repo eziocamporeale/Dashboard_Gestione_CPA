@@ -62,17 +62,46 @@ class SimpleAuthSystem:
     def authenticate_user(self, username: str, password: str) -> bool:
         """Autentica un utente"""
         try:
+            # Prima controlla gli utenti hardcoded
             if username in self.users:
                 user = self.users[username]
                 if self.verify_password(password, user['password_hash']):
-                    logger.info(f"✅ Autenticazione riuscita per utente: {username}")
+                    logger.info(f"✅ Autenticazione riuscita per utente hardcoded: {username}")
                     return True
                 else:
-                    logger.warning(f"❌ Password errata per utente: {username}")
+                    logger.warning(f"❌ Password errata per utente hardcoded: {username}")
                     return False
-            else:
-                logger.warning(f"❌ Utente non trovato: {username}")
+            
+            # Poi controlla gli utenti in Supabase
+            try:
+                from supabase_manager import SupabaseManager
+                supabase_manager = SupabaseManager()
+                
+                if supabase_manager.supabase:
+                    # Cerca l'utente in Supabase
+                    response = supabase_manager.supabase.table('users').select('*').eq('username', username).execute()
+                    
+                    if response.data:
+                        user_data = response.data[0]
+                        stored_hash = user_data.get('password_hash', '')
+                        
+                        if self.verify_password(password, stored_hash):
+                            logger.info(f"✅ Autenticazione riuscita per utente Supabase: {username}")
+                            return True
+                        else:
+                            logger.warning(f"❌ Password errata per utente Supabase: {username}")
+                            return False
+                    else:
+                        logger.warning(f"❌ Utente Supabase non trovato: {username}")
+                        return False
+                else:
+                    logger.warning("❌ Supabase non configurato")
+                    return False
+                    
+            except Exception as e:
+                logger.error(f"❌ Errore autenticazione Supabase: {e}")
                 return False
+            
         except Exception as e:
             logger.error(f"❌ Errore autenticazione: {e}")
             return False
@@ -80,6 +109,7 @@ class SimpleAuthSystem:
     def get_user_info(self, username: str) -> Optional[Dict]:
         """Ottiene le informazioni di un utente"""
         try:
+            # Prima controlla gli utenti hardcoded
             if username in self.users:
                 user = self.users[username]
                 # Ritorna solo i dati non sensibili
@@ -91,9 +121,38 @@ class SimpleAuthSystem:
                     'role': user['role'],
                     'from_supabase': user['from_supabase']
                 }
-            else:
-                logger.warning(f"❌ Utente non trovato: {username}")
+            
+            # Poi controlla gli utenti in Supabase
+            try:
+                from supabase_manager import SupabaseManager
+                supabase_manager = SupabaseManager()
+                
+                if supabase_manager.supabase:
+                    # Cerca l'utente in Supabase
+                    response = supabase_manager.supabase.table('users').select('*').eq('username', username).execute()
+                    
+                    if response.data:
+                        user_data = response.data[0]
+                        # Ritorna solo i dati non sensibili
+                        return {
+                            'user_id': user_data.get('id'),
+                            'username': user_data.get('username'),
+                            'email': user_data.get('email'),
+                            'name': user_data.get('full_name'),
+                            'role': user_data.get('role'),
+                            'from_supabase': True
+                        }
+                    else:
+                        logger.warning(f"❌ Utente Supabase non trovato: {username}")
+                        return None
+                else:
+                    logger.warning("❌ Supabase non configurato")
+                    return None
+                    
+            except Exception as e:
+                logger.error(f"❌ Errore recupero info utente Supabase: {e}")
                 return None
+            
         except Exception as e:
             logger.error(f"❌ Errore recupero info utente: {e}")
             return None

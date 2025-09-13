@@ -107,3 +107,4 @@ if __name__ == "__main__":
     create_test_wallet()
     
     print("\n✅ Operazione completata!")
+

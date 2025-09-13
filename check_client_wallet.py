@@ -94,3 +94,4 @@ if __name__ == "__main__":
     check_client_wallet()
     
     print("\n✅ Controllo completato!")
+

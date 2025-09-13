@@ -220,6 +220,7 @@ class PermissionsManagement:
                 users = []
                 for user in response.data:
                     users.append({
+                        'id': user.get('id', ''),
                         'username': user.get('username', ''),
                         'email': user.get('email', ''),
                         'full_name': user.get('full_name', user.get('username', '')),
