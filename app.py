@@ -124,6 +124,7 @@ except Exception as e:
 try:
     from components.user_navigation import render_user_navigation
     from components.layout.central_menu import render_central_menu, render_compact_sidebar
+    from components.user_settings import render_user_settings
     print("✅ Sistema gestione utenti importato correttamente")
 except Exception as e:
     print(f"❌ Errore import sistema gestione utenti: {e}")
@@ -1489,28 +1490,11 @@ elif page == "⚙️ Impostazioni":
     
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
-        st.subheader("👤 Impostazioni Utente")
-        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
-        
-        # Impostazioni utente corrente
-        current_user = get_current_user()
-        if current_user:
-            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
-            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
-            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
-            
-            # Pulsante per forzare il logout
-            st.markdown("---")
-            st.subheader("🚪 Gestione Sessione")
-            if st.button("🚪 Forza Logout", type="secondary"):
-                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
-                if st.button("✅ Conferma Logout Forzato", type="primary"):
-                    # Pulisci session state per logout
-                    for key in list(st.session_state.keys()):
-                        del st.session_state[key]
-                    st.rerun()
-        else:
-            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+        try:
+            render_user_settings()
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
+            st.info("🔧 Controlla che il componente user_settings sia disponibile")
 
 elif page == "📊 Statistiche Sistema":
     # Mostra le statistiche del sistema per admin
@@ -1609,31 +1593,6 @@ elif page == "📊 Statistiche Sistema":
         st.write("• ✅ IncrociManager inizializzato con Supabase")
         st.write("• ✅ Componenti inizializzati correttamente")
         st.write("• ✅ Configurazione da Streamlit Cloud secrets")
-    
-    # TAB 5: Impostazioni Utente
-    with tab_user_settings:
-        st.subheader("👤 Impostazioni Utente")
-        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
-        
-        # Impostazioni utente corrente
-        current_user = get_current_user()
-        if current_user:
-            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
-            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
-            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
-            
-            # Pulsante per forzare il logout
-            st.markdown("---")
-            st.subheader("🚪 Gestione Sessione")
-            if st.button("🚪 Forza Logout", type="secondary"):
-                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
-                if st.button("✅ Conferma Logout Forzato", type="primary"):
-                    # Pulisci session state per logout
-                    for key in list(st.session_state.keys()):
-                        del st.session_state[key]
-                    st.rerun()
-        else:
-            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
 
 elif page == "🔍 Audit Sicurezza":
     # Mostra l'audit di sicurezza per admin
