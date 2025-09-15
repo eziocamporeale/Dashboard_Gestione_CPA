@@ -512,5 +512,21 @@ def has_role(role_name: str) -> bool:
     logger.info(f"🔍 DEBUG has_role: Risultato verifica ruolo '{role_name}' = {result}")
     
     return result
+
+def get_current_user() -> Optional[Dict[str, Any]]:
+    """Ottiene le informazioni dell'utente corrente dalla sessione"""
+    try:
+        if 'user_info' not in st.session_state:
+            logger.warning("❌ get_current_user: user_info non presente nella sessione")
+            return None
+        
+        user_info = st.session_state.get('user_info')
+        logger.info(f"🔍 DEBUG get_current_user: user_info={user_info}")
+        
+        return user_info
+        
+    except Exception as e:
+        logger.error(f"❌ Errore ottenimento utente corrente: {e}")
+        return None
 # Istanza globale del gestore permessi
 supabase_permission_manager = SupabasePermissionManager()
