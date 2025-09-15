@@ -40,6 +40,12 @@ class StorageManager:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         
+        # Mapping utenti UUID -> ID numerico per compatibilità storage
+        self.user_id_mapping = {
+            '794f1d66-7e99-425b-977a-874df86a9ab0': 2,  # Diego
+            # Aggiungi altri mapping se necessario
+        }
+        
         # Categorie specifiche per CPA
         self.categories = {
             'EA Trading': ['ex4', 'ex5', 'mq4', 'mq5'],
@@ -112,6 +118,45 @@ class StorageManager:
                 return category
         
         return 'Altro'
+    
+    def convert_user_id_for_storage(self, user_id) -> int:
+        """
+        Converte l'ID utente per compatibilità con le tabelle storage
+        
+        Args:
+            user_id: ID utente (può essere UUID string o integer)
+            
+        Returns:
+            int: ID numerico per le tabelle storage
+        """
+        try:
+            if user_id is None:
+                return 1  # Default per utenti non identificati
+            
+            if isinstance(user_id, int):
+                return user_id
+            
+            if isinstance(user_id, str):
+                # Controlla se è un UUID nel mapping
+                if user_id in self.user_id_mapping:
+                    return self.user_id_mapping[user_id]
+                
+                # Se è un UUID non mappato, usa un ID di default
+                if len(user_id) > 10:  # Probabilmente UUID
+                    return 1  # ID di default per admin
+                
+                # Se è una stringa numerica, prova a convertirla
+                try:
+                    return int(user_id)
+                except ValueError:
+                    return 1  # Fallback se non è numerica
+            
+            # Fallback per altri tipi
+            return 1
+            
+        except Exception as e:
+            # In caso di qualsiasi errore, ritorna un ID di default
+            return 1
     
     def generate_unique_filename(self, original_filename: str) -> str:
         """
@@ -197,6 +242,10 @@ class StorageManager:
             file_type = mimetypes.guess_type(uploaded_file.name)[0] or 'application/octet-stream'
             
             # Inserisci record nel database
+            user_id = self.convert_user_id_for_storage(
+                current_user.get('id') or current_user.get('user_id')
+            )
+            
             file_data = {
                 'filename': unique_filename,
                 'original_filename': uploaded_file.name,
@@ -205,7 +254,7 @@ class StorageManager:
                 'file_type': file_type,
                 'category': category,
                 'description': description or '',
-                'uploaded_by': current_user.get('id') or current_user.get('user_id')
+                'uploaded_by': user_id
             }
             
             # Inserisci record nel database
@@ -304,16 +353,33 @@ class StorageManager:
             # Registra il download
             current_user = st.session_state.get('user_info', {})
             if current_user:
-                download_data = {
-                    'file_id': file_id,
-                    'downloaded_by': current_user.get('id') or current_user.get('user_id')
-                }
-                self.supabase.table('storage_downloads').insert(download_data).execute()
-                
-                # Incrementa contatore download
-                self.supabase.table('storage_files').update({
-                    'download_count': file_info['download_count'] + 1
-                }).eq('id', file_id).execute()
+                try:
+                    user_id = self.convert_user_id_for_storage(
+                        current_user.get('id') or current_user.get('user_id')
+                    )
+                    
+                    download_data = {
+                        'file_id': file_id,
+                        'downloaded_by': user_id
+                    }
+                    self.supabase.table('storage_downloads').insert(download_data).execute()
+                    
+                    # Incrementa contatore download
+                    self.supabase.table('storage_files').update({
+                        'download_count': file_info['download_count'] + 1
+                    }).eq('id', file_id).execute()
+                    
+                except Exception as e:
+                    # Se c'è un errore con la registrazione del download, 
+                    # non bloccare il download stesso
+                    st.warning(f"⚠️ Errore registrazione download: {str(e)}")
+                    # Incrementa comunque il contatore download
+                    try:
+                        self.supabase.table('storage_files').update({
+                            'download_count': file_info['download_count'] + 1
+                        }).eq('id', file_id).execute()
+                    except:
+                        pass  # Se anche questo fallisce, ignora
             
             return True, file_info['original_filename'], file_content
             

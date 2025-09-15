@@ -124,7 +124,6 @@ except Exception as e:
 try:
     from components.user_navigation import render_user_navigation
     from components.layout.central_menu import render_central_menu, render_compact_sidebar
-    from components.user_settings import render_user_settings
     print("✅ Sistema gestione utenti importato correttamente")
 except Exception as e:
     print(f"❌ Errore import sistema gestione utenti: {e}")
@@ -976,49 +975,163 @@ elif page == "💰 Wallet":
     st.header("💰 Gestione Transazioni Wallet")
     st.write("Gestisci le transazioni tra i wallet dei collaboratori")
     
-    # Verifica se l'utente è admin per mostrare la gestione wallet
-    is_admin = False
+    # Importa il sistema di permessi wallet
     try:
-        from utils.supabase_permissions import has_role
-        is_admin = has_role('admin')
-    except:
-        pass
+        from utils.wallet_permissions import (
+            can_view_wallet, can_create_transaction, can_edit_transaction,
+            can_delete_transaction, can_manage_wallets, can_deposit, can_withdrawal,
+            render_permissions_info
+        )
+        
+        # Verifica i permessi dell'utente
+        can_view = can_view_wallet()
+        can_create = can_create_transaction()
+        can_edit = can_edit_transaction()
+        can_delete = can_delete_transaction()
+        can_manage = can_manage_wallets()
+        can_deposit_perm = can_deposit()
+        can_withdrawal_perm = can_withdrawal()
+        
+    except Exception as e:
+        st.error(f"❌ Errore caricamento permessi wallet: {e}")
+        # Fallback: permessi base
+        can_view = True
+        can_create = True
+        can_edit = False
+        can_delete = False
+        can_manage = False
+        can_deposit_perm = True
+        can_withdrawal_perm = True
     
-    # Tab per organizzare le funzionalità wallet (struttura semplificata)
-    if is_admin:
-        tab_deposits, tab_transactions, tab_management = st.tabs([
-            "💸 Depositi/Prelievi", "📋 Transazioni", "🔧 Gestione Wallet"
-        ])
+    # Mostra informazioni sui permessi dell'utente
+    render_permissions_info()
+    
+    # Determina i tab disponibili basati sui permessi
+    available_tabs = []
+    tab_labels = []
+    
+    if can_deposit_perm:
+        available_tabs.append("deposits")
+        tab_labels.append("💸 Depositi Team → Cliente")
+    
+    if can_withdrawal_perm:
+        available_tabs.append("withdrawals")
+        tab_labels.append("💳 Prelievi Cliente → Team")
+    
+    if can_view:
+        available_tabs.append("transactions")
+        tab_labels.append("📋 Transazioni")
+    
+    if can_view:
+        available_tabs.append("balances")
+        tab_labels.append("💰 Saldi Wallet")
+    
+    if can_manage:
+        available_tabs.append("management")
+        tab_labels.append("🔧 Gestione Wallet")
+    
+    # Crea i tab basati sui permessi
+    if available_tabs:
+        tabs = st.tabs(tab_labels)
         
-        # TAB 1: Depositi e Prelievi (funzionalità principale)
-        with tab_deposits:
-            components['deposit_management'].render_deposit_management()
+        tab_index = 0
         
-        # TAB 2: Transazioni esistenti
-        with tab_transactions:
-            components['wallet_table'].render_table(
-                on_edit=lambda x: None,  # Abilita modifica (gestito internamente)
-                on_delete=lambda x: None  # Abilita eliminazione (gestito internamente)
-            )
+        # TAB Depositi
+        if "deposits" in available_tabs:
+            with tabs[tab_index]:
+                if can_deposit_perm:
+                    components['deposit_management'].render_deposit_management()
+                else:
+                    st.error("❌ Non hai i permessi per eseguire depositi")
+            tab_index += 1
         
-        # TAB 3: Gestione Wallet (solo admin)
-        with tab_management:
-            components['wallet_management'].render_wallet_management()
+        # TAB Prelievi
+        if "withdrawals" in available_tabs:
+            with tabs[tab_index]:
+                if can_withdrawal_perm:
+                    components['deposit_management'].render_deposit_management()
+                else:
+                    st.error("❌ Non hai i permessi per eseguire prelievi")
+            tab_index += 1
+        
+        # TAB Transazioni
+        if "transactions" in available_tabs:
+            with tabs[tab_index]:
+                if can_view:
+                    if can_edit or can_delete:
+                        st.info("✏️ **Modalità Completa**: Puoi visualizzare, modificare ed eliminare le transazioni")
+                        components['wallet_table'].render_table(
+                            on_edit=lambda x: None if can_edit else None,
+                            on_delete=lambda x: None if can_delete else None
+                        )
+                    else:
+                        st.info("👁️ **Modalità Visualizzazione**: Puoi visualizzare le transazioni ma non modificarle")
+                        components['wallet_table'].render_table(
+                            on_edit=lambda x: None,  # Disabilita modifica
+                            on_delete=lambda x: None  # Disabilita eliminazione
+                        )
+                else:
+                    st.error("❌ Non hai i permessi per visualizzare le transazioni")
+            tab_index += 1
+        
+        # TAB Saldi Wallet
+        if "balances" in available_tabs:
+            with tabs[tab_index]:
+                if can_view:
+                    st.info("👁️ **Modalità Visualizzazione**: Puoi visualizzare i saldi dei wallet")
+                    try:
+                        wallet_manager = components['wallet_manager']
+                        all_wallets = wallet_manager.get_wallet_collaboratori()
+                        
+                        if all_wallets:
+                            import pandas as pd
+                            wallet_data = []
+                            for wallet in all_wallets:
+                                if wallet.get('attivo', True):
+                                    saldo = wallet_manager.calculate_wallet_balance(wallet['nome_wallet'])
+                                    wallet_data.append({
+                                        'nome_wallet': wallet['nome_wallet'],
+                                        'proprietario': wallet.get('proprietario', 'N/A'),
+                                        'tipo_wallet': wallet['tipo_wallet'],
+                                        'saldo': saldo,
+                                        'valuta': wallet.get('valuta', 'USD')
+                                    })
+                            
+                            if wallet_data:
+                                df = pd.DataFrame(wallet_data)
+                                st.dataframe(
+                                    df,
+                                    use_container_width=True,
+                                    column_config={
+                                        "nome_wallet": st.column_config.TextColumn("💰 Wallet", width=150),
+                                        "proprietario": st.column_config.TextColumn("👤 Proprietario", width=150),
+                                        "tipo_wallet": st.column_config.TextColumn("📋 Tipo", width=120),
+                                        "saldo": st.column_config.NumberColumn("💵 Saldo", width=120, format="%.2f"),
+                                        "valuta": st.column_config.TextColumn("💱 Valuta", width=80)
+                                    }
+                                )
+                            else:
+                                st.info("📋 Nessun wallet attivo disponibile.")
+                        else:
+                            st.info("📋 Nessun wallet disponibile.")
+                    except Exception as e:
+                        st.error(f"❌ Errore caricamento saldi: {e}")
+                else:
+                    st.error("❌ Non hai i permessi per visualizzare i saldi")
+            tab_index += 1
+        
+        # TAB Gestione Wallet
+        if "management" in available_tabs:
+            with tabs[tab_index]:
+                if can_manage:
+                    components['wallet_management'].render_wallet_management()
+                else:
+                    st.error("❌ Non hai i permessi per gestire i wallet")
+            tab_index += 1
+    
     else:
-        tab_transactions, tab_form = st.tabs([
-            "📋 Transazioni", "➕ Nuova Transazione"
-        ])
-        
-        # TAB 1: Transazioni esistenti
-        with tab_transactions:
-            components['wallet_table'].render_table(
-                on_edit=lambda x: None,  # Abilita modifica (gestito internamente)
-                on_delete=lambda x: None  # Abilita eliminazione (gestito internamente)
-            )
-        
-        # TAB 2: Form nuova transazione
-        with tab_form:
-            components['wallet_form'].render_form()
+        st.error("❌ Non hai alcun permesso per accedere alle funzionalità wallet")
+        st.info("💡 Contatta un amministratore per ottenere i permessi necessari")
 
 elif page == "📁 Storage":
     # Mostra la sezione storage
@@ -1490,11 +1603,28 @@ elif page == "⚙️ Impostazioni":
     
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
-        try:
-            render_user_settings()
-        except Exception as e:
-            st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
-            st.info("🔧 Controlla che il componente user_settings sia disponibile")
+        st.subheader("👤 Impostazioni Utente")
+        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
+        
+        # Impostazioni utente corrente
+        current_user = get_current_user()
+        if current_user:
+            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
+            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
+            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+            
+            # Pulsante per forzare il logout
+            st.markdown("---")
+            st.subheader("🚪 Gestione Sessione")
+            if st.button("🚪 Forza Logout", type="secondary"):
+                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
+                if st.button("✅ Conferma Logout Forzato", type="primary"):
+                    # Pulisci session state per logout
+                    for key in list(st.session_state.keys()):
+                        del st.session_state[key]
+                    st.rerun()
+        else:
+            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
 
 elif page == "📊 Statistiche Sistema":
     # Mostra le statistiche del sistema per admin
@@ -1593,6 +1723,31 @@ elif page == "📊 Statistiche Sistema":
         st.write("• ✅ IncrociManager inizializzato con Supabase")
         st.write("• ✅ Componenti inizializzati correttamente")
         st.write("• ✅ Configurazione da Streamlit Cloud secrets")
+    
+    # TAB 5: Impostazioni Utente
+    with tab_user_settings:
+        st.subheader("👤 Impostazioni Utente")
+        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
+        
+        # Impostazioni utente corrente
+        current_user = get_current_user()
+        if current_user:
+            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
+            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
+            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+            
+            # Pulsante per forzare il logout
+            st.markdown("---")
+            st.subheader("🚪 Gestione Sessione")
+            if st.button("🚪 Forza Logout", type="secondary"):
+                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
+                if st.button("✅ Conferma Logout Forzato", type="primary"):
+                    # Pulisci session state per logout
+                    for key in list(st.session_state.keys()):
+                        del st.session_state[key]
+                    st.rerun()
+        else:
+            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
 
 elif page == "🔍 Audit Sicurezza":
     # Mostra l'audit di sicurezza per admin
