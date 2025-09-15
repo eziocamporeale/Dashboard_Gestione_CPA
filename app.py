@@ -1040,7 +1040,7 @@ elif page == "💰 Wallet":
         if "deposits" in available_tabs:
             with tabs[tab_index]:
                 if can_deposit_perm:
-                    components['deposit_management'].render_deposit_management()
+                    components['deposit_management']._render_deposit_form()
                 else:
                     st.error("❌ Non hai i permessi per eseguire depositi")
             tab_index += 1
@@ -1049,7 +1049,7 @@ elif page == "💰 Wallet":
         if "withdrawals" in available_tabs:
             with tabs[tab_index]:
                 if can_withdrawal_perm:
-                    components['deposit_management'].render_deposit_management()
+                    components['deposit_management']._render_withdrawal_form()
                 else:
                     st.error("❌ Non hai i permessi per eseguire prelievi")
             tab_index += 1
