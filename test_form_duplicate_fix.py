@@ -236,3 +236,4 @@ if __name__ == "__main__":
     else:
         print("\n❌ Test fallito!")
         print("🔧 Controlla i log per dettagli")
+

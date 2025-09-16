@@ -952,14 +952,64 @@ elif page == "👥 Gestione Clienti":
             st.info("Nessun cliente presente. Aggiungi il primo cliente usando il form sopra!")
 
 elif page == "🔄 Incroci":
-    # Controlla se il componente è disponibile
-    if 'incroci_tab' not in components or components['incroci_tab'] is None:
-        st.error("❌ **Componente IncrociTab non disponibile**")
-        st.info("💡 Controlla che il componente sia stato importato correttamente")
-        st.stop()
-    
-    # Mostra il tab degli incroci
-    components['incroci_tab'].render()
+    # Importa configurazione test
+    try:
+        from config_incroci_test import is_modern_enabled, get_test_config, get_test_messages
+        test_config = get_test_config()
+        test_messages = get_test_messages()
+        
+        # Toggle per scegliere la versione (solo se abilitato)
+        if test_config['show_toggle']:
+            st.sidebar.markdown("---")
+            st.sidebar.markdown("### 🔧 Test Interfaccia")
+            
+            # Usa session state per mantenere la scelta
+            if 'incroci_version' not in st.session_state:
+                st.session_state.incroci_version = test_config['default_version']
+            
+            version_choice = st.sidebar.radio(
+                test_messages['toggle_label'],
+                [test_messages['modern_label'], test_messages['original_label']],
+                index=0 if st.session_state.incroci_version == 'modern' else 1,
+                key="incroci_version_toggle"
+            )
+            
+            # Aggiorna session state
+            st.session_state.incroci_version = 'modern' if version_choice == test_messages['modern_label'] else 'original'
+            
+            # Mostra avviso modalità test
+            if st.session_state.incroci_version == 'modern':
+                st.sidebar.warning(test_messages['test_mode_warning'])
+        
+        # Controlla se il componente è disponibile
+        if 'incroci_tab' not in components or components['incroci_tab'] is None:
+            st.error("❌ **Componente IncrociTab non disponibile**")
+            st.info("💡 Controlla che il componente sia stato importato correttamente")
+            st.stop()
+        
+        # Mostra la versione scelta
+        if st.session_state.get('incroci_version', 'original') == 'modern':
+            # Versione moderna
+            try:
+                from components.incroci_modern import IncrociModern
+                if 'incroci_modern' not in components:
+                    components['incroci_modern'] = IncrociModern(IncrociManager(), db)
+                components['incroci_modern'].render()
+            except Exception as e:
+                st.error(f"❌ Errore caricamento versione moderna: {e}")
+                st.info("🔄 Passando alla versione originale...")
+                components['incroci_tab'].render()
+        else:
+            # Versione originale
+            components['incroci_tab'].render()
+            
+    except ImportError:
+        # Fallback se il file di configurazione non esiste
+        if 'incroci_tab' not in components or components['incroci_tab'] is None:
+            st.error("❌ **Componente IncrociTab non disponibile**")
+            st.info("💡 Controlla che il componente sia stato importato correttamente")
+            st.stop()
+        components['incroci_tab'].render()
 
 elif page == "🔗 Broker":
     # Controlla se il componente è disponibile

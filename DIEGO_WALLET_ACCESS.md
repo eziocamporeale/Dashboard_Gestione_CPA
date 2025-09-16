@@ -130,3 +130,4 @@ L'interfaccia mostra sempre:
 ---
 
 **✅ Diego è ora completamente configurato per utilizzare la sezione Wallet del Dashboard Gestione CPA!**
+

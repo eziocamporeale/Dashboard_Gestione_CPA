@@ -145,3 +145,4 @@ self.user_id_mapping = {
 ---
 
 **✅ Problema risolto completamente!**
+
