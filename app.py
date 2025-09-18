@@ -1653,28 +1653,39 @@ elif page == "⚙️ Impostazioni":
     
     # TAB 5: Impostazioni Utente
     with tab_user_settings:
-        st.subheader("👤 Impostazioni Utente")
-        st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
-        
-        # Impostazioni utente corrente
-        current_user = get_current_user()
-        if current_user:
-            st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
-            st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
-            st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+        try:
+            from components.user_settings import render_user_settings
+            render_user_settings()
+        except ImportError:
+            st.error("❌ **COMPONENTE IMPOSTAZIONI UTENTE NON DISPONIBILE**")
+            st.info("💡 Controlla che il file `components/user_settings.py` sia presente")
             
-            # Pulsante per forzare il logout
-            st.markdown("---")
-            st.subheader("🚪 Gestione Sessione")
-            if st.button("🚪 Forza Logout", type="secondary"):
-                st.warning("⚠️ Sei sicuro di voler forzare il logout?")
-                if st.button("✅ Conferma Logout Forzato", type="primary"):
-                    # Pulisci session state per logout
-                    for key in list(st.session_state.keys()):
-                        del st.session_state[key]
-                    st.rerun()
-        else:
-            st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+            # Fallback: mostra informazioni base
+            st.subheader("👤 Impostazioni Utente")
+            st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
+            
+            # Impostazioni utente corrente
+            current_user = get_current_user()
+            if current_user:
+                st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
+                st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
+                st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+                
+                # Pulsante per forzare il logout
+                st.markdown("---")
+                st.subheader("🚪 Gestione Sessione")
+                if st.button("🚪 Forza Logout", type="secondary"):
+                    st.warning("⚠️ Sei sicuro di voler forzare il logout?")
+                    if st.button("✅ Conferma Logout Forzato", type="primary"):
+                        # Pulisci session state per logout
+                        for key in list(st.session_state.keys()):
+                            del st.session_state[key]
+                        st.rerun()
+            else:
+                st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
+            st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
 
 elif page == "📊 Statistiche Sistema":
     # Mostra le statistiche del sistema per admin

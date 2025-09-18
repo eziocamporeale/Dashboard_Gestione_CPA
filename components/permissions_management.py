@@ -389,8 +389,8 @@ class PermissionsManagement:
         # Crea matrice
         matrix_data = []
         for role in roles:
-            role_perms = self.permission_manager.get_role_permissions(role['id'])
-            role_perm_names = {perm['name'] for perm in role_perms}
+            role_perms = self.permission_manager.get_role_permissions(role['name'])
+            role_perm_names = set(role_perms)  # get_role_permissions restituisce lista di stringhe
             
             for perm in permissions:
                 matrix_data.append({
@@ -427,7 +427,11 @@ class PermissionsManagement:
             st.subheader("🎭 " + t("permissions.users.roles", "Ruoli"))
             if user_roles:
                 for role in user_roles:
-                    st.write(f"• **{role['name']}** - {role['description']}")
+                    # Gestisce sia dizionari che stringhe per compatibilità
+                    if isinstance(role, dict):
+                        st.write(f"• **{role['name']}** - {role.get('description', 'N/A')}")
+                    else:
+                        st.write(f"• **{role}**")
             else:
                 st.info(t("permissions.users.no_roles", "Nessun ruolo assegnato."))
         
@@ -441,23 +445,28 @@ class PermissionsManagement:
     
     def show_role_permissions_details(self, role_id: str):
         """Mostra i dettagli dei permessi di un ruolo"""
-        role_permissions = self.permission_manager.get_role_permissions(role_id)
+        # Il metodo get_role_permissions si aspetta un role_name, non un role_id
+        # Dobbiamo ottenere il nome del ruolo dall'ID
+        roles = self.permission_manager.get_all_roles()
+        role_name = None
+        for role in roles:
+            if role.get('id') == role_id:
+                role_name = role.get('name')
+                break
+        
+        if not role_name:
+            st.error("❌ Ruolo non trovato")
+            return
+            
+        role_permissions = self.permission_manager.get_role_permissions(role_name)
         
         st.subheader("🔐 " + t("permissions.roles.permissions", "Permessi del Ruolo"))
         
         if role_permissions:
-            df = pd.DataFrame(role_permissions)
-            st.dataframe(
-                df,
-                column_config={
-                    "name": t("permissions.roles.permission_name", "Nome"),
-                    "description": t("permissions.roles.permission_description", "Descrizione"),
-                    "resource": t("permissions.roles.resource", "Risorsa"),
-                    "action": t("permissions.roles.action", "Azione")
-                },
-                hide_index=True,
-                use_container_width=True
-            )
+            # get_role_permissions restituisce una lista di stringhe, non dizionari
+            st.write("**Permessi assegnati:**")
+            for perm in sorted(role_permissions):
+                st.write(f"• **{perm}**")
         else:
             st.info(t("permissions.roles.no_permissions", "Nessun permesso assegnato a questo ruolo."))
     
