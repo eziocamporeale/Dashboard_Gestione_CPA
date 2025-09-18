@@ -96,7 +96,7 @@ class ClientForm:
                 if st.button("🔄 Aggiorna Broker", help="Aggiorna la lista dei broker dal database"):
                     if 'cached_broker_options' in st.session_state:
                         del st.session_state.cached_broker_options
-                    st.experimental_rerun()
+                    st.rerun()
                 
                 # Determina l'indice di default
                 default_index = 0
@@ -235,14 +235,14 @@ class ClientForm:
                 with col_del:
                     if st.button(t("common.delete", "🗑️"), key=f"del_{i}", help=t("clients.help.delete_field", "Elimina questo campo")):
                         st.session_state.campi_aggiuntivi.pop(i)
-                        # Usa st.experimental_rerun() invece di st.rerun() per evitare loop infiniti
-                        st.experimental_rerun()
+                        # Usa st.rerun() per aggiornare l'interfaccia
+                        st.rerun()
             
             # Pulsante per aggiungere nuovi campi
             if st.button(t("clients.form.add_field", "➕ Aggiungi Campo"), help=t("clients.help.add_field", "Aggiungi un nuovo campo personalizzato")):
                 st.session_state.campi_aggiuntivi.append({'nome': '', 'valore': ''})
-                # Usa st.experimental_rerun() invece di st.rerun() per evitare loop infiniti
-                st.experimental_rerun()
+                # Usa st.rerun() per aggiornare l'interfaccia
+                st.rerun()
             
             # Pulsante salva
             button_text = t("clients.form.update_client", "💾 Aggiorna Cliente") if is_edit else t("clients.form.save_client", "💾 Salva Cliente")
