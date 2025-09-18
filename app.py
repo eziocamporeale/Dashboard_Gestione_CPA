@@ -676,7 +676,17 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                             if wallet_manager.supabase_manager:
                                 # Verifica se il wallet esiste già
                                 existing_wallets = wallet_manager.get_wallet_collaboratori()
-                                wallet_exists = any(w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() for w in existing_wallets if 'Wallet:' in w.get('note', ''))
+                                wallet_exists = False
+                                for w in existing_wallets:
+                                    if 'Wallet:' in w.get('note', ''):
+                                        try:
+                                            wallet_address = w.get('note', '').split('Wallet:')[1].split('|')[0].strip()
+                                            if wallet_address == dati_cliente['wallet'].strip():
+                                                wallet_exists = True
+                                                break
+                                        except Exception:
+                                            # Se c'è un errore nel parsing, continua
+                                            continue
                                 
                                 if not wallet_exists:
                                     # Recupera l'ID del cliente appena creato da Supabase (più recente)
@@ -685,8 +695,10 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                     
                                     if cliente_id:
                                         # Crea nuovo wallet nel sistema dedicato
+                                        # Crea nome wallet univoco usando parte dell'indirizzo
+                                        wallet_suffix = dati_cliente['wallet'].strip()[-8:] if len(dati_cliente['wallet'].strip()) >= 8 else dati_cliente['wallet'].strip()
                                         wallet_data = {
-                                            'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
+                                            'nome_wallet': f"Wallet {dati_cliente['nome_cliente']} - {wallet_suffix}",
                                             'tipo_wallet': 'cliente',
                                             'saldo_attuale': 0.0,
                                             'valuta': 'USDT',
@@ -701,6 +713,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                         
                                         if response.data:
                                             st.info(f"💰 Wallet automaticamente creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
+                                            st.info(f"📝 Nome wallet: {wallet_data['nome_wallet']}")
                                         else:
                                             st.warning(f"⚠️ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
                                     else:
@@ -829,12 +842,24 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                 if wallet_manager.supabase_manager:
                                     # Verifica se il wallet esiste già
                                     existing_wallets = wallet_manager.get_wallet_collaboratori()
-                                    wallet_exists = any(w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() for w in existing_wallets if 'Wallet:' in w.get('note', ''))
+                                    wallet_exists = False
+                                    for w in existing_wallets:
+                                        if 'Wallet:' in w.get('note', ''):
+                                            try:
+                                                wallet_address = w.get('note', '').split('Wallet:')[1].split('|')[0].strip()
+                                                if wallet_address == dati_cliente['wallet'].strip():
+                                                    wallet_exists = True
+                                                    break
+                                            except Exception:
+                                                # Se c'è un errore nel parsing, continua
+                                                continue
                                     
                                     if not wallet_exists:
                                         # Crea nuovo wallet nel sistema dedicato
+                                        # Crea nome wallet univoco usando parte dell'indirizzo
+                                        wallet_suffix = dati_cliente['wallet'].strip()[-8:] if len(dati_cliente['wallet'].strip()) >= 8 else dati_cliente['wallet'].strip()
                                         wallet_data = {
-                                            'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
+                                            'nome_wallet': f"Wallet {dati_cliente['nome_cliente']} - {wallet_suffix}",
                                             'tipo_wallet': 'cliente',
                                             'saldo_attuale': 0.0,
                                             'valuta': 'USDT',
@@ -853,13 +878,24 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                             st.warning(f"⚠️ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
                                     else:
                                         # Aggiorna wallet esistente se necessario
-                                        wallet_to_update = next(w for w in existing_wallets if w.get('note', '').split('Wallet:')[1].split('|')[0].strip() == dati_cliente['wallet'].strip() if 'Wallet:' in w.get('note', ''))
+                                        wallet_to_update = None
+                                        for w in existing_wallets:
+                                            if 'Wallet:' in w.get('note', ''):
+                                                try:
+                                                    wallet_address = w.get('note', '').split('Wallet:')[1].split('|')[0].strip()
+                                                    if wallet_address == dati_cliente['wallet'].strip():
+                                                        wallet_to_update = w
+                                                        break
+                                                except Exception:
+                                                    continue
+                                        
                                         if wallet_to_update and cliente_supabase['id'] not in wallet_to_update.get('note', ''):
                                             # Aggiorna il collegamento al cliente
+                                            wallet_suffix = dati_cliente['wallet'].strip()[-8:] if len(dati_cliente['wallet'].strip()) >= 8 else dati_cliente['wallet'].strip()
                                             wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').update({
                                                 'proprietario': dati_cliente['nome_cliente'],
                                                 'updated_at': datetime.now().isoformat(),
-                                                'nome_wallet': f"Wallet {dati_cliente['nome_cliente']}",
+                                                'nome_wallet': f"Wallet {dati_cliente['nome_cliente']} - {wallet_suffix}",
                                                 'note': f"Wallet: {dati_cliente['wallet'].strip()} | Cliente: {dati_cliente['nome_cliente']} (ID: {cliente_supabase['id']})"
                                             }).eq('id', wallet_to_update['id']).execute()
                                             st.info(f"💰 Wallet aggiornato nel sistema dedicato per {dati_cliente['nome_cliente']}")
