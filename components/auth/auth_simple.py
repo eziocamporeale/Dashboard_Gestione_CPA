@@ -39,22 +39,32 @@ class SimpleAuthSystem:
         return f"{salt}${password_hash}"
     
     def verify_password(self, password: str, stored_hash: str) -> bool:
-        """Verifica password"""
+        """Verifica password con supporto per formati multipli"""
         try:
             # Se è un hash bcrypt (inizia con $2b$)
             if stored_hash.startswith('$2b$'):
                 import bcrypt
                 return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
-            # Se è un hash semplice (per test)
+            
+            # Se è un hash semplice (per test e admin hardcoded)
             elif stored_hash == password:
                 return True
-            # Se è un hash con salt
-            elif '$' in stored_hash:
+            
+            # Se è un hash con salt (SHA256 con salt)
+            elif '$' in stored_hash and len(stored_hash) > 50:
                 salt, hash_part = stored_hash.split('$', 1)
                 password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
                 return password_hash == hash_part
+            
+            # Se è un hash SHA256 semplice (senza salt, 64 caratteri)
+            elif len(stored_hash) == 64:
+                password_hash = hashlib.sha256(password.encode()).hexdigest()
+                return password_hash == stored_hash
+            
+            # Fallback: confronto diretto
             else:
-                return False
+                return password == stored_hash
+                
         except Exception as e:
             logger.error(f"Errore verifica password: {e}")
             return False

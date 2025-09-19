@@ -39,9 +39,39 @@ class UserSettings:
         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     def verify_password(self, password: str, stored_hash: str) -> bool:
-        """Verifica password con bcrypt (compatibile con auth_manager)"""
+        """Verifica password con supporto per formati multipli (bcrypt, SHA256, password semplici)"""
         try:
-            return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
+            # Se è un hash bcrypt (inizia con $2b$)
+            if stored_hash.startswith('$2b$'):
+                return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
+            
+            # Se è un hash SHA256 con salt (contiene $)
+            elif '$' in stored_hash and len(stored_hash) > 50:
+                try:
+                    salt, hash_part = stored_hash.split('$', 1)
+                    import hashlib
+                    password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+                    return password_hash == hash_part
+                except:
+                    return False
+            
+            # Se è una password semplice (per compatibilità con admin hardcoded)
+            elif stored_hash == password:
+                return True
+            
+            # Se è un hash SHA256 semplice (senza salt)
+            elif len(stored_hash) == 64:  # SHA256 è sempre 64 caratteri
+                try:
+                    import hashlib
+                    password_hash = hashlib.sha256(password.encode()).hexdigest()
+                    return password_hash == stored_hash
+                except:
+                    return False
+            
+            # Fallback: confronto diretto
+            else:
+                return password == stored_hash
+                
         except Exception as e:
             logger.error(f"🔍 USER_SETTINGS: Errore verifica password: {e}")
             return False
