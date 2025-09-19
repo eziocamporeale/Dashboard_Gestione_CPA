@@ -10,8 +10,7 @@ from datetime import datetime
 import sys
 import os
 import logging
-import hashlib
-import secrets
+import bcrypt
 from utils.translations import t
 
 # Configura il logger
@@ -36,18 +35,15 @@ class UserSettings:
         logger.info(f"🔍 USER_SETTINGS: user_info caricato (senza dati sensibili)")
         
     def hash_password(self, password: str) -> str:
-        """Hash della password con salt"""
-        salt = secrets.token_hex(16)
-        password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-        return f"{salt}${password_hash}"
+        """Hash della password con bcrypt (compatibile con auth_manager)"""
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     def verify_password(self, password: str, stored_hash: str) -> bool:
-        """Verifica password"""
+        """Verifica password con bcrypt (compatibile con auth_manager)"""
         try:
-            salt, hash_value = stored_hash.split('$')
-            password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-            return password_hash == hash_value
-        except:
+            return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
+        except Exception as e:
+            logger.error(f"🔍 USER_SETTINGS: Errore verifica password: {e}")
             return False
     
     def get_current_user_data(self):
@@ -92,20 +88,11 @@ class UserSettings:
             
             # Verifica password corrente
             current_hash = user_data.get('password_hash', '')
-            logger.info(f"🔍 USER_SETTINGS: Password corrente nel DB: {current_hash}")
-            logger.info(f"🔍 USER_SETTINGS: Password inserita (hashata)")
+            logger.info(f"🔍 USER_SETTINGS: Password corrente nel DB: {current_hash[:20]}...")
             
-            # Per compatibilità con il sistema attuale (password semplice)
-            password_correct = False
-            
-            # Prova confronto diretto (per password semplici)
-            if current_password == current_hash:
-                password_correct = True
-                logger.info(f"🔍 USER_SETTINGS: Password corretta (confronto diretto)")
-            else:
-                # Prova con hash (per password hashate)
-                password_correct = self.verify_password(current_password, current_hash)
-                logger.info(f"🔍 USER_SETTINGS: Password corretta: {password_correct}")
+            # Verifica password con bcrypt
+            password_correct = self.verify_password(current_password, current_hash)
+            logger.info(f"🔍 USER_SETTINGS: Password corretta: {password_correct}")
             
             if not password_correct:
                 st.error("❌ Password corrente non corretta")
