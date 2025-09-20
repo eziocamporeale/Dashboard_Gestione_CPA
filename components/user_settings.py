@@ -77,15 +77,38 @@ class UserSettings:
             return False
     
     def get_current_user_data(self):
-        """Recupera i dati dell'utente corrente"""
+        """Recupera i dati dell'utente corrente (Supabase o hardcoded)"""
         try:
             if not self.current_user:
                 return None
-                
-            response = self.supabase_manager.supabase.table('users').select('*').eq('username', self.current_user).execute()
             
-            if response.data:
-                return response.data[0]
+            # Prima prova a cercare in Supabase
+            try:
+                response = self.supabase_manager.supabase.table('users').select('*').eq('username', self.current_user).execute()
+                
+                if response.data:
+                    logger.info(f"🔍 USER_SETTINGS: Utente trovato in Supabase: {self.current_user}")
+                    return response.data[0]
+            except Exception as e:
+                logger.warning(f"🔍 USER_SETTINGS: Errore ricerca Supabase: {e}")
+            
+            # Se non trovato in Supabase, controlla se è un utente hardcoded
+            if self.current_user == 'admin':
+                logger.info(f"🔍 USER_SETTINGS: Utente admin hardcoded rilevato")
+                # Restituisce dati mock per admin hardcoded
+                return {
+                    'id': 1,
+                    'username': 'admin',
+                    'email': 'admin@cpadashboard.com',
+                    'full_name': 'Amministratore CPA Dashboard',
+                    'password_hash': 'admin123',  # Password hardcoded
+                    'role': 'admin',
+                    'is_active': True,
+                    'created_at': '2024-01-01T00:00:00Z',
+                    'updated_at': '2024-01-01T00:00:00Z'
+                }
+            
+            logger.warning(f"🔍 USER_SETTINGS: Utente non trovato: {self.current_user}")
             return None
             
         except Exception as e:
@@ -134,17 +157,46 @@ class UserSettings:
             logger.info(f"🔍 USER_SETTINGS: Nuova password hashata correttamente")
             
             # Aggiorna password nel database
-            response = self.supabase_manager.supabase.table('users').update({
-                'password_hash': new_password_hash,
-                'updated_at': datetime.now().isoformat()
-            }).eq('username', self.current_user).execute()
-            
-            if response.data:
-                logger.info(f"🔍 USER_SETTINGS: Password cambiata con successo per {self.current_user}")
-                st.success("✅ Password cambiata con successo!")
-                return True
-            else:
-                st.error("❌ Errore nell'aggiornamento della password")
+            try:
+                # Prova prima l'aggiornamento
+                response = self.supabase_manager.supabase.table('users').update({
+                    'password_hash': new_password_hash,
+                    'updated_at': datetime.now().isoformat()
+                }).eq('username', self.current_user).execute()
+                
+                if response.data:
+                    logger.info(f"🔍 USER_SETTINGS: Password aggiornata in Supabase per {self.current_user}")
+                    st.success("✅ Password cambiata con successo!")
+                    return True
+                else:
+                    # Se l'utente non esiste in Supabase (admin hardcoded), crealo
+                    if self.current_user == 'admin':
+                        logger.info(f"🔍 USER_SETTINGS: Creazione utente admin in Supabase")
+                        create_response = self.supabase_manager.supabase.table('users').insert({
+                            'username': 'admin',
+                            'email': 'admin@cpadashboard.com',
+                            'full_name': 'Amministratore CPA Dashboard',
+                            'password_hash': new_password_hash,
+                            'role': 'admin',
+                            'is_active': True,
+                            'created_at': datetime.now().isoformat(),
+                            'updated_at': datetime.now().isoformat()
+                        }).execute()
+                        
+                        if create_response.data:
+                            logger.info(f"🔍 USER_SETTINGS: Utente admin creato in Supabase")
+                            st.success("✅ Password cambiata con successo! Utente migrato al database.")
+                            return True
+                        else:
+                            st.error("❌ Errore nella creazione dell'utente nel database")
+                            return False
+                    else:
+                        st.error("❌ Errore nell'aggiornamento della password")
+                        return False
+                        
+            except Exception as e:
+                logger.error(f"🔍 USER_SETTINGS: Errore aggiornamento Supabase: {e}")
+                st.error(f"❌ Errore nell'aggiornamento della password: {e}")
                 return False
                 
         except Exception as e:
