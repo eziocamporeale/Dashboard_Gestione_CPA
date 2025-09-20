@@ -70,19 +70,9 @@ class SimpleAuthSystem:
             return False
     
     def authenticate_user(self, username: str, password: str) -> bool:
-        """Autentica un utente"""
+        """Autentica un utente (logica semplificata come DASH_GESTIONE_LEAD)"""
         try:
-            # Prima controlla gli utenti hardcoded
-            if username in self.users:
-                user = self.users[username]
-                if self.verify_password(password, user['password_hash']):
-                    logger.info(f"✅ Autenticazione riuscita per utente hardcoded: {username}")
-                    return True
-                else:
-                    logger.warning(f"❌ Password errata per utente hardcoded: {username}")
-                    return False
-            
-            # Poi controlla gli utenti in Supabase
+            # Cerca direttamente in Supabase (come nel progetto Lead)
             try:
                 from supabase_manager import SupabaseManager
                 supabase_manager = SupabaseManager()
@@ -117,22 +107,9 @@ class SimpleAuthSystem:
             return False
     
     def get_user_info(self, username: str) -> Optional[Dict]:
-        """Ottiene le informazioni di un utente"""
+        """Ottiene le informazioni di un utente (logica semplificata come DASH_GESTIONE_LEAD)"""
         try:
-            # Prima controlla gli utenti hardcoded
-            if username in self.users:
-                user = self.users[username]
-                # Ritorna solo i dati non sensibili
-                return {
-                    'user_id': user['user_id'],
-                    'username': user['username'],
-                    'email': user['email'],
-                    'name': user['name'],
-                    'role': user['role'],
-                    'from_supabase': user['from_supabase']
-                }
-            
-            # Poi controlla gli utenti in Supabase
+            # Cerca direttamente in Supabase (come nel progetto Lead)
             try:
                 from supabase_manager import SupabaseManager
                 supabase_manager = SupabaseManager()
