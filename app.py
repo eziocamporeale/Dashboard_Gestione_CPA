@@ -1146,6 +1146,14 @@ elif page == "💰 Wallet":
                 if can_view:
                     if can_edit or can_delete:
                         st.info("✏️ **Modalità Completa**: Puoi visualizzare, modificare ed eliminare le transazioni")
+                        
+                        # Form per creare nuove transazioni (solo se si può creare)
+                        if can_create:
+                            st.markdown("---")
+                            st.subheader("➕ Crea Nuova Transazione")
+                            components['wallet_form'].render_form()
+                            st.markdown("---")
+                        
                         components['wallet_table'].render_table(
                             on_edit=lambda x: None if can_edit else None,
                             on_delete=lambda x: None if can_delete else None
