@@ -97,3 +97,6 @@ Prova a scaricare questi file per testare:
 
 **📞 Supporto**: Se hai problemi, contatta Ezio con screenshot e dettagli dell'errore.
 
+
+
+

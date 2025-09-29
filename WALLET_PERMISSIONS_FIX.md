@@ -150,3 +150,6 @@ La funzione è stata aggiunta nel file `utils/supabase_permissions.py` alla fine
 
 **✅ Problema risolto completamente! Diego può ora accedere alla sezione Wallet senza errori.**
 
+
+
+

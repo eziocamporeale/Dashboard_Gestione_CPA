@@ -104,3 +104,6 @@ La nuova interfaccia è pronta per essere testata. Vai alla sezione "🔄 Incroc
 
 **Ricorda**: Puoi sempre tornare all'interfaccia originale se qualcosa non ti convince.
 
+
+
+

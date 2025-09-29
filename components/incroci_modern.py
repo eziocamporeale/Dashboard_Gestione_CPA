@@ -856,3 +856,6 @@ class IncrociModern:
             st.error(f"❌ Errore nel caricamento clienti: {e}")
             return []
 
+
+
+
