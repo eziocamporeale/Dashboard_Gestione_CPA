@@ -255,7 +255,7 @@ class WalletTransactionTable:
                 }
             )
             
-            st.plotly_chart(fig_stato, use_container_width=True, key=f"chart_stato_wallet_table_{unique_id}")
+            st.plotly_chart(fig_stato, width='stretch', key=f"chart_stato_wallet_table_{unique_id}")
         
         with col_chart2:
             # Grafico transazioni per tipo
@@ -268,7 +268,7 @@ class WalletTransactionTable:
                 labels={'x': 'Tipo Transazione', 'y': 'Numero Transazioni'}
             )
             
-            st.plotly_chart(fig_tipo, use_container_width=True, key=f"chart_tipo_wallet_table_{unique_id}")
+            st.plotly_chart(fig_tipo, width='stretch', key=f"chart_tipo_wallet_table_{unique_id}")
         
         # Grafico timeline transazioni
         if len(df) > 1:
@@ -309,7 +309,7 @@ class WalletTransactionTable:
                 hovermode='closest'
             )
             
-            st.plotly_chart(fig_timeline, use_container_width=True, key=f"chart_timeline_wallet_table_{unique_id}")
+            st.plotly_chart(fig_timeline, width='stretch', key=f"chart_timeline_wallet_table_{unique_id}")
     
     # Funzione render_wallet_balances rimossa - ora integrata in deposit_management per evitare duplicazioni
     
@@ -450,21 +450,21 @@ class WalletTransactionTable:
                 submit_button = st.form_submit_button(
                     "💾 Salva Modifiche",
                     type="primary",
-                    use_container_width=True,
+                    width='stretch',
                     key=f"edit_save_{transaction_data['id']}_{unique_id}"
                 )
             
             with col_btn2:
                 cancel_button = st.form_submit_button(
                     "❌ Annulla",
-                    use_container_width=True,
+                    width='stretch',
                     key=f"edit_cancel_{transaction_data['id']}_{unique_id}"
                 )
             
             with col_btn3:
                 delete_button = st.form_submit_button(
                     "🗑️ Elimina Transazione",
-                    use_container_width=True,
+                    width='stretch',
                     key=f"edit_delete_{transaction_data['id']}_{unique_id}"
                 )
             
