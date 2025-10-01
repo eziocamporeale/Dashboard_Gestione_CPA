@@ -75,11 +75,20 @@ class SupabaseManager:
             return []
     
     def add_cliente(self, cliente_data: Dict[str, Any]) -> Tuple[bool, str]:
-        """Aggiunge un nuovo cliente su Supabase"""
+        """Aggiunge un nuovo cliente su Supabase con controllo duplicati"""
         if not self.supabase:
             return False, "❌ Client Supabase non disponibile"
         
         try:
+            # Controlla se esiste già un cliente con la stessa email
+            email = cliente_data.get('email', '').strip()
+            if email:
+                existing_client = self.supabase.table('clienti').select('id, nome_cliente').eq('email', email).execute()
+                
+                if existing_client.data:
+                    existing_client_info = existing_client.data[0]
+                    return False, f"❌ Cliente con email {email} già esistente (ID: {existing_client_info['id']}, Nome: {existing_client_info.get('nome_cliente', 'N/A')})"
+            
             cliente_data['created_at'] = datetime.now().isoformat()
             cliente_data['updated_at'] = datetime.now().isoformat()
             
