@@ -670,6 +670,8 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                     # INTEGRAZIONE WALLET: Se il cliente ha un wallet, crealo nel sistema dedicato
                     if dati_cliente.get('wallet') and dati_cliente['wallet'].strip():
                         st.info(f"🔍 Verifica creazione wallet per {dati_cliente['nome_cliente']}...")
+                        # Salva info debug in session_state
+                        st.session_state.wallet_debug_info = f"Creazione wallet per {dati_cliente['nome_cliente']} - Wallet: {dati_cliente['wallet']}"
                         try:
                             from components.wallet_transactions_manager import WalletTransactionsManager
                             wallet_manager = WalletTransactionsManager()
@@ -726,8 +728,22 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                             st.error(f"❌ Errore creazione wallet automatico: {wallet_error}")
                             import traceback
                             st.error(f"🔍 Dettagli errore: {traceback.format_exc()}")
+                            # Salva l'errore in session_state per mantenerlo visibile
+                            st.session_state.wallet_creation_error = f"Errore creazione wallet per {dati_cliente['nome_cliente']}: {wallet_error}"
                     
                     st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE e SUPABASE!")
+                    
+                    # Mostra eventuali errori di creazione wallet persistenti
+                    if 'wallet_creation_error' in st.session_state:
+                        st.error(f"⚠️ {st.session_state.wallet_creation_error}")
+                        # Rimuovi l'errore dopo averlo mostrato
+                        del st.session_state.wallet_creation_error
+                    
+                    # Mostra info debug persistenti
+                    if 'wallet_debug_info' in st.session_state:
+                        st.info(f"🔍 Debug: {st.session_state.wallet_debug_info}")
+                        # Rimuovi l'info dopo averla mostrata
+                        del st.session_state.wallet_debug_info
                 else:
                     st.warning(f"⚠️ Cliente salvato in LOCALE ma errore SUPABASE: {supabase_message}")
             else:
