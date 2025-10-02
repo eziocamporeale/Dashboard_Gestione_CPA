@@ -669,6 +669,7 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                 if supabase_success:
                     # INTEGRAZIONE WALLET: Se il cliente ha un wallet, crealo nel sistema dedicato
                     if dati_cliente.get('wallet') and dati_cliente['wallet'].strip():
+                        st.info(f"🔍 Verifica creazione wallet per {dati_cliente['nome_cliente']}...")
                         try:
                             from components.wallet_transactions_manager import WalletTransactionsManager
                             wallet_manager = WalletTransactionsManager()
@@ -712,16 +713,19 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                         response = wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').insert(wallet_data).execute()
                                         
                                         if response.data:
-                                            st.info(f"💰 Wallet automaticamente creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
-                                            st.info(f"📝 Nome wallet: {wallet_data['nome_wallet']}")
+                                            st.success(f"💰 Wallet automaticamente creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
+                                            st.success(f"📝 Nome wallet: {wallet_data['nome_wallet']}")
+                                            st.info(f"✅ Il wallet è ora disponibile nel dropdown delle transazioni!")
                                         else:
-                                            st.warning(f"⚠️ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
+                                            st.error(f"❌ Wallet non creato nel sistema dedicato per {dati_cliente['nome_cliente']}")
                                     else:
                                         st.warning(f"⚠️ Impossibile recuperare ID cliente per creazione wallet")
                                 else:
                                     st.info(f"ℹ️ Wallet {dati_cliente['wallet']} già esistente nel sistema")
                         except Exception as wallet_error:
-                            st.warning(f"⚠️ Errore creazione wallet automatico: {wallet_error}")
+                            st.error(f"❌ Errore creazione wallet automatico: {wallet_error}")
+                            import traceback
+                            st.error(f"🔍 Dettagli errore: {traceback.format_exc()}")
                     
                     st.success(f"✅ Cliente {dati_cliente['nome_cliente']} salvato in LOCALE e SUPABASE!")
                 else:
