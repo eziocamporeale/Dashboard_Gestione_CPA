@@ -681,9 +681,10 @@ def handle_save_client(dati_cliente, campi_aggiuntivi):
                                 existing_wallets = wallet_manager.get_wallet_collaboratori()
                                 wallet_exists = False
                                 for w in existing_wallets:
-                                    if 'Wallet:' in w.get('note', ''):
+                                    note = w.get('note') or ''
+                                    if 'Wallet:' in note:
                                         try:
-                                            wallet_address = w.get('note', '').split('Wallet:')[1].split('|')[0].strip()
+                                            wallet_address = note.split('Wallet:')[1].split('|')[0].strip()
                                             if wallet_address == dati_cliente['wallet'].strip():
                                                 wallet_exists = True
                                                 break
@@ -864,9 +865,10 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                     existing_wallets = wallet_manager.get_wallet_collaboratori()
                                     wallet_exists = False
                                     for w in existing_wallets:
-                                        if 'Wallet:' in w.get('note', ''):
+                                        note = w.get('note') or ''
+                                        if 'Wallet:' in note:
                                             try:
-                                                wallet_address = w.get('note', '').split('Wallet:')[1].split('|')[0].strip()
+                                                wallet_address = note.split('Wallet:')[1].split('|')[0].strip()
                                                 if wallet_address == dati_cliente['wallet'].strip():
                                                     wallet_exists = True
                                                     break
@@ -900,16 +902,17 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
                                         # Aggiorna wallet esistente se necessario
                                         wallet_to_update = None
                                         for w in existing_wallets:
-                                            if 'Wallet:' in w.get('note', ''):
+                                            note = w.get('note') or ''
+                                            if 'Wallet:' in note:
                                                 try:
-                                                    wallet_address = w.get('note', '').split('Wallet:')[1].split('|')[0].strip()
+                                                    wallet_address = note.split('Wallet:')[1].split('|')[0].strip()
                                                     if wallet_address == dati_cliente['wallet'].strip():
                                                         wallet_to_update = w
                                                         break
                                                 except Exception:
                                                     continue
                                         
-                                        if wallet_to_update and cliente_supabase['id'] not in wallet_to_update.get('note', ''):
+                                        if wallet_to_update and cliente_supabase['id'] not in (wallet_to_update.get('note') or ''):
                                             # Aggiorna il collegamento al cliente
                                             wallet_suffix = dati_cliente['wallet'].strip()[-8:] if len(dati_cliente['wallet'].strip()) >= 8 else dati_cliente['wallet'].strip()
                                             wallet_manager.supabase_manager.supabase.table('wallet_collaboratori').update({
