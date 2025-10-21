@@ -78,6 +78,22 @@ except Exception as e:
     BrokerLinksManager = None
 
 try:
+    from components.vps_ui import VPSUI
+    print("✅ VPSUI importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import VPSUI: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="VPSUI", error=e))
+    VPSUI = None
+
+try:
+    from components.vps_notifications import VPSNotifications
+    print("✅ VPSNotifications importato correttamente")
+except Exception as e:
+    print(f"❌ Errore import VPSNotifications: {e}")
+    st.error(t("system.errors.import_error", "Errore import {module}: {error}").format(module="VPSNotifications", error=e))
+    VPSNotifications = None
+
+try:
     from database.database import DatabaseManager
     print("✅ DatabaseManager importato correttamente")
 except Exception as e:
@@ -489,13 +505,14 @@ else:
             t("navigation.clients", "👥 Gestione Clienti"), 
             t("navigation.crosses", "🔄 Incroci"), 
             t("navigation.broker", "🔗 Broker"), 
+            "🖥️ VPS",
             "💰 Wallet",
             "📁 Storage",
             t("navigation.summary", "📈 Riepilogo"), 
             "🤖 AI Assistant",
             t("navigation.settings", "⚙️ Impostazioni")
         ],
-        icons=["house", "people", "arrows-collapse", "link", "wallet", "folder", "bar-chart", "robot", "gear"],
+        icons=["house", "people", "arrows-collapse", "link", "server", "wallet", "folder", "bar-chart", "robot", "gear"],
         orientation="horizontal",
         styles={
             "container": {"padding": "0!important", "background-color": "#fafafa"},
@@ -947,6 +964,12 @@ def handle_update_client(cliente_id, dati_cliente, campi_aggiuntivi):
 if page == "🏠 Dashboard":
     # Usa il nuovo sistema di navigazione utente
     render_user_navigation()
+    
+    # Mostra notifiche VPS se disponibili
+    if VPSNotifications is not None:
+        vps_notifications = VPSNotifications()
+        vps_notifications.render_notifications_banner()
+    
     # Pulisci il contenuto precedente quando si torna alla dashboard
     if "current_page" in st.session_state:
         del st.session_state["current_page"]
@@ -1079,6 +1102,16 @@ elif page == "🔗 Broker":
     
     # Mostra la gestione dei link broker
     components['broker_links_manager'].render_broker_links_page()
+
+elif page == "🖥️ VPS":
+    # Controlla se il componente è disponibile
+    if VPSUI is None:
+        st.error("❌ **Componente VPS non disponibile**")
+        st.info("💡 Assicurati che il componente VPS sia installato correttamente")
+    else:
+        # Mostra la gestione VPS
+        vps_ui = VPSUI()
+        vps_ui.render_vps_dashboard()
 
 elif page == "💰 Wallet":
     st.header("💰 Gestione Transazioni Wallet")
