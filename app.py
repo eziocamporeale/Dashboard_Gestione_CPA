@@ -1331,8 +1331,8 @@ elif page == "⚙️ Impostazioni":
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
     # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente"
+    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings, tab_statistics = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente", "📊 Statistiche Sistema"
     ])
     
     # TAB 1: Supabase
@@ -1787,128 +1787,153 @@ elif page == "⚙️ Impostazioni":
             st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
             st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
 
-elif page == "📊 Statistiche Sistema":
-    # Mostra le statistiche del sistema per admin
-    st.header("📊 Statistiche Sistema")
-    st.info("📈 **STATISTICHE AVANZATE**: Visualizza metriche e analisi del sistema")
-    
-    # Usa il sistema di navigazione utente per le statistiche
-    render_user_navigation()
-    
-    # Contenuto delle statistiche sistema (da implementare)
-    st.info("📊 **STATISTICHE AVANZATE**: Questa sezione mostrerà metriche e analisi dettagliate del sistema")
-    
-    st.subheader("🚀 Gestione Supabase")
-    st.info("📊 **DATABASE REMOTO**: Tutti i dati sono sincronizzati automaticamente con Supabase")
-    
-    # Stato Supabase
-    try:
-        from supabase_manager import SupabaseManager
-        supabase_manager = SupabaseManager()
+    # TAB 6: Statistiche Sistema
+    with tab_statistics:
+        st.subheader("📊 Statistiche Sistema")
+        st.info("📈 **STATISTICHE AVANZATE**: Visualizza metriche e analisi del sistema")
         
-        if supabase_manager.is_configured:
-            st.success("✅ **SUPABASE ATTIVO** - Configurazione corretta")
-            
-            # Statistiche Supabase
-            clienti_supabase = supabase_manager.get_clienti()
-            incroci_supabase = supabase_manager.get_incroci()
-            
-            col_stats1, col_stats2, col_stats3 = st.columns(3)
-            with col_stats1:
-                st.metric("👥 Clienti", len(clienti_supabase))
-            with col_stats2:
-                st.metric("🔄 Incroci", len(incroci_supabase))
-            with col_stats3:
-                st.metric("🌐 Status", "Online")
-            
-            # Informazioni connessione (SICURE)
-            st.markdown("---")
-            st.subheader("🔗 Stato Connessione")
-            st.write(f"**🌐 Status:** Connesso a Supabase")
-            st.write(f"**🔒 Sicurezza:** Configurazione protetta")
-            st.write(f"**📅 Ultimo aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-            
-        else:
-            st.error("❌ **SUPABASE NON CONFIGURATO** - Controlla le variabili d'ambiente")
-            
-    except Exception as e:
-        st.error(f"❌ **Errore connessione Supabase:** {e}")
-    
-    # Test connessione
-    st.markdown("---")
-    st.subheader("🧪 Test Connessione")
-    if st.button("🔍 Test Supabase", type="primary"):
+        # Stato Supabase
         try:
+            from supabase_manager import SupabaseManager
+            supabase_manager = SupabaseManager()
+            
             if supabase_manager.is_configured:
-                # Test lettura clienti
-                clienti = supabase_manager.get_clienti()
-                st.success(f"✅ **CONNESSIONE OK** - {len(clienti)} clienti letti")
+                st.success("✅ **SUPABASE ATTIVO** - Configurazione corretta")
                 
-                # Test lettura incroci
-                incroci = supabase_manager.get_incroci()
-                st.success(f"✅ **INCROCI OK** - {len(incroci)} incroci letti")
+                # Statistiche Supabase
+                clienti_supabase = supabase_manager.get_clienti()
+                incroci_supabase = supabase_manager.get_incroci()
+                
+                col_stats1, col_stats2, col_stats3 = st.columns(3)
+                with col_stats1:
+                    st.metric("👥 Clienti", len(clienti_supabase))
+                with col_stats2:
+                    st.metric("🔄 Incroci", len(incroci_supabase))
+                with col_stats3:
+                    st.metric("🌐 Status", "Online")
+                
+                # Informazioni connessione (SICURE)
+                st.markdown("---")
+                st.subheader("🔗 Stato Connessione")
+                st.write(f"**🌐 Status:** Connesso a Supabase")
+                st.write(f"**🔒 Sicurezza:** Configurazione protetta")
+                st.write(f"**📅 Ultimo aggiornamento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+                
             else:
-                st.error("❌ Supabase non configurato")
+                st.error("❌ **SUPABASE NON CONFIGURATO** - Controlla le variabili d'ambiente")
+                
         except Exception as e:
-            st.error(f"❌ **Test fallito:** {e}")
-    
-    # Informazioni Sistema
-    st.markdown("---")
-    st.subheader("ℹ️ Informazioni Sistema")
-    st.info("📋 **STATO APPLICAZIONE**: Monitora lo stato generale del sistema")
-    
-    # Informazioni generali
-    col_sys1, col_sys2 = st.columns(2)
-    
-    with col_sys1:
-        st.write("**🖥️ Ambiente:**")
-        st.write(f"• **OS:** {os.name}")
-        st.write(f"• **Python:** {sys.version.split()[0]}")
-        st.write(f"• **Streamlit:** {st.__version__}")
-    
-    with col_sys2:
-        st.write("**📊 Componenti:**")
-        st.write("• ✅ ClientForm")
-        st.write("• ✅ ClientTable") 
-        st.write("• ✅ IncrociTab")
-        st.write("• ✅ Charts")
-    
-    # Logs recenti
-    st.markdown("---")
-    st.subheader("📝 Logs Recenti")
-    st.info("🔍 **DEBUGGING**: Ultimi messaggi di log del sistema")
-    
-    # Mostra ultimi log (esempio)
-    st.write("**📋 Log di Sistema:**")
-    st.write("• ✅ Supabase client inizializzato")
-    st.write("• ✅ IncrociManager inizializzato con Supabase")
-    st.write("• ✅ Componenti inizializzati correttamente")
-    st.write("• ✅ Configurazione da Streamlit Cloud secrets")
-    
-    # Impostazioni Utente
-    st.markdown("---")
-    st.subheader("👤 Impostazioni Utente")
-    st.info("⚙️ **PERSONALIZZAZIONE**: Configura le tue preferenze")
-    
-    # Impostazioni utente corrente
-    current_user = get_current_user()
-    if current_user:
-        st.write(f"**👤 Nome:** {current_user.get('name', 'N/A')}")
-        st.write(f"**📧 Email:** {current_user.get('email', 'N/A')}")
-        st.write(f"**👑 Ruolo:** {current_user.get('role', 'N/A')}")
+            st.error(f"❌ **Errore connessione Supabase:** {e}")
         
-        # Pulsante per forzare il logout
+        # Test connessione
         st.markdown("---")
-        st.subheader("🚪 Gestione Sessione")
-        if st.button("🚪 Forza Logout", type="secondary"):
-            st.warning("⚠️ Sei sicuro di voler forzare il logout?")
-            if st.button("✅ Conferma Logout Forzato", type="primary"):
-                # Pulisci session state per logout
-                for key in list(st.session_state.keys()):
-                    del st.session_state[key]
-                st.rerun()
-    else:
-        st.error("❌ **UTENTE NON TROVATO** - Errore autenticazione")
+        st.subheader("🧪 Test Connessione")
+        if st.button("🔍 Test Supabase", type="primary"):
+            try:
+                if supabase_manager.is_configured:
+                    # Test lettura clienti
+                    clienti = supabase_manager.get_clienti()
+                    st.success(f"✅ **CONNESSIONE OK** - {len(clienti)} clienti letti")
+                    
+                    # Test lettura incroci
+                    incroci = supabase_manager.get_incroci()
+                    st.success(f"✅ **INCROCI OK** - {len(incroci)} incroci letti")
+                else:
+                    st.error("❌ Supabase non configurato")
+            except Exception as e:
+                st.error(f"❌ **Test fallito:** {e}")
+        
+        # Informazioni Sistema
+        st.markdown("---")
+        st.subheader("ℹ️ Informazioni Sistema")
+        st.info("📋 **STATO APPLICAZIONE**: Monitora lo stato generale del sistema")
+        
+        # Informazioni generali
+        col_sys1, col_sys2 = st.columns(2)
+        
+        with col_sys1:
+            st.write("**🖥️ Ambiente:**")
+            st.write(f"• **OS:** {os.name}")
+            st.write(f"• **Python:** {sys.version.split()[0]}")
+            st.write(f"• **Streamlit:** {st.__version__}")
+        
+        with col_sys2:
+            st.write("**📊 Componenti:**")
+            st.write("• ✅ ClientForm")
+            st.write("• ✅ ClientTable") 
+            st.write("• ✅ IncrociTab")
+            st.write("• ✅ Charts")
+        
+        # Logs recenti
+        st.markdown("---")
+        st.subheader("📝 Logs Recenti")
+        st.info("🔍 **DEBUGGING**: Ultimi messaggi di log del sistema")
+        
+        # Mostra ultimi log (esempio)
+        st.write("**📋 Log di Sistema:**")
+        st.write("• ✅ Supabase client inizializzato")
+        st.write("• ✅ IncrociManager inizializzato con Supabase")
+        st.write("• ✅ Componenti inizializzati correttamente")
+        st.write("• ✅ Configurazione da Streamlit Cloud secrets")
+
+elif page == "📋 Task Giornalieri":
+    # Gestione task giornalieri/settimanali/mensili
+    try:
+        from components.tasks_manager import TasksManager
+        
+        tasks_manager = TasksManager()
+        tasks_manager.render_tasks_dashboard()
+        
+    except ImportError as e:
+        st.error(f"❌ **COMPONENTE TASK MANAGER NON DISPONIBILE**: {e}")
+        st.info("💡 Controlla che il file `components/tasks_manager.py` sia presente")
+        
+        # Fallback: mostra interfaccia base
+        st.header("📋 Task Giornalieri")
+        st.info("🎯 **GESTIONE ATTIVITÀ**: Organizza e traccia le attività giornaliere, settimanali e mensili con i collaboratori")
+        
+        st.subheader("🚧 Funzionalità in Sviluppo")
+        st.info("📋 **TASK MANAGEMENT**: Sistema per organizzare task giornalieri, settimanali e mensili")
+        
+        # Placeholder per funzionalità future
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            **📅 Task Giornalieri**
+            - Controllo saldi clienti
+            - Verifica incroci attivi
+            - Aggiornamento wallet
+            """)
+        
+        with col2:
+            st.markdown("""
+            **📊 Task Settimanali**
+            - Report settimanale
+            - Backup dati
+            - Pulizia sistema
+            """)
+        
+        with col3:
+            st.markdown("""
+            **📈 Task Mensili**
+            - Report mensile
+            - Analisi performance
+            - Pianificazione strategica
+            """)
+        
+    except Exception as e:
+        st.error(f"❌ **Errore caricamento Task Manager**: {e}")
+        st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
+
+elif page == "📊 Statistiche Sistema":
+    # Redirect alle impostazioni per le statistiche sistema
+    st.info("🔄 **REDIRECT**: Le Statistiche Sistema sono ora disponibili nella sezione ⚙️ Impostazioni > 📊 Statistiche Sistema")
+    
+    # Pulsante per andare alle impostazioni
+    if st.button("⚙️ Vai alle Impostazioni", type="primary"):
+        st.session_state['current_page'] = "⚙️ Impostazioni"
+        st.rerun()
 
 elif page == "🔍 Audit Sicurezza":
     # Mostra l'audit di sicurezza per admin
