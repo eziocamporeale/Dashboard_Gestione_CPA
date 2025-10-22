@@ -1376,7 +1376,7 @@ elif page == "⚙️ Impostazioni":
         # Test connessione
         st.markdown("---")
         st.subheader("🧪 Test Connessione")
-        if st.button("🔍 Test Supabase", type="primary"):
+        if st.button("🔍 Test Supabase", type="primary", key="test_supabase_main"):
             try:
                 if supabase_manager.is_configured:
                     # Test lettura clienti
@@ -1828,7 +1828,7 @@ elif page == "⚙️ Impostazioni":
         # Test connessione
         st.markdown("---")
         st.subheader("🧪 Test Connessione")
-        if st.button("🔍 Test Supabase", type="primary"):
+        if st.button("🔍 Test Supabase", type="primary", key="test_supabase_settings"):
             try:
                 if supabase_manager.is_configured:
                     # Test lettura clienti

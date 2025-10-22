@@ -49,7 +49,7 @@ class TasksManager:
     def _init_supabase(self):
         """Inizializza la connessione Supabase"""
         try:
-            from database.supabase_manager import SupabaseManager
+            from supabase_manager import SupabaseManager
             self.supabase_manager = SupabaseManager()
             logger.info("✅ Supabase inizializzato per TasksManager")
         except Exception as e:
@@ -441,12 +441,18 @@ class TasksManager:
     def _get_system_users(self) -> List[Dict]:
         """Ottiene la lista degli utenti dal sistema di autenticazione"""
         try:
+            logger.info("🔍 Tentativo recupero utenti dal sistema...")
+            
             if not self.supabase_manager:
                 logger.warning("❌ Supabase non disponibile per recupero utenti")
                 return []
             
+            logger.info("✅ SupabaseManager disponibile, eseguo query...")
+            
             # Recupera utenti dalla tabella users
             response = self.supabase_manager.supabase.table('users').select('*').execute()
+            
+            logger.info(f"📊 Risposta query: {len(response.data) if response.data else 0} utenti")
             
             if response.data:
                 logger.info(f"✅ Recuperati {len(response.data)} utenti dal sistema")
