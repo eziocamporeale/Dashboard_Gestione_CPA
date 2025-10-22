@@ -277,7 +277,7 @@ class WalletTransactionsManager:
                 'wallet_destinatario': client_wallet,
                 'importo': amount,
                 'valuta': 'USDT',
-                'tipo_transazione': motivo,
+                'tipo_transazione': 'deposit',  # Usa sempre 'deposit' per i depositi
                 'stato': 'completed',  # Depositi automatici
                 'note': f"Deposito {motivo} da team a cliente",
                 'hash_transazione': hash_blockchain or f"deposit_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -323,7 +323,7 @@ class WalletTransactionsManager:
                 'wallet_destinatario': team_wallet,
                 'importo': amount,
                 'valuta': 'USDT',
-                'tipo_transazione': motivo,
+                'tipo_transazione': 'withdrawal',  # Usa sempre 'withdrawal' per i prelievi
                 'stato': 'completed',  # Prelievi automatici
                 'note': f"Prelievo {motivo} da cliente a team",
                 'hash_transazione': hash_blockchain or f"withdrawal_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -373,3 +373,180 @@ class WalletTransactionsManager:
         except Exception as e:
             logger.error(f"❌ Errore calcolo saldo wallet {wallet_name}: {e}")
             return 0.0
+    
+    def create_cross_transaction(self, incrocio_id: str, cliente_long_id: str, cliente_short_id: str, 
+                                volume_long: float, volume_short: float, pair_trading: str) -> Tuple[bool, str]:
+        """
+        Crea transazioni wallet per un nuovo incrocio
+        
+        Args:
+            incrocio_id: ID dell'incrocio
+            cliente_long_id: ID del cliente long
+            cliente_short_id: ID del cliente short
+            volume_long: Volume posizione long
+            volume_short: Volume posizione short
+            pair_trading: Coppia di trading (es. EUR/USD)
+            
+        Returns:
+            (success, message)
+        """
+        if not self.supabase_manager:
+            return False, "❌ Supabase non configurato"
+        
+        try:
+            # Recupera informazioni clienti
+            cliente_long_response = self.supabase_manager.supabase.table('clienti').select('nome_cliente, wallet').eq('id', cliente_long_id).execute()
+            cliente_short_response = self.supabase_manager.supabase.table('clienti').select('nome_cliente, wallet').eq('id', cliente_short_id).execute()
+            
+            if not cliente_long_response.data or not cliente_short_response.data:
+                return False, "❌ Cliente non trovato"
+            
+            cliente_long = cliente_long_response.data[0]
+            cliente_short = cliente_short_response.data[0]
+            
+            # Trova i wallet dei clienti
+            wallet_long = self._find_client_wallet(cliente_long['nome_cliente'], cliente_long.get('wallet', ''))
+            wallet_short = self._find_client_wallet(cliente_short['nome_cliente'], cliente_short.get('wallet', ''))
+            
+            if not wallet_long or not wallet_short:
+                return False, "❌ Wallet clienti non trovati"
+            
+            # Crea transazione di apertura incrocio (registra i saldi iniziali)
+            transaction_data = {
+                'wallet_mittente': 'Sistema',
+                'wallet_destinatario': 'Sistema',
+                'importo': 0.0,  # Transazione di registrazione
+                'valuta': 'USDT',
+                'tipo_transazione': 'transfer',  # Usa tipo permesso
+                'stato': 'completed',
+                'note': f"Incrocio {incrocio_id} - Apertura: {cliente_long['nome_cliente']} (Long {volume_long} {pair_trading}) vs {cliente_short['nome_cliente']} (Short {volume_short} {pair_trading})",
+                'hash_transazione': f"incrocio_open_{incrocio_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                'commissione': 0.0,
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Inserisci transazione di apertura
+            response = self.supabase_manager.supabase.table('wallet_transactions').insert(transaction_data).execute()
+            
+            if response.data:
+                logger.info(f"✅ Transazione apertura incrocio {incrocio_id} creata")
+                return True, f"✅ Transazione apertura incrocio creata per {cliente_long['nome_cliente']} vs {cliente_short['nome_cliente']}"
+            else:
+                return False, "❌ Errore creazione transazione apertura incrocio"
+                
+        except Exception as e:
+            logger.error(f"❌ Errore creazione transazione incrocio: {e}")
+            return False, f"❌ Errore: {e}"
+    
+    def _find_client_wallet(self, nome_cliente: str, wallet_address: str = '') -> Optional[str]:
+        """
+        Trova il wallet di un cliente nel sistema
+        
+        Args:
+            nome_cliente: Nome del cliente
+            wallet_address: Indirizzo wallet (opzionale)
+            
+        Returns:
+            Nome del wallet o None se non trovato
+        """
+        try:
+            # Cerca wallet per nome cliente
+            wallets = self.get_client_wallets()
+            for wallet in wallets:
+                if wallet.get('proprietario') == nome_cliente:
+                    return wallet['nome_wallet']
+            
+            # Se non trovato e abbiamo l'indirizzo, cerca per indirizzo
+            if wallet_address:
+                for wallet in wallets:
+                    note = wallet.get('note', '')
+                    if wallet_address in note:
+                        return wallet['nome_wallet']
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"❌ Errore ricerca wallet cliente {nome_cliente}: {e}")
+            return None
+    
+    def close_cross_transaction(self, incrocio_id: str, cliente_long_id: str, cliente_short_id: str,
+                               saldo_long_attuale: float, saldo_short_attuale: float,
+                               vincitore: str, pair_trading: str) -> Tuple[bool, str]:
+        """
+        Gestisce la chiusura di un incrocio con bilanciamento automatico dei saldi
+        
+        Args:
+            incrocio_id: ID dell'incrocio
+            cliente_long_id: ID del cliente long
+            cliente_short_id: ID del cliente short
+            saldo_long_attuale: Saldo attuale del cliente long
+            saldo_short_attuale: Saldo attuale del cliente short
+            vincitore: 'long' o 'short' - chi ha vinto l'incrocio
+            pair_trading: Coppia di trading
+            
+        Returns:
+            (success, message)
+        """
+        if not self.supabase_manager:
+            return False, "❌ Supabase non configurato"
+        
+        try:
+            # Recupera informazioni clienti
+            cliente_long_response = self.supabase_manager.supabase.table('clienti').select('nome_cliente, wallet').eq('id', cliente_long_id).execute()
+            cliente_short_response = self.supabase_manager.supabase.table('clienti').select('nome_cliente, wallet').eq('id', cliente_short_id).execute()
+            
+            if not cliente_long_response.data or not cliente_short_response.data:
+                return False, "❌ Cliente non trovato"
+            
+            cliente_long = cliente_long_response.data[0]
+            cliente_short = cliente_short_response.data[0]
+            
+            # Trova i wallet dei clienti
+            wallet_long = self._find_client_wallet(cliente_long['nome_cliente'], cliente_long.get('wallet', ''))
+            wallet_short = self._find_client_wallet(cliente_short['nome_cliente'], cliente_short.get('wallet', ''))
+            
+            if not wallet_long or not wallet_short:
+                return False, "❌ Wallet clienti non trovati"
+            
+            # Calcola P&L basato sul vincitore
+            if vincitore == 'long':
+                # Long vince, short perde
+                pnl_long = saldo_long_attuale
+                pnl_short = -saldo_short_attuale
+                note_vincitore = f"Vincitore: {cliente_long['nome_cliente']} (Long)"
+            elif vincitore == 'short':
+                # Short vince, long perde
+                pnl_long = -saldo_long_attuale
+                pnl_short = saldo_short_attuale
+                note_vincitore = f"Vincitore: {cliente_short['nome_cliente']} (Short)"
+            else:
+                return False, "❌ Vincitore deve essere 'long' o 'short'"
+            
+            # Crea transazione di chiusura incrocio
+            transaction_data = {
+                'wallet_mittente': 'Sistema',
+                'wallet_destinatario': 'Sistema',
+                'importo': 0.0,  # Transazione di registrazione
+                'valuta': 'USDT',
+                'tipo_transazione': 'transfer',  # Usa tipo permesso
+                'stato': 'completed',
+                'note': f"Incrocio {incrocio_id} - Chiusura: {note_vincitore} | P&L Long: {pnl_long:.2f} USDT, P&L Short: {pnl_short:.2f} USDT | Pair: {pair_trading}",
+                'hash_transazione': f"incrocio_close_{incrocio_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                'commissione': 0.0,
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Inserisci transazione di chiusura
+            response = self.supabase_manager.supabase.table('wallet_transactions').insert(transaction_data).execute()
+            
+            if response.data:
+                logger.info(f"✅ Transazione chiusura incrocio {incrocio_id} creata")
+                return True, f"✅ Incrocio chiuso: {note_vincitore} | P&L Long: {pnl_long:.2f} USDT, P&L Short: {pnl_short:.2f} USDT"
+            else:
+                return False, "❌ Errore creazione transazione chiusura incrocio"
+                
+        except Exception as e:
+            logger.error(f"❌ Errore chiusura incrocio: {e}")
+            return False, f"❌ Errore: {e}"

@@ -88,6 +88,38 @@ class IncrociManager:
                 
                 bonus_totali = sum(bonus.get('importo_bonus', 0) for bonus in response_bonus.data) if response_bonus.data else 0
                 
+                # Recupera informazioni clienti per ID
+                cliente_long_id = None
+                cliente_short_id = None
+                
+                try:
+                    # Cerca cliente long per numero conto
+                    if account_long.get('numero_conto'):
+                        cliente_long_response = self.supabase.supabase.table('clienti').select('id, nome_cliente').eq('numero_conto', account_long['numero_conto']).execute()
+                        if cliente_long_response.data:
+                            cliente_long_id = cliente_long_response.data[0]['id']
+                            cliente_long_nome = cliente_long_response.data[0]['nome_cliente']
+                        else:
+                            cliente_long_nome = account_long.get('numero_conto', 'N/A')
+                    else:
+                        cliente_long_nome = 'N/A'
+                    
+                    # Cerca cliente short per numero conto
+                    if account_short.get('numero_conto'):
+                        cliente_short_response = self.supabase.supabase.table('clienti').select('id, nome_cliente').eq('numero_conto', account_short['numero_conto']).execute()
+                        if cliente_short_response.data:
+                            cliente_short_id = cliente_short_response.data[0]['id']
+                            cliente_short_nome = cliente_short_response.data[0]['nome_cliente']
+                        else:
+                            cliente_short_nome = account_short.get('numero_conto', 'N/A')
+                    else:
+                        cliente_short_nome = 'N/A'
+                        
+                except Exception as e:
+                    logging.warning(f"Errore recupero info clienti: {e}")
+                    cliente_long_nome = account_long.get('numero_conto', 'N/A')
+                    cliente_short_nome = account_short.get('numero_conto', 'N/A')
+                
                 # Crea record completo
                 incrocio_completo = {
                     'id': incrocio['id'],
@@ -98,8 +130,10 @@ class IncrociManager:
                     'pair_trading': incrocio['pair_trading'],
                     'volume_trading': incrocio.get('volume_trading', 0),
                     'note': incrocio.get('note', ''),
-                    'cliente_long': account_long.get('numero_conto', 'N/A'),
-                    'cliente_short': account_short.get('numero_conto', 'N/A'),
+                    'cliente_long': cliente_long_nome,
+                    'cliente_short': cliente_short_nome,
+                    'cliente_long_id': cliente_long_id,
+                    'cliente_short_id': cliente_short_id,
                     'broker_long': account_long.get('broker', 'N/A'),
                     'piattaforma_long': account_long.get('piattaforma', 'N/A'),
                     'conto_long': account_long.get('numero_conto', 'N/A'),
@@ -274,6 +308,42 @@ class IncrociManager:
                     response = self.supabase.supabase.table('incroci_bonus').insert(bonus_data).execute()
                     if not response.data:
                         logging.warning(f"Errore creazione bonus: {bonus}")
+            
+            # INTEGRAZIONE WALLET: Crea transazione wallet per tracciare l'incrocio
+            try:
+                from components.wallet_transactions_manager import WalletTransactionsManager
+                wallet_manager = WalletTransactionsManager()
+                
+                # Estrai ID clienti dai dati
+                cliente_long_id = dati_incrocio.get('account_long_id')
+                cliente_short_id = dati_incrocio.get('account_short_id')
+                
+                # Se sono tuple, estrai l'ID
+                if isinstance(cliente_long_id, tuple):
+                    cliente_long_id = cliente_long_id[1]
+                if isinstance(cliente_short_id, tuple):
+                    cliente_short_id = cliente_short_id[1]
+                
+                if cliente_long_id and cliente_short_id:
+                    wallet_success, wallet_message = wallet_manager.create_cross_transaction(
+                        incrocio_id=incrocio_id,
+                        cliente_long_id=cliente_long_id,
+                        cliente_short_id=cliente_short_id,
+                        volume_long=dati_incrocio.get('volume_long', 0),
+                        volume_short=dati_incrocio.get('volume_short', 0),
+                        pair_trading=dati_incrocio.get('pair_trading', '')
+                    )
+                    
+                    if wallet_success:
+                        logging.info(f"✅ Transazione wallet creata per incrocio {incrocio_id}")
+                    else:
+                        logging.warning(f"⚠️ Errore creazione transazione wallet: {wallet_message}")
+                else:
+                    logging.warning("⚠️ ID clienti non trovati per creazione transazione wallet")
+                    
+            except Exception as wallet_error:
+                logging.error(f"❌ Errore integrazione wallet: {wallet_error}")
+                # Non bloccare la creazione dell'incrocio se c'è un errore wallet
             
             logging.info(f"Incrocio creato con ID: {incrocio_id}")
             return True, incrocio_id

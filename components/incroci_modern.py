@@ -337,6 +337,12 @@ class IncrociModern:
         st.markdown('<div class="modern-card fade-in">', unsafe_allow_html=True)
         st.markdown("### 📋 Gestione Incroci")
         
+        # Gestione chiusura incroci moderna
+        if st.session_state.get('incrocio_da_chiudere_modern'):
+            incrocio_id = st.session_state.incrocio_da_chiudere_modern
+            self._close_incrocio(incrocio_id)
+            return
+        
         # Filtri moderni
         self._render_modern_filters()
         
@@ -536,7 +542,8 @@ class IncrociModern:
             with col3:
                 if incrocio['stato'] == 'attivo':
                     if st.button("❌ Chiudi", key=f"chiudi_{incrocio['id']}"):
-                        self._close_incrocio(incrocio['id'])
+                        st.session_state.incrocio_da_chiudere_modern = incrocio['id']
+                        st.rerun()
     
     def _render_incrocio_wizard(self):
         """Wizard moderno per creazione incrocio"""
@@ -826,8 +833,150 @@ class IncrociModern:
         st.info(f"👁️ Dettagli incrocio {incrocio_id} in sviluppo")
     
     def _close_incrocio(self, incrocio_id):
-        """Chiude un incrocio"""
-        st.info(f"❌ Chiusura incrocio {incrocio_id} in sviluppo")
+        """Chiude un incrocio con bilanciamento automatico"""
+        try:
+            from components.incroci_close_manager import IncrociCloseManager
+            
+            # Usa il nuovo sistema di chiusura
+            close_manager = IncrociCloseManager()
+            
+            # Recupera informazioni incrocio
+            incroci = self.incroci_manager.ottieni_incroci()
+            incrocio_data = None
+            
+            for _, incrocio in incroci.iterrows():
+                if incrocio['id'] == incrocio_id:
+                    incrocio_data = incrocio
+                    break
+            
+            if incrocio_data is None:
+                st.error("❌ Incrocio non trovato")
+                return
+            
+            # Mostra informazioni incrocio con design moderno
+            st.markdown(f"### 🔄 Chiusura: {incrocio_data['nome_incrocio']}")
+            
+            # Card moderna per informazioni incrocio
+            col_info1, col_info2 = st.columns(2)
+            
+            with col_info1:
+                st.markdown("""
+                <div class="incrocio-card">
+                    <h4>👤 Cliente Long (Buy)</h4>
+                    <p><strong>Nome:</strong> {cliente_long}</p>
+                    <p><strong>Conto:</strong> {conto_long}</p>
+                    <p><strong>Broker:</strong> {broker_long}</p>
+                </div>
+                """.format(
+                    cliente_long=incrocio_data['cliente_long'],
+                    conto_long=incrocio_data['conto_long'],
+                    broker_long=incrocio_data['broker_long']
+                ), unsafe_allow_html=True)
+            
+            with col_info2:
+                st.markdown("""
+                <div class="incrocio-card">
+                    <h4>👤 Cliente Short (Sell)</h4>
+                    <p><strong>Nome:</strong> {cliente_short}</p>
+                    <p><strong>Conto:</strong> {conto_short}</p>
+                    <p><strong>Broker:</strong> {broker_short}</p>
+                </div>
+                """.format(
+                    cliente_short=incrocio_data['cliente_short'],
+                    conto_short=incrocio_data['conto_short'],
+                    broker_short=incrocio_data['broker_short']
+                ), unsafe_allow_html=True)
+            
+            # Form chiusura con design moderno
+            st.markdown("---")
+            st.markdown("### 💰 Inserisci Saldi Attuali")
+            
+            col_saldi1, col_saldi2 = st.columns(2)
+            
+            with col_saldi1:
+                saldo_long_attuale = st.number_input(
+                    "💰 Saldo Cliente Long (USDT)",
+                    min_value=0.0,
+                    step=0.01,
+                    format="%.2f",
+                    help="Inserisci il saldo attuale del conto Long",
+                    key=f"modern_saldo_long_{incrocio_id}"
+                )
+            
+            with col_saldi2:
+                saldo_short_attuale = st.number_input(
+                    "💰 Saldo Cliente Short (USDT)",
+                    min_value=0.0,
+                    step=0.01,
+                    format="%.2f",
+                    help="Inserisci il saldo attuale del conto Short",
+                    key=f"modern_saldo_short_{incrocio_id}"
+                )
+            
+            st.markdown("---")
+            st.markdown("### 🏆 Risultato Incrocio")
+            
+            vincitore = st.radio(
+                "🎯 Chi ha vinto l'incrocio?",
+                options=["long", "short"],
+                format_func=lambda x: {
+                    "long": f"👤 {incrocio_data['cliente_long']} (Long/Buy)",
+                    "short": f"👤 {incrocio_data['cliente_short']} (Short/Sell)"
+                }[x],
+                help="Seleziona chi ha vinto l'incrocio",
+                key=f"modern_vincitore_{incrocio_id}"
+            )
+            
+            # Note aggiuntive
+            note_chiusura = st.text_area(
+                "📝 Note Chiusura",
+                placeholder="Note aggiuntive sulla chiusura dell'incrocio...",
+                help="Note opzionali per la chiusura",
+                key=f"modern_note_chiusura_{incrocio_id}"
+            )
+            
+            # Pulsanti con design moderno
+            col_btn1, col_btn2 = st.columns(2)
+            
+            with col_btn1:
+                if st.button("✅ Chiudi Incrocio", type="primary", key=f"modern_confirm_close_{incrocio_id}"):
+                    if saldo_long_attuale > 0 and saldo_short_attuale > 0:
+                        # Prepara dati per la chiusura
+                        incrocio_dict = {
+                            'id': incrocio_id,
+                            'nome_incrocio': incrocio_data['nome_incrocio'],
+                            'pair_trading': incrocio_data['pair_trading'],
+                            'cliente_long': {'id': incrocio_data.get('cliente_long_id', ''), 'nome_cliente': incrocio_data['cliente_long']},
+                            'cliente_short': {'id': incrocio_data.get('cliente_short_id', ''), 'nome_cliente': incrocio_data['cliente_short']},
+                            'note': incrocio_data.get('note', '')
+                        }
+                        
+                        success, message = close_manager._close_cross(
+                            incrocio=incrocio_dict,
+                            saldo_long_attuale=saldo_long_attuale,
+                            saldo_short_attuale=saldo_short_attuale,
+                            vincitore=vincitore,
+                            note_chiusura=note_chiusura
+                        )
+                        
+                        if success:
+                            st.success(message)
+                            st.balloons()
+                            st.session_state.incrocio_da_chiudere_modern = None
+                            st.rerun()
+                        else:
+                            st.error(message)
+                    else:
+                        st.error("❌ Inserisci saldi validi per entrambi i clienti")
+            
+            with col_btn2:
+                if st.button("❌ Annulla", key=f"modern_cancel_close_{incrocio_id}"):
+                    st.session_state.incrocio_da_chiudere_modern = None
+                    st.rerun()
+                    
+        except Exception as e:
+            st.error(f"❌ Errore chiusura incrocio: {e}")
+            logging.error(f"Errore _close_incrocio modern: {e}")
     
     def _create_incrocio_from_wizard(self):
         """Crea incrocio dal wizard"""
