@@ -60,6 +60,22 @@ class TasksManager:
         """Rende il dashboard principale dei task"""
         st.header("📋 Task Giornalieri")
         st.info("🎯 **GESTIONE ATTIVITÀ**: Organizza e traccia le attività giornaliere, settimanali e mensili con i collaboratori")
+
+        # Avviso sulla persistenza dei dati
+        if not self.supabase_manager:
+            st.error("❌ **SUPABASE NON CONFIGURATO** - I task vengono salvati temporaneamente")
+        else:
+            # Controlla se la tabella tasks esiste
+            try:
+                test_response = self.supabase_manager.supabase.table('tasks').select('*').limit(1).execute()
+                if test_response.data is not None:
+                    st.success("✅ **DATABASE CONFIGURATO** - I task vengono salvati permanentemente")
+                else:
+                    st.warning("⚠️ **TABELLA TASKS MANCANTE** - I task vengono salvati temporaneamente")
+                    st.info("💡 **Per salvare permanentemente i task:**\n1. Vai al dashboard Supabase\n2. Crea la tabella 'tasks' con i campi necessari\n3. Ricarica questa pagina")
+            except Exception as e:
+                st.warning("⚠️ **TABELLA TASKS NON TROVATA** - I task vengono salvati temporaneamente")
+                st.info("💡 **Per salvare permanentemente i task:**\n1. Vai al dashboard Supabase\n2. Crea la tabella 'tasks' con i campi necessari\n3. Ricarica questa pagina")
         
         # Tab per organizzare le funzionalità
         tab_overview, tab_create, tab_manage, tab_collaborators = st.tabs([
@@ -369,12 +385,10 @@ class TasksManager:
                     due_date: date, assigned_to: List[str]) -> Tuple[bool, str]:
         """Crea un nuovo task"""
         try:
-            # Per ora salva in session state (in futuro integreremo con Supabase)
-            if 'tasks' not in st.session_state:
-                st.session_state.tasks = []
+            # Genera ID univoco
+            task_id = str(uuid.uuid4())
             
-            task_id = f"task_{len(st.session_state.tasks) + 1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            
+            # Crea oggetto task
             task_data = {
                 'id': task_id,
                 'title': title,
@@ -388,10 +402,30 @@ class TasksManager:
                 'created_by': 'Admin'  # In futuro prendere dall'utente corrente
             }
             
+            # Prova prima a salvare nel database
+            if self.supabase_manager:
+                try:
+                    # Inserisci nel database
+                    response = self.supabase_manager.supabase.table('tasks').insert(task_data).execute()
+                    
+                    if response.data:
+                        logger.info(f"✅ Task '{title}' salvato nel database con ID {task_id}")
+                        return True, f"✅ Task '{title}' creato e salvato nel database!"
+                    else:
+                        logger.warning(f"⚠️ Errore salvataggio database per task '{title}', uso sessione temporanea")
+                        
+                except Exception as db_error:
+                    logger.warning(f"⚠️ Database non disponibile per task '{title}': {db_error}")
+                    logger.info("💡 Usando salvataggio temporaneo in sessione")
+            
+            # Fallback: salva nella sessione
+            if 'tasks' not in st.session_state:
+                st.session_state.tasks = []
+            
             st.session_state.tasks.append(task_data)
             
-            logger.info(f"✅ Task creato: {title}")
-            return True, f"✅ Task '{title}' creato con successo!"
+            logger.info(f"✅ Task '{title}' creato temporaneamente in sessione con ID {task_id}")
+            return True, f"✅ Task '{title}' creato! (Salvato temporaneamente - ricarica la pagina per vedere)"
             
         except Exception as e:
             logger.error(f"❌ Errore creazione task: {e}")
@@ -400,18 +434,44 @@ class TasksManager:
     def get_tasks(self, status: Optional[str] = None, priority: Optional[str] = None) -> List[Dict]:
         """Ottiene la lista dei task"""
         try:
+            # Prova prima a recuperare dal database
+            if self.supabase_manager:
+                try:
+                    query = self.supabase_manager.supabase.table('tasks').select('*')
+                    
+                    # Applica filtri se specificati
+                    if status:
+                        query = query.eq('status', status)
+                    if priority:
+                        query = query.eq('priority', priority)
+                    
+                    response = query.execute()
+                    
+                    if response.data:
+                        logger.info(f"✅ Recuperati {len(response.data)} task dal database")
+                        return response.data
+                    else:
+                        logger.info("📋 Nessun task trovato nel database")
+                        
+                except Exception as db_error:
+                    logger.warning(f"⚠️ Errore recupero task dal database: {db_error}")
+                    logger.info("💡 Fallback a sessione temporanea")
+            
+            # Fallback: usa la sessione
             if 'tasks' not in st.session_state:
+                st.session_state.tasks = []
                 return []
             
             tasks = st.session_state.tasks.copy()
             
-            # Filtri
+            # Applica filtri se specificati
             if status:
                 tasks = [task for task in tasks if task['status'] == status]
             
             if priority:
                 tasks = [task for task in tasks if task['priority'] == priority]
             
+            logger.info(f"📋 Recuperati {len(tasks)} task dalla sessione")
             return tasks
             
         except Exception as e:
