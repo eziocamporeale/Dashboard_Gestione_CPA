@@ -85,30 +85,85 @@ class TasksManager:
         # Statistiche rapide
         col1, col2, col3, col4 = st.columns(4)
         
+        # Calcola statistiche reali
+        tasks = self.get_tasks()
+        collaborators = self._get_system_users()
+        
+        total_tasks = len(tasks)
+        in_progress = len([task for task in tasks if task['status'] == TaskStatus.IN_PROGRESS.value])
+        completed = len([task for task in tasks if task['status'] == TaskStatus.COMPLETED.value])
+        total_collaborators = len(collaborators)
+        
         with col1:
-            st.metric("📋 Task Totali", "0", "0")
+            st.metric("📋 Task Totali", total_tasks, "0")
         with col2:
-            st.metric("⏳ In Corso", "0", "0")
+            st.metric("⏳ In Corso", in_progress, "0")
         with col3:
-            st.metric("✅ Completati", "0", "0")
+            st.metric("✅ Completati", completed, "0")
         with col4:
-            st.metric("👥 Collaboratori", "0", "0")
+            st.metric("👥 Collaboratori", total_collaborators, "0")
         
         # Task di oggi
         st.markdown("---")
         st.subheader("📅 Task di Oggi")
         st.info("📋 **ATTIVITÀ GIORNALIERE**: Task programmati per oggi")
         
-        # Placeholder per task di oggi
-        st.write("• Nessun task programmato per oggi")
+        # Filtra task di oggi
+        today = date.today()
+        today_tasks = [task for task in tasks if task.get('due_date') == today.isoformat()]
+        
+        if today_tasks:
+            st.success(f"📋 **{len(today_tasks)} task** programmati per oggi")
+            for task in today_tasks:
+                priority_color = {
+                    TaskPriority.LOW.value: "🟢",
+                    TaskPriority.MEDIUM.value: "🟡", 
+                    TaskPriority.HIGH.value: "🟠",
+                    TaskPriority.URGENT.value: "🔴"
+                }.get(task['priority'], "⚪")
+                
+                st.write(f"{priority_color} **{task['title']}** - {task['priority']} - Assegnato a: {', '.join(task.get('assigned_to', []))}")
+        else:
+            st.write("• Nessun task programmato per oggi")
         
         # Task in scadenza
         st.markdown("---")
         st.subheader("⏰ Task in Scadenza")
         st.info("🚨 **ATTENZIONE**: Task che scadono nei prossimi 3 giorni")
         
-        # Placeholder per task in scadenza
-        st.write("• Nessun task in scadenza")
+        # Filtra task in scadenza (nei prossimi 3 giorni)
+        three_days_later = today + timedelta(days=3)
+        upcoming_tasks = []
+        
+        for task in tasks:
+            if task.get('due_date'):
+                try:
+                    due_date = datetime.fromisoformat(task['due_date']).date()
+                    if today <= due_date <= three_days_later:
+                        upcoming_tasks.append(task)
+                except:
+                    continue
+        
+        if upcoming_tasks:
+            st.warning(f"🚨 **{len(upcoming_tasks)} task** in scadenza nei prossimi 3 giorni")
+            for task in upcoming_tasks:
+                try:
+                    due_date = datetime.fromisoformat(task['due_date']).date()
+                    days_left = (due_date - today).days
+                    
+                    priority_color = {
+                        TaskPriority.LOW.value: "🟢",
+                        TaskPriority.MEDIUM.value: "🟡", 
+                        TaskPriority.HIGH.value: "🟠",
+                        TaskPriority.URGENT.value: "🔴"
+                    }.get(task['priority'], "⚪")
+                    
+                    urgency_text = "OGGI!" if days_left == 0 else f"tra {days_left} giorni"
+                    st.write(f"{priority_color} **{task['title']}** - Scade {urgency_text} - {task['priority']}")
+                except:
+                    continue
+        else:
+            st.write("• Nessun task in scadenza")
     
     def _render_create_task_tab(self):
         """Tab creazione task"""
@@ -151,8 +206,8 @@ class TasksManager:
                 
                 assigned_to = st.multiselect(
                     "👥 Assegna a",
-                    options=["Admin", "Collaboratore 1", "Collaboratore 2"],
-                    help="Collaboratori assegnati al task"
+                    options=self.get_collaborators_for_assignment(),
+                    help="Collaboratori assegnati al task (basati sugli account utenti)"
                 )
             
             # Pulsanti
@@ -244,79 +299,71 @@ class TasksManager:
     def _render_collaborators_tab(self):
         """Tab gestione collaboratori"""
         st.subheader("👥 Gestione Collaboratori")
-        st.info("🤝 **TEAM MANAGEMENT**: Gestisci i collaboratori e le loro assegnazioni")
+        st.info("🤝 **TEAM MANAGEMENT**: Collaboratori basati sugli account utenti del sistema")
         
-        # Lista collaboratori
+        # Lista collaboratori dal sistema utenti
         st.markdown("---")
         st.subheader("👥 Lista Collaboratori")
         
-        # Placeholder per collaboratori
-        col1, col2, col3 = st.columns(3)
+        try:
+            # Ottieni lista utenti dal sistema di autenticazione
+            users = self._get_system_users()
+            
+            if users:
+                st.success(f"✅ **{len(users)} collaboratori** trovati nel sistema")
+                
+                # Mostra collaboratori in colonne
+                cols_per_row = 3
+                for i in range(0, len(users), cols_per_row):
+                    cols = st.columns(cols_per_row)
+                    
+                    for j, col in enumerate(cols):
+                        if i + j < len(users):
+                            user = users[i + j]
+                            with col:
+                                # Calcola statistiche task per questo utente
+                                task_stats = self._get_user_task_stats(user['username'])
+                                
+                                st.markdown(f"""
+                                **👤 {user.get('name', user['username'])}**
+                                - Username: {user['username']}
+                                - Ruolo: {user.get('role', 'N/A')}
+                                - Email: {user.get('email', 'N/A')}
+                                - Task assegnati: {task_stats['assigned']}
+                                - Task completati: {task_stats['completed']}
+                                """)
+            else:
+                st.warning("⚠️ **Nessun collaboratore trovato** - Crea account utenti nel sistema")
+                st.info("💡 **Come aggiungere collaboratori:**")
+                st.write("1. Vai alla sezione **⚙️ Impostazioni**")
+                st.write("2. Tab **🛡️ Permessi**")
+                st.write("3. Crea nuovi account utenti")
+                st.write("4. I nuovi utenti appariranno automaticamente qui")
+                
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento collaboratori**: {e}")
+            st.info("🔧 Controlla la connessione al database utenti")
         
-        with col1:
-            st.markdown("""
-            **👤 Admin**
-            - Ruolo: Amministratore
-            - Task assegnati: 0
-            - Task completati: 0
-            """)
-        
-        with col2:
-            st.markdown("""
-            **👤 Collaboratore 1**
-            - Ruolo: Operatore
-            - Task assegnati: 0
-            - Task completati: 0
-            """)
-        
-        with col3:
-            st.markdown("""
-            **👤 Collaboratore 2**
-            - Ruolo: Operatore
-            - Task assegnati: 0
-            - Task completati: 0
-            """)
-        
-        # Aggiungi collaboratore
+        # Informazioni aggiuntive
         st.markdown("---")
-        st.subheader("➕ Aggiungi Collaboratore")
+        st.subheader("ℹ️ Informazioni Sistema")
+        st.info("📋 **GESTIONE AUTOMATICA**: I collaboratori vengono sincronizzati automaticamente con gli account utenti del sistema")
         
-        with st.form("add_collaborator_form"):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                collaborator_name = st.text_input(
-                    "👤 Nome Collaboratore",
-                    placeholder="Es: Mario Rossi",
-                    help="Nome completo del collaboratore"
-                )
-                
-                collaborator_email = st.text_input(
-                    "📧 Email",
-                    placeholder="mario.rossi@example.com",
-                    help="Email del collaboratore"
-                )
-            
-            with col2:
-                collaborator_role = st.selectbox(
-                    "👑 Ruolo",
-                    options=["Operatore", "Supervisore", "Amministratore"],
-                    help="Ruolo del collaboratore"
-                )
-                
-                collaborator_department = st.text_input(
-                    "🏢 Dipartimento",
-                    placeholder="Es: Gestione Clienti",
-                    help="Dipartimento di appartenenza"
-                )
-            
-            submitted = st.form_submit_button("✅ Aggiungi Collaboratore", type="primary")
-            
-            if submitted:
-                if collaborator_name and collaborator_email:
-                    st.success(f"✅ Collaboratore {collaborator_name} aggiunto con successo!")
-                else:
-                    st.error("❌ Compila tutti i campi obbligatori")
+        col_info1, col_info2 = st.columns(2)
+        
+        with col_info1:
+            st.write("**✅ Vantaggi:**")
+            st.write("• Sincronizzazione automatica")
+            st.write("• Gestione centralizzata")
+            st.write("• Controllo accessi integrato")
+            st.write("• Ruoli e permessi unificati")
+        
+        with col_info2:
+            st.write("**🔧 Come funziona:**")
+            st.write("• Ogni account utente = Collaboratore")
+            st.write("• Ruoli dal sistema di autenticazione")
+            st.write("• Statistiche task automatiche")
+            st.write("• Aggiornamento in tempo reale")
     
     def _create_task(self, title: str, description: str, priority: str, period: str, 
                     due_date: date, assigned_to: List[str]) -> Tuple[bool, str]:
@@ -390,3 +437,61 @@ class TasksManager:
         except Exception as e:
             logger.error(f"❌ Errore aggiornamento task: {e}")
             return False, f"❌ Errore nell'aggiornamento: {e}"
+    
+    def _get_system_users(self) -> List[Dict]:
+        """Ottiene la lista degli utenti dal sistema di autenticazione"""
+        try:
+            if not self.supabase_manager:
+                logger.warning("❌ Supabase non disponibile per recupero utenti")
+                return []
+            
+            # Recupera utenti dalla tabella users
+            response = self.supabase_manager.supabase.table('users').select('*').execute()
+            
+            if response.data:
+                logger.info(f"✅ Recuperati {len(response.data)} utenti dal sistema")
+                return response.data
+            else:
+                logger.warning("⚠️ Nessun utente trovato nel sistema")
+                return []
+                
+        except Exception as e:
+            logger.error(f"❌ Errore recupero utenti: {e}")
+            return []
+    
+    def _get_user_task_stats(self, username: str) -> Dict[str, int]:
+        """Calcola le statistiche task per un utente specifico"""
+        try:
+            if 'tasks' not in st.session_state:
+                return {'assigned': 0, 'completed': 0, 'in_progress': 0}
+            
+            user_tasks = [task for task in st.session_state.tasks if username in task.get('assigned_to', [])]
+            
+            stats = {
+                'assigned': len(user_tasks),
+                'completed': len([task for task in user_tasks if task['status'] == TaskStatus.COMPLETED.value]),
+                'in_progress': len([task for task in user_tasks if task['status'] == TaskStatus.IN_PROGRESS.value])
+            }
+            
+            return stats
+            
+        except Exception as e:
+            logger.error(f"❌ Errore calcolo statistiche utente {username}: {e}")
+            return {'assigned': 0, 'completed': 0, 'in_progress': 0}
+    
+    def get_collaborators_for_assignment(self) -> List[str]:
+        """Ottiene la lista dei collaboratori per l'assegnazione task"""
+        try:
+            users = self._get_system_users()
+            collaborators = []
+            
+            for user in users:
+                # Usa il nome completo se disponibile, altrimenti username
+                display_name = user.get('name', user['username'])
+                collaborators.append(display_name)
+            
+            return collaborators
+            
+        except Exception as e:
+            logger.error(f"❌ Errore recupero collaboratori per assegnazione: {e}")
+            return ["Admin"]  # Fallback
