@@ -23,7 +23,8 @@ class IncrociManager:
         if SupabaseManager:
             self.supabase = SupabaseManager()
             self.telegram_manager = None
-            self._init_telegram()
+            # Non inizializzare TelegramManager qui per evitare loop infinito
+            # self._init_telegram()
             logging.info("IncrociManager inizializzato con Supabase")
         else:
             self.supabase = None
@@ -483,6 +484,10 @@ class IncrociManager:
     def _send_incrocio_notification(self, notification_type: str, data: Dict[str, Any]):
         """Invia notifica Telegram per eventi incroci"""
         try:
+            # Inizializza TelegramManager solo se necessario
+            if not self.telegram_manager:
+                self._init_telegram()
+            
             if not self.telegram_manager or not self.telegram_manager.is_configured:
                 logging.info("📱 Telegram non configurato, notifica incrocio non inviata")
                 return

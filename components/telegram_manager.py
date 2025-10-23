@@ -27,7 +27,8 @@ class TelegramManager:
         self.chat_id = None
         self.is_configured = False
         self.supabase_manager = None
-        self._init_supabase()
+        # Non inizializzare Supabase qui per evitare loop infinito
+        # self._init_supabase()
         self._load_configuration()
         logger.info("✅ TelegramManager inizializzato")
     
@@ -44,6 +45,10 @@ class TelegramManager:
     def _load_configuration(self):
         """Carica la configurazione Telegram dal database"""
         try:
+            # Inizializza Supabase solo se necessario
+            if not self.supabase_manager:
+                self._init_supabase()
+            
             if not self.supabase_manager:
                 logger.warning("❌ Supabase non disponibile per caricamento configurazione")
                 return

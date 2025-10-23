@@ -21,7 +21,8 @@ class WalletTransactionsManager:
         self.supabase_manager = None
         self.telegram_manager = None
         self._init_supabase()
-        self._init_telegram()
+        # Non inizializzare TelegramManager qui per evitare loop infinito
+        # self._init_telegram()
     
     def _init_supabase(self):
         """Inizializza la connessione Supabase"""
@@ -586,6 +587,10 @@ class WalletTransactionsManager:
     def _send_wallet_notification(self, notification_type: str, data: Dict[str, Any]):
         """Invia notifica Telegram per eventi wallet"""
         try:
+            # Inizializza TelegramManager solo se necessario
+            if not self.telegram_manager:
+                self._init_telegram()
+            
             if not self.telegram_manager or not self.telegram_manager.is_configured:
                 logger.info("📱 Telegram non configurato, notifica wallet non inviata")
                 return

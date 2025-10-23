@@ -33,13 +33,14 @@ class SupabaseManager:
         
         self.is_configured = bool(self.supabase_url and self.supabase_key)
         self.telegram_manager = None
+        # Non inizializzare TelegramManager qui per evitare loop infinito
+        # self._init_telegram()
         
         if self.is_configured:
             try:
                 from supabase import create_client, Client
                 self.supabase: Client = create_client(self.supabase_url, self.supabase_key)
                 logger.info("✅ Supabase client inizializzato")
-                self._init_telegram()
             except ImportError:
                 logger.warning("⚠️ Supabase non installato: pip install supabase")
                 self.supabase = None
@@ -684,6 +685,10 @@ class SupabaseManager:
     def _send_cliente_notification(self, notification_type: str, data: Dict[str, Any]):
         """Invia notifica Telegram per eventi clienti"""
         try:
+            # Inizializza TelegramManager solo se necessario
+            if not self.telegram_manager:
+                self._init_telegram()
+            
             if not self.telegram_manager or not self.telegram_manager.is_configured:
                 logger.info("📱 Telegram non configurato, notifica cliente non inviata")
                 return

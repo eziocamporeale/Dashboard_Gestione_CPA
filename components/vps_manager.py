@@ -21,7 +21,8 @@ class VPSManager:
         self.supabase_manager = None
         self.telegram_manager = None
         self._init_supabase()
-        self._init_telegram()
+        # Non inizializzare TelegramManager qui per evitare loop infinito
+        # self._init_telegram()
         logger.info("✅ VPSManager inizializzato")
     
     def _init_supabase(self):
@@ -261,6 +262,10 @@ class VPSManager:
     def _send_vps_notification(self, notification_type: str, data: Dict[str, Any]):
         """Invia notifica Telegram per eventi VPS"""
         try:
+            # Inizializza TelegramManager solo se necessario
+            if not self.telegram_manager:
+                self._init_telegram()
+            
             if not self.telegram_manager or not self.telegram_manager.is_configured:
                 logger.info("📱 Telegram non configurato, notifica VPS non inviata")
                 return
