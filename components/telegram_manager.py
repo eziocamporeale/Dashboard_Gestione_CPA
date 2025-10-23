@@ -8,7 +8,7 @@ Creato da Ezio Camporeale
 
 import requests
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
 import json
 import time
@@ -211,7 +211,56 @@ class TelegramManager:
     def _format_notification(self, notification_type: str, data: Dict[str, Any]) -> Optional[str]:
         """Formatta il messaggio basato sul tipo di notifica"""
         try:
-            if notification_type == "new_task":
+            # Task notifications
+            if notification_type == "task_new_task":
+                return self._format_new_task_message(data)
+            elif notification_type == "task_completed":
+                return self._format_task_completed_message(data)
+            elif notification_type == "task_due_soon":
+                return self._format_task_due_soon_message(data)
+            elif notification_type == "task_daily_report":
+                return self._format_task_daily_report_message(data)
+            
+            # Incroci notifications
+            elif notification_type == "incrocio_new_incrocio":
+                return self._format_new_incrocio_message(data)
+            elif notification_type == "incrocio_closed":
+                return self._format_incrocio_closed_message(data)
+            elif notification_type == "incrocio_daily_report":
+                return self._format_incrocio_daily_report_message(data)
+            elif notification_type == "incrocio_long_open_alert":
+                return self._format_incrocio_long_open_alert_message(data)
+            
+            # Cliente notifications
+            elif notification_type == "cliente_new_client":
+                return self._format_new_client_message(data)
+            elif notification_type == "cliente_modified":
+                return self._format_client_modified_message(data)
+            elif notification_type == "cliente_deleted":
+                return self._format_client_deleted_message(data)
+            
+            # Wallet notifications
+            elif notification_type == "wallet_new_deposit":
+                return self._format_new_deposit_message(data)
+            elif notification_type == "wallet_new_withdrawal":
+                return self._format_new_withdrawal_message(data)
+            elif notification_type == "wallet_cross_transaction":
+                return self._format_cross_transaction_message(data)
+            elif notification_type == "wallet_low_balance_alert":
+                return self._format_low_balance_alert_message(data)
+            
+            # VPS notifications
+            elif notification_type == "vps_expiring":
+                return self._format_vps_expiring_message(data)
+            elif notification_type == "vps_expired":
+                return self._format_vps_expired_message(data)
+            elif notification_type == "vps_new":
+                return self._format_vps_new_message(data)
+            elif notification_type == "vps_monthly_report":
+                return self._format_vps_monthly_report_message(data)
+            
+            # Legacy support
+            elif notification_type == "new_task":
                 return self._format_new_task_message(data)
             elif notification_type == "task_completed":
                 return self._format_task_completed_message(data)
@@ -397,6 +446,356 @@ class TelegramManager:
 
 Buona giornata! 🚀
         """.strip()
+    
+    # ===== NUOVI TEMPLATE MESSAGGI =====
+    
+    def _format_task_daily_report_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per report giornaliero task"""
+        return f"""
+📊 *REPORT GIORNALIERO TASK*
+
+📅 Data: {data.get('date', datetime.now().strftime('%d/%m/%Y'))}
+
+📋 *STATISTICHE:*
+• Task completati: {data.get('completed_tasks', 0)}
+• Task in corso: {data.get('in_progress_tasks', 0)}
+• Task in scadenza: {data.get('due_tasks', 0)}
+• Task totali: {data.get('total_tasks', 0)}
+
+👥 *COLLABORATORI ATTIVI:*
+{self._format_collaborators_list(data.get('active_collaborators', []))}
+
+🎯 Produttività: {data.get('productivity_score', 'N/A')}%
+        """.strip()
+    
+    def _format_incrocio_daily_report_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per report giornaliero incroci"""
+        return f"""
+📊 *REPORT GIORNALIERO INCROCI*
+
+📅 Data: {data.get('date', datetime.now().strftime('%d/%m/%Y'))}
+
+🔄 *STATISTICHE:*
+• Incroci aperti: {data.get('open_crosses', 0)}
+• Incroci chiusi oggi: {data.get('closed_today', 0)}
+• Volume totale: {data.get('total_volume', 0)} lot
+• P&L giornaliero: {data.get('daily_pnl', 0)} USDT
+
+📈 *TOP PAIRS:*
+{self._format_top_pairs(data.get('top_pairs', []))}
+
+⚠️ *ATTENZIONE:*
+{self._format_alerts(data.get('alerts', []))}
+        """.strip()
+    
+    def _format_incrocio_long_open_alert_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per alert incroci aperti da tempo"""
+        days_open = data.get('days_open', 0)
+        urgency = "🚨" if days_open >= 7 else "⚠️"
+        
+        return f"""
+{urgency} *INCROCIO APERTO DA TROPPO TEMPO*
+
+🔄 *{data.get('nome_incrocio', 'N/A')}*
+📅 Aperto da: *{days_open} giorni*
+💰 Volume: {data.get('lot_size', 'N/A')} lot
+📊 Pair: {data.get('pair', 'N/A')}
+
+👥 *CLIENTI:*
+• Long: {data.get('cliente_long', 'N/A')}
+• Short: {data.get('cliente_short', 'N/A')}
+
+💡 *AZIONE RICHIESTA:*
+Considera di chiudere questo incrocio per evitare rischi eccessivi.
+        """.strip()
+    
+    def _format_client_modified_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per cliente modificato"""
+        return f"""
+✏️ *CLIENTE MODIFICATO*
+
+👤 *{data.get('nome_cliente', 'N/A')}*
+📧 Email: {data.get('email', 'N/A')}
+📞 Telefono: {data.get('telefono', 'N/A')}
+🏢 Broker: {data.get('broker', 'N/A')}
+
+🔄 *MODIFICHE:*
+{self._format_changes(data.get('changes', []))}
+
+📅 Modificato il: {data.get('modified_at', 'N/A')}
+👤 Modificato da: {data.get('modified_by', 'N/A')}
+        """.strip()
+    
+    def _format_client_deleted_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per cliente eliminato"""
+        return f"""
+🗑️ *CLIENTE ELIMINATO*
+
+👤 *{data.get('nome_cliente', 'N/A')}*
+📧 Email: {data.get('email', 'N/A')}
+🏢 Broker: {data.get('broker', 'N/A')}
+
+⚠️ *IMPORTANTE:*
+Tutti i dati del cliente sono stati rimossi dal sistema.
+
+📅 Eliminato il: {data.get('deleted_at', 'N/A')}
+👤 Eliminato da: {data.get('deleted_by', 'N/A')}
+        """.strip()
+    
+    def _format_new_deposit_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per nuovo deposito"""
+        return f"""
+💰 *NUOVO DEPOSITO*
+
+👤 Cliente: *{data.get('wallet_destinatario', 'N/A')}*
+💵 Importo: *{data.get('importo', 'N/A')} {data.get('valuta', 'USDT')}*
+📝 Motivo: {data.get('motivo', 'N/A')}
+🔗 Hash: `{data.get('hash_transazione', 'N/A')}`
+
+📅 Data: {data.get('created_at', 'N/A')}
+✅ Stato: Completato
+        """.strip()
+    
+    def _format_new_withdrawal_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per nuovo prelievo"""
+        return f"""
+💸 *NUOVO PRELIEVO*
+
+👤 Cliente: *{data.get('wallet_mittente', 'N/A')}*
+💵 Importo: *{data.get('importo', 'N/A')} {data.get('valuta', 'USDT')}*
+📝 Motivo: {data.get('motivo', 'N/A')}
+🔗 Hash: `{data.get('hash_transazione', 'N/A')}`
+
+📅 Data: {data.get('created_at', 'N/A')}
+✅ Stato: Completato
+        """.strip()
+    
+    def _format_cross_transaction_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per transazione incrocio"""
+        transaction_type = data.get('transaction_type', 'N/A')
+        type_emoji = "🔄" if transaction_type == "apertura" else "🔒"
+        
+        return f"""
+{type_emoji} *TRANSAZIONE INCROCIO*
+
+🔄 Incrocio: *{data.get('incrocio_id', 'N/A')}*
+💰 Importo: *{data.get('importo', 'N/A')} {data.get('valuta', 'USDT')}*
+📊 Tipo: {transaction_type.title()}
+👥 Clienti: {data.get('clienti', 'N/A')}
+
+📅 Data: {data.get('created_at', 'N/A')}
+🔗 Hash: `{data.get('hash_transazione', 'N/A')}`
+        """.strip()
+    
+    def _format_low_balance_alert_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per alert saldo basso"""
+        balance = data.get('balance', 0)
+        threshold = data.get('threshold', 0)
+        
+        return f"""
+⚠️ *SALDO BASSO*
+
+👤 Wallet: *{data.get('wallet_name', 'N/A')}*
+💰 Saldo attuale: *{balance} {data.get('valuta', 'USDT')}*
+📉 Soglia minima: {threshold} {data.get('valuta', 'USDT')}
+
+💡 *AZIONE RICHIESTA:*
+Considera di fare un deposito per mantenere il wallet operativo.
+
+📅 Alert generato: {data.get('alert_time', 'N/A')}
+        """.strip()
+    
+    def _format_vps_expired_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per VPS scaduto"""
+        return f"""
+❌ *VPS SCADUTO*
+
+🖥️ Cliente: *{data.get('nome_cliente', 'N/A')}*
+🌐 IP: `{data.get('vps_ip', 'N/A')}`
+👤 Username: {data.get('vps_username', 'N/A')}
+📅 Scaduto il: {data.get('data_rinnovo', 'N/A')}
+💰 Prezzo: {data.get('prezzo_vps', 'N/A')}
+
+🚨 *AZIONE URGENTE:*
+Il VPS è scaduto e potrebbe essere disattivato dal provider.
+
+💡 Contatta il cliente per il rinnovo immediato!
+        """.strip()
+    
+    def _format_vps_new_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per nuovo VPS"""
+        return f"""
+🆕 *NUOVO VPS AGGIUNTO*
+
+🖥️ Cliente: *{data.get('nome_cliente', 'N/A')}*
+🌐 IP: `{data.get('vps_ip', 'N/A')}`
+👤 Username: {data.get('vps_username', 'N/A')}
+📅 Data rinnovo: {data.get('data_rinnovo', 'N/A')}
+💰 Prezzo: {data.get('prezzo_vps', 'N/A')}
+
+✅ VPS aggiunto al sistema di monitoraggio
+📅 Aggiunto il: {data.get('created_at', 'N/A')}
+        """.strip()
+    
+    def _format_vps_monthly_report_message(self, data: Dict[str, Any]) -> str:
+        """Formatta messaggio per report mensile VPS"""
+        return f"""
+📊 *REPORT MENSILE VPS*
+
+📅 Mese: {data.get('month', datetime.now().strftime('%m/%Y'))}
+
+🖥️ *STATISTICHE:*
+• VPS totali: {data.get('total_vps', 0)}
+• VPS attivi: {data.get('active_vps', 0)}
+• VPS in scadenza: {data.get('expiring_vps', 0)}
+• VPS scaduti: {data.get('expired_vps', 0)}
+
+💰 *COSTI:*
+• Spesa totale: {data.get('total_cost', 0)} USDT
+• Costo medio: {data.get('average_cost', 0)} USDT/VPS
+
+📈 *TREND:*
+• Nuovi VPS: {data.get('new_vps', 0)}
+• VPS rinnovati: {data.get('renewed_vps', 0)}
+• VPS disattivati: {data.get('deactivated_vps', 0)}
+
+⚠️ *ATTENZIONE:*
+{self._format_vps_alerts(data.get('alerts', []))}
+        """.strip()
+    
+    # ===== METODI HELPER PER FORMATTAZIONE =====
+    
+    def _format_collaborators_list(self, collaborators: List[str]) -> str:
+        """Formatta lista collaboratori"""
+        if not collaborators:
+            return "• Nessun collaboratore attivo"
+        
+        return "\n".join([f"• {collaborator}" for collaborator in collaborators[:5]])
+    
+    def _format_top_pairs(self, pairs: List[Dict[str, Any]]) -> str:
+        """Formatta lista top pairs"""
+        if not pairs:
+            return "• Nessuna pair attiva"
+        
+        return "\n".join([f"• {pair.get('pair', 'N/A')}: {pair.get('volume', 0)} lot" for pair in pairs[:3]])
+    
+    def _format_alerts(self, alerts: List[str]) -> str:
+        """Formatta lista alert"""
+        if not alerts:
+            return "• Nessun alert"
+        
+        return "\n".join([f"• {alert}" for alert in alerts[:3]])
+    
+    def _format_changes(self, changes: List[str]) -> str:
+        """Formatta lista modifiche"""
+        if not changes:
+            return "• Nessuna modifica specificata"
+        
+        return "\n".join([f"• {change}" for change in changes[:5]])
+    
+    def _format_vps_alerts(self, alerts: List[str]) -> str:
+        """Formatta lista alert VPS"""
+        if not alerts:
+            return "• Nessun alert VPS"
+        
+        return "\n".join([f"• {alert}" for alert in alerts[:3]])
+    
+    # ===== SISTEMA RETRY E GESTIONE ERRORI =====
+    
+    def _send_with_retry(self, url: str, payload: Dict[str, Any], max_retries: int = 3) -> Tuple[bool, str]:
+        """Invia richiesta con retry automatico"""
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('ok'):
+                        message_id = result['result'].get('message_id')
+                        logger.info(f"✅ Messaggio Telegram inviato (ID: {message_id}) - Tentativo {attempt + 1}")
+                        return True, f"✅ Messaggio inviato con successo!"
+                    else:
+                        error_msg = result.get('description', 'Errore sconosciuto')
+                        logger.warning(f"⚠️ Errore Telegram API: {error_msg} - Tentativo {attempt + 1}")
+                        if attempt == max_retries - 1:
+                            return False, f"❌ Errore API: {error_msg}"
+                        time.sleep(2 ** attempt)  # Backoff esponenziale
+                else:
+                    error_msg = f"HTTP {response.status_code}: {response.text}"
+                    logger.warning(f"⚠️ Errore HTTP: {error_msg} - Tentativo {attempt + 1}")
+                    if attempt == max_retries - 1:
+                        return False, f"❌ Errore HTTP {response.status_code}: {response.text}"
+                    time.sleep(2 ** attempt)  # Backoff esponenziale
+                    
+            except requests.exceptions.Timeout:
+                logger.warning(f"⚠️ Timeout Telegram - Tentativo {attempt + 1}")
+                if attempt == max_retries - 1:
+                    return False, "❌ Timeout connessione Telegram"
+                time.sleep(2 ** attempt)  # Backoff esponenziale
+                
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"⚠️ Errore di rete: {e} - Tentativo {attempt + 1}")
+                if attempt == max_retries - 1:
+                    return False, f"❌ Errore di rete: {e}"
+                time.sleep(2 ** attempt)  # Backoff esponenziale
+                
+            except Exception as e:
+                logger.error(f"❌ Errore inaspettato: {e} - Tentativo {attempt + 1}")
+                if attempt == max_retries - 1:
+                    return False, f"❌ Errore inaspettato: {e}"
+                time.sleep(2 ** attempt)  # Backoff esponenziale
+        
+        return False, "❌ Tutti i tentativi falliti"
+    
+    def get_notification_statistics(self) -> Dict[str, Any]:
+        """Recupera statistiche delle notifiche"""
+        try:
+            if not self.supabase_manager:
+                return {"error": "SupabaseManager non disponibile"}
+            
+            # Recupera statistiche degli ultimi 30 giorni
+            thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
+            
+            response = self.supabase_manager.supabase.table('notification_logs').select('*').gte('sent_at', thirty_days_ago).execute()
+            
+            if not response.data:
+                return {
+                    "total_notifications": 0,
+                    "successful_notifications": 0,
+                    "failed_notifications": 0,
+                    "success_rate": 0,
+                    "most_common_type": "N/A",
+                    "last_notification": "N/A"
+                }
+            
+            logs = response.data
+            
+            # Calcola statistiche
+            total = len(logs)
+            successful = sum(1 for log in logs if log.get('status') == 'sent')
+            failed = total - successful
+            success_rate = (successful / total * 100) if total > 0 else 0
+            
+            # Tipo più comune
+            types = [log.get('notification_type', 'unknown') for log in logs]
+            most_common_type = max(set(types), key=types.count) if types else "N/A"
+            
+            # Ultima notifica
+            last_notification = max(logs, key=lambda x: x.get('sent_at', '')) if logs else None
+            last_notification_time = last_notification.get('sent_at', 'N/A') if last_notification else 'N/A'
+            
+            return {
+                "total_notifications": total,
+                "successful_notifications": successful,
+                "failed_notifications": failed,
+                "success_rate": round(success_rate, 1),
+                "most_common_type": most_common_type,
+                "last_notification": last_notification_time[:19] if last_notification_time != 'N/A' else 'N/A'
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Errore recupero statistiche notifiche: {e}")
+            return {"error": f"Errore: {e}"}
     
     def _log_notification(self, notification_type: str, message: str, status: str, error_message: str = None):
         """Logga la notifica nel database"""
