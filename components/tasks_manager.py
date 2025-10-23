@@ -289,29 +289,93 @@ class TasksManager:
         st.markdown("---")
         st.subheader("📋 Lista Task")
         
-        # Placeholder per lista task
-        st.info("📋 **Nessun task presente** - Crea il tuo primo task nella tab 'Crea Task'")
+        # Recupera task con filtri
+        status_filter = None if filter_status == "Tutti" else filter_status
+        priority_filter = None if filter_priority == "Tutti" else filter_priority
         
-        # Esempio di task
-        with st.expander("📝 Esempio Task", expanded=False):
-            st.write("**Titolo:** Controllo saldi clienti")
-            st.write("**Descrizione:** Verificare i saldi di tutti i clienti e aggiornare il database")
-            st.write("**Priorità:** Alta")
-            st.write("**Periodo:** Giornaliero")
-            st.write("**Scadenza:** 23/10/2025")
-            st.write("**Assegnato a:** Admin")
-            st.write("**Stato:** Da Fare")
+        tasks = self.get_tasks(status=status_filter, priority=priority_filter)
+        
+        if tasks:
+            st.success(f"📋 **{len(tasks)} task trovati**")
             
-            col_btn1, col_btn2, col_btn3 = st.columns(3)
-            with col_btn1:
-                if st.button("▶️ Inizia", key="start_example"):
-                    st.success("✅ Task iniziato!")
-            with col_btn2:
-                if st.button("✅ Completa", key="complete_example"):
-                    st.success("✅ Task completato!")
-            with col_btn3:
-                if st.button("❌ Cancella", key="cancel_example"):
-                    st.warning("⚠️ Task cancellato!")
+            for task in tasks:
+                # Colori per priorità
+                priority_colors = {
+                    TaskPriority.LOW.value: "🟢",
+                    TaskPriority.MEDIUM.value: "🟡", 
+                    TaskPriority.HIGH.value: "🟠",
+                    TaskPriority.URGENT.value: "🔴"
+                }
+                
+                priority_icon = priority_colors.get(task.get('priority', ''), "⚪")
+                
+                # Colori per stato
+                status_colors = {
+                    TaskStatus.TODO.value: "🔵",
+                    TaskStatus.IN_PROGRESS.value: "🟡",
+                    TaskStatus.COMPLETED.value: "🟢",
+                    TaskStatus.CANCELLED.value: "🔴"
+                }
+                
+                status_icon = status_colors.get(task.get('status', ''), "⚪")
+                
+                with st.expander(f"{priority_icon} {task.get('title', 'N/A')} - {status_icon} {task.get('status', 'N/A')}", expanded=False):
+                    st.write(f"**📝 Titolo:** {task.get('title', 'N/A')}")
+                    st.write(f"**📄 Descrizione:** {task.get('description', 'N/A')}")
+                    st.write(f"**🔥 Priorità:** {task.get('priority', 'N/A')}")
+                    st.write(f"**⏰ Periodo:** {task.get('period', 'N/A')}")
+                    st.write(f"**📅 Scadenza:** {task.get('due_date', 'N/A')}")
+                    st.write(f"**👥 Assegnato a:** {', '.join(task.get('assigned_to', []))}")
+                    st.write(f"**📅 Creato il:** {task.get('created_at', 'N/A')}")
+                    
+                    # Pulsanti azione
+                    col_btn1, col_btn2, col_btn3 = st.columns(3)
+                    
+                    with col_btn1:
+                        if task.get('status') == TaskStatus.TODO.value:
+                            if st.button("▶️ Inizia", key=f"start_{task.get('id')}"):
+                                success, message = self.update_task_status(task.get('id'), TaskStatus.IN_PROGRESS.value)
+                                if success:
+                                    st.success(message)
+                                    st.rerun()
+                    
+                    with col_btn2:
+                        if task.get('status') in [TaskStatus.TODO.value, TaskStatus.IN_PROGRESS.value]:
+                            if st.button("✅ Completa", key=f"complete_{task.get('id')}"):
+                                success, message = self.update_task_status(task.get('id'), TaskStatus.COMPLETED.value)
+                                if success:
+                                    st.success(message)
+                                    st.rerun()
+                    
+                    with col_btn3:
+                        if st.button("❌ Cancella", key=f"cancel_{task.get('id')}"):
+                            success, message = self.update_task_status(task.get('id'), TaskStatus.CANCELLED.value)
+                            if success:
+                                st.success(message)
+                                st.rerun()
+        else:
+            st.info("📋 **Nessun task presente** - Crea il tuo primo task nella tab 'Crea Task'")
+            
+            # Esempio di task solo se non ci sono task reali
+            with st.expander("📝 Esempio Task", expanded=False):
+                st.write("**Titolo:** Controllo saldi clienti")
+                st.write("**Descrizione:** Verificare i saldi di tutti i clienti e aggiornare il database")
+                st.write("**Priorità:** Alta")
+                st.write("**Periodo:** Giornaliero")
+                st.write("**Scadenza:** 23/10/2025")
+                st.write("**Assegnato a:** Admin")
+                st.write("**Stato:** Da Fare")
+                
+                col_btn1, col_btn2, col_btn3 = st.columns(3)
+                with col_btn1:
+                    if st.button("▶️ Inizia", key="start_example"):
+                        st.success("✅ Task iniziato!")
+                with col_btn2:
+                    if st.button("✅ Completa", key="complete_example"):
+                        st.success("✅ Task completato!")
+                with col_btn3:
+                    if st.button("❌ Cancella", key="cancel_example"):
+                        st.warning("⚠️ Task cancellato!")
     
     def _render_collaborators_tab(self):
         """Tab gestione collaboratori"""
@@ -482,6 +546,30 @@ class TasksManager:
     def update_task_status(self, task_id: str, new_status: str) -> Tuple[bool, str]:
         """Aggiorna lo stato di un task"""
         try:
+            # Prova prima ad aggiornare nel database
+            if self.supabase_manager:
+                try:
+                    update_data = {
+                        'status': new_status,
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    
+                    # Se completato, aggiungi timestamp completamento
+                    if new_status == TaskStatus.COMPLETED.value:
+                        update_data['completed_at'] = datetime.now().isoformat()
+                    
+                    response = self.supabase_manager.supabase.table('tasks').update(update_data).eq('id', task_id).execute()
+                    
+                    if response.data:
+                        logger.info(f"✅ Task {task_id} aggiornato a {new_status} nel database")
+                        return True, f"✅ Task aggiornato a {new_status}"
+                    else:
+                        logger.warning(f"⚠️ Errore aggiornamento database per task {task_id}")
+                        
+                except Exception as db_error:
+                    logger.warning(f"⚠️ Errore aggiornamento database per task {task_id}: {db_error}")
+            
+            # Fallback: aggiorna nella sessione
             if 'tasks' not in st.session_state:
                 return False, "❌ Nessun task trovato"
             
@@ -490,7 +578,10 @@ class TasksManager:
                     task['status'] = new_status
                     task['updated_at'] = datetime.now().isoformat()
                     
-                    logger.info(f"✅ Task {task_id} aggiornato a {new_status}")
+                    if new_status == TaskStatus.COMPLETED.value:
+                        task['completed_at'] = datetime.now().isoformat()
+                    
+                    logger.info(f"✅ Task {task_id} aggiornato a {new_status} in sessione")
                     return True, f"✅ Task aggiornato a {new_status}"
             
             return False, "❌ Task non trovato"
