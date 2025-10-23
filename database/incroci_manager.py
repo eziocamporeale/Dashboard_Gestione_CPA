@@ -362,11 +362,41 @@ class IncrociManager:
             logging.info(f"Incrocio creato con ID: {incrocio_id}")
             
             # Invia notifica Telegram per nuovo incrocio
+            # Recupera i nomi dei clienti dal database
+            cliente_long_name = 'N/A'
+            cliente_short_name = 'N/A'
+            
+            try:
+                # Recupera nome cliente long
+                if 'account_long_id' in dati_incrocio:
+                    cliente_long_id = dati_incrocio['account_long_id']
+                    if isinstance(cliente_long_id, tuple):
+                        cliente_long_id = cliente_long_id[1]
+                    
+                    cliente_response = self.supabase.supabase.table('clienti').select('nome_cliente, broker').eq('id', cliente_long_id).execute()
+                    if cliente_response.data and len(cliente_response.data) > 0:
+                        cliente_data = cliente_response.data[0]
+                        cliente_long_name = f"{cliente_data.get('nome_cliente', 'N/A')} - {cliente_data.get('broker', 'N/A')}"
+                
+                # Recupera nome cliente short
+                if 'account_short_id' in dati_incrocio:
+                    cliente_short_id = dati_incrocio['account_short_id']
+                    if isinstance(cliente_short_id, tuple):
+                        cliente_short_id = cliente_short_id[1]
+                    
+                    cliente_response = self.supabase.supabase.table('clienti').select('nome_cliente, broker').eq('id', cliente_short_id).execute()
+                    if cliente_response.data and len(cliente_response.data) > 0:
+                        cliente_data = cliente_response.data[0]
+                        cliente_short_name = f"{cliente_data.get('nome_cliente', 'N/A')} - {cliente_data.get('broker', 'N/A')}"
+                        
+            except Exception as e:
+                logging.warning(f"Errore recupero nomi clienti per notifica: {e}")
+            
             self._send_incrocio_notification('new_incrocio', {
                 'nome_incrocio': dati_incrocio['nome_incrocio'],
                 'pair_trading': dati_incrocio['pair_trading'],
-                'cliente_long': dati_incrocio.get('cliente_long', 'N/A'),
-                'cliente_short': dati_incrocio.get('cliente_short', 'N/A'),
+                'cliente_long': cliente_long_name,
+                'cliente_short': cliente_short_name,
                 'lot_size': dati_incrocio.get('volume_trading', 'N/A'),
                 'created_at': datetime.now().isoformat()
             })
