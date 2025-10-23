@@ -9,6 +9,7 @@ import streamlit as st
 from datetime import datetime
 from typing import Dict, List, Any
 import logging
+import uuid
 
 # Configurazione logging
 logging.basicConfig(level=logging.INFO)
@@ -399,27 +400,45 @@ class TelegramSettingsUI:
                 st.error("❌ SupabaseManager non disponibile per salvataggio impostazioni")
                 return
             
-            # Prepara i dati per l'inserimento/aggiornamento
-            settings_data = []
+            saved_count = 0
+            
+            # Salva ogni impostazione individualmente
             for notification_type, is_enabled in settings.items():
-                settings_data.append({
-                    'notification_type': notification_type,
-                    'is_enabled': is_enabled,
-                    'updated_at': datetime.now().isoformat()
-                })
+                try:
+                    # Controlla se esiste già
+                    existing = self.supabase_manager.supabase.table('notification_settings').select('id').eq('notification_type', notification_type).execute()
+                    
+                    setting_data = {
+                        'notification_type': notification_type,
+                        'is_enabled': is_enabled,
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    
+                    if existing.data and len(existing.data) > 0:
+                        # Aggiorna esistente
+                        response = self.supabase_manager.supabase.table('notification_settings').update(setting_data).eq('notification_type', notification_type).execute()
+                    else:
+                        # Inserisci nuovo
+                        setting_data['id'] = str(uuid.uuid4())
+                        setting_data['created_at'] = datetime.now().isoformat()
+                        response = self.supabase_manager.supabase.table('notification_settings').insert(setting_data).execute()
+                    
+                    if response.data:
+                        saved_count += 1
+                        logger.info(f"✅ Salvata impostazione: {notification_type} = {is_enabled}")
+                    else:
+                        logger.warning(f"⚠️ Errore salvataggio impostazione: {notification_type}")
+                        
+                except Exception as e:
+                    logger.error(f"❌ Errore salvataggio impostazione {notification_type}: {e}")
+                    continue
             
-            # Usa upsert per inserire o aggiornare
-            response = self.supabase_manager.supabase.table('notification_settings').upsert(
-                settings_data, 
-                on_conflict='notification_type'
-            ).execute()
-            
-            if response.data:
-                st.success(f"✅ Impostazioni notifiche salvate con successo! ({len(settings)} impostazioni)")
-                logger.info(f"✅ Salvate {len(settings)} impostazioni notifiche nel database")
+            if saved_count > 0:
+                st.success(f"✅ Impostazioni notifiche salvate con successo! ({saved_count}/{len(settings)} impostazioni)")
+                logger.info(f"✅ Salvate {saved_count}/{len(settings)} impostazioni notifiche nel database")
             else:
-                st.error("❌ Errore salvataggio impostazioni notifiche")
-                logger.error("❌ Errore salvataggio impostazioni notifiche")
+                st.error("❌ Nessuna impostazione salvata")
+                logger.error("❌ Nessuna impostazione notifiche salvata")
                 
         except Exception as e:
             st.error(f"❌ Errore salvataggio impostazioni: {e}")
