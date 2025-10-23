@@ -1963,6 +1963,41 @@ elif page == "📋 Task Giornalieri":
         st.error(f"❌ **Errore caricamento Task Manager**: {e}")
         st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
 
+elif page == "📊 Notifiche":
+    # Dashboard notifiche Telegram
+    try:
+        from components.notification_dashboard import NotificationDashboard
+        
+        notification_dashboard = NotificationDashboard()
+        notification_dashboard.render_dashboard()
+        
+    except ImportError as e:
+        st.error(f"❌ **COMPONENTE DASHBOARD NOTIFICHE NON DISPONIBILE**: {e}")
+        st.info("💡 Controlla che il file `components/notification_dashboard.py` sia presente")
+        
+        # Fallback: mostra interfaccia base
+        st.header("📊 Dashboard Notifiche Telegram")
+        st.info("📈 **MONITORAGGIO NOTIFICHE**: Statistiche e analisi del sistema notifiche Telegram")
+        
+        st.subheader("🚧 Funzionalità in Sviluppo")
+        st.info("📊 **DASHBOARD NOTIFICHE**: Sistema completo per monitoraggio notifiche Telegram")
+        
+        # Mostra informazioni sulla dashboard
+        st.markdown("### 📊 Funzionalità Disponibili:")
+        st.write("• ✅ Statistiche notifiche in tempo reale")
+        st.write("• ✅ Grafici e analisi per tipo di notifica")
+        st.write("• ✅ Log dettagliati delle notifiche inviate")
+        st.write("• ✅ Test connessione e invio messaggi")
+        
+        st.markdown("### 🔧 Configurazione:")
+        st.write("• 📱 Bot Telegram configurato")
+        st.write("• 📊 Tabelle `notification_logs` e `notification_settings`")
+        st.write("• 📈 Grafici interattivi con Plotly")
+        
+    except Exception as e:
+        st.error(f"❌ **Errore caricamento Dashboard Notifiche**: {e}")
+        st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
+
 elif page == "📊 Statistiche Sistema":
     # Redirect alle impostazioni per le statistiche sistema
     st.info("🔄 **REDIRECT**: Le Statistiche Sistema sono ora disponibili nella sezione ⚙️ Impostazioni > 📊 Statistiche Sistema")

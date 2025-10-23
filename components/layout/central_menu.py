@@ -87,6 +87,7 @@ def render_central_menu(current_page: str = "🏠 Dashboard") -> str:
         ("🖥️ VPS", "🖥️ VPS"),
         ("💰 Wallet", "💰 Wallet"),
         ("📋 Task Giornalieri", "📋 Task Giornalieri"),
+        ("📊 Notifiche", "📊 Notifiche"),
         ("📁 Storage", "📁 Storage"),
         ("📈 Riepilogo", "📈 Riepilogo"),
         ("🤖 AI Assistant", "🤖 AI Assistant"),
