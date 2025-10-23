@@ -73,7 +73,10 @@ class TelegramSettingsUI:
             st.markdown("**📊 Stato Attuale:**")
             if status['is_configured']:
                 st.success("✅ Bot configurato e operativo")
-                st.info(f"🔗 Chat ID: `{status['chat_id']}`")
+                if status['chat_id']:
+                    st.info(f"🔗 Chat ID: `{status['chat_id']}`")
+                else:
+                    st.info("🔗 Chat ID: Non configurato")
             else:
                 st.warning("⚠️ Bot non configurato")
         

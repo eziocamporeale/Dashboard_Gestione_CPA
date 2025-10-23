@@ -437,6 +437,8 @@ Buona giornata! 🚀
         """Restituisce lo stato del TelegramManager"""
         return {
             'is_configured': self.is_configured,
+            'bot_token': self.bot_token,
+            'chat_id': self.chat_id,
             'bot_token_set': bool(self.bot_token),
             'chat_id_set': bool(self.chat_id),
             'supabase_available': bool(self.supabase_manager)
