@@ -10,6 +10,7 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from typing import List, Dict, Optional, Tuple
 import logging
+import uuid
 from enum import Enum
 
 # Configurazione logging
