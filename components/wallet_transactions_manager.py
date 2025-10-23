@@ -19,7 +19,9 @@ class WalletTransactionsManager:
     def __init__(self):
         """Inizializza il gestore delle transazioni wallet"""
         self.supabase_manager = None
+        self.telegram_manager = None
         self._init_supabase()
+        self._init_telegram()
     
     def _init_supabase(self):
         """Inizializza la connessione Supabase"""
@@ -36,6 +38,16 @@ class WalletTransactionsManager:
         except Exception as e:
             logger.error(f"❌ Errore inizializzazione Supabase: {e}")
             self.supabase_manager = None
+    
+    def _init_telegram(self):
+        """Inizializza il gestore Telegram"""
+        try:
+            from components.telegram_manager import TelegramManager
+            self.telegram_manager = TelegramManager()
+            logger.info("✅ TelegramManager inizializzato per WalletTransactionsManager")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione TelegramManager: {e}")
+            self.telegram_manager = None
     
     def get_wallet_collaboratori(self) -> List[Dict[str, Any]]:
         """Recupera tutti i wallet dei collaboratori"""
@@ -290,6 +302,16 @@ class WalletTransactionsManager:
             response = self.supabase_manager.supabase.table('wallet_transactions').insert(transaction_data).execute()
             
             if response.data:
+                # Invia notifica Telegram per nuovo deposito
+                self._send_wallet_notification('new_deposit', {
+                    'wallet_destinatario': client_wallet,
+                    'importo': amount,
+                    'valuta': 'USDT',
+                    'motivo': motivo,
+                    'hash_transazione': transaction_data['hash_transazione'],
+                    'created_at': transaction_data['created_at']
+                })
+                
                 return True, f"✅ Deposito {motivo} creato con successo"
             else:
                 return False, "❌ Errore creazione deposito"
@@ -336,6 +358,16 @@ class WalletTransactionsManager:
             response = self.supabase_manager.supabase.table('wallet_transactions').insert(transaction_data).execute()
             
             if response.data:
+                # Invia notifica Telegram per nuovo prelievo
+                self._send_wallet_notification('new_withdrawal', {
+                    'wallet_mittente': client_wallet,
+                    'importo': amount,
+                    'valuta': 'USDT',
+                    'motivo': motivo,
+                    'hash_transazione': transaction_data['hash_transazione'],
+                    'created_at': transaction_data['created_at']
+                })
+                
                 return True, f"✅ Prelievo {motivo} creato con successo"
             else:
                 return False, "❌ Errore creazione prelievo"
@@ -550,3 +582,45 @@ class WalletTransactionsManager:
         except Exception as e:
             logger.error(f"❌ Errore chiusura incrocio: {e}")
             return False, f"❌ Errore: {e}"
+    
+    def _send_wallet_notification(self, notification_type: str, data: Dict[str, Any]):
+        """Invia notifica Telegram per eventi wallet"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                logger.info("📱 Telegram non configurato, notifica wallet non inviata")
+                return
+            
+            # Controlla se le notifiche wallet sono abilitate
+            if not self._is_notification_enabled('wallet'):
+                logger.info("🔔 Notifiche wallet disabilitate")
+                return
+            
+            # Invia la notifica
+            success, message = self.telegram_manager.send_notification(notification_type, data)
+            
+            if success:
+                logger.info(f"✅ Notifica wallet '{notification_type}' inviata con successo")
+            else:
+                logger.warning(f"⚠️ Errore invio notifica wallet '{notification_type}': {message}")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore invio notifica wallet '{notification_type}': {e}")
+    
+    def _is_notification_enabled(self, notification_category: str) -> bool:
+        """Controlla se le notifiche per una categoria sono abilitate"""
+        try:
+            if not self.supabase_manager:
+                return True  # Default abilitato se Supabase non disponibile
+            
+            # Recupera impostazioni notifiche dal database
+            response = self.supabase_manager.supabase.table('notification_settings').select('*').eq('notification_type', notification_category).execute()
+            
+            if response.data and len(response.data) > 0:
+                setting = response.data[0]
+                return setting.get('is_enabled', True)
+            else:
+                return True  # Default abilitato se nessuna impostazione trovata
+                
+        except Exception as e:
+            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")
+            return True  # Default abilitato in caso di errore

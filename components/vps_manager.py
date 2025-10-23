@@ -18,7 +18,31 @@ class VPSManager:
     
     def __init__(self):
         """Inizializza il VPS Manager"""
-        pass
+        self.supabase_manager = None
+        self.telegram_manager = None
+        self._init_supabase()
+        self._init_telegram()
+        logger.info("✅ VPSManager inizializzato")
+    
+    def _init_supabase(self):
+        """Inizializza la connessione Supabase"""
+        try:
+            from supabase_manager import SupabaseManager
+            self.supabase_manager = SupabaseManager()
+            logger.info("✅ Supabase inizializzato per VPSManager")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione Supabase: {e}")
+            self.supabase_manager = None
+    
+    def _init_telegram(self):
+        """Inizializza il gestore Telegram"""
+        try:
+            from components.telegram_manager import TelegramManager
+            self.telegram_manager = TelegramManager()
+            logger.info("✅ TelegramManager inizializzato per VPSManager")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione TelegramManager: {e}")
+            self.telegram_manager = None
     
     def _encrypt_password(self, password: str) -> str:
         """Password VPS senza crittografia (versione semplificata)"""
@@ -98,6 +122,15 @@ class VPSManager:
             result = supabase_manager.supabase.table('clienti').update(update_data).eq('id', cliente_id).execute()
             
             if result.data:
+                # Invia notifica Telegram per aggiornamento VPS
+                self._send_vps_notification('vps_updated', {
+                    'cliente_id': cliente_id,
+                    'vps_ip': vps_data.get('vps_ip', 'N/A'),
+                    'data_rinnovo': vps_data.get('data_rinnovo', 'N/A'),
+                    'prezzo_vps': vps_data.get('prezzo_vps', 'N/A'),
+                    'updated_at': update_data['updated_at']
+                })
+                
                 st.success("✅ Dati VPS aggiornati con successo!")
                 return True
             else:
@@ -224,3 +257,73 @@ class VPSManager:
         except Exception as e:
             logger.error(f"Errore esportazione dati VPS: {e}")
             return pd.DataFrame()
+    
+    def _send_vps_notification(self, notification_type: str, data: Dict[str, Any]):
+        """Invia notifica Telegram per eventi VPS"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                logger.info("📱 Telegram non configurato, notifica VPS non inviata")
+                return
+            
+            # Controlla se le notifiche VPS sono abilitate
+            if not self._is_notification_enabled('vps'):
+                logger.info("🔔 Notifiche VPS disabilitate")
+                return
+            
+            # Invia la notifica
+            success, message = self.telegram_manager.send_notification(notification_type, data)
+            
+            if success:
+                logger.info(f"✅ Notifica VPS '{notification_type}' inviata con successo")
+            else:
+                logger.warning(f"⚠️ Errore invio notifica VPS '{notification_type}': {message}")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore invio notifica VPS '{notification_type}': {e}")
+    
+    def _is_notification_enabled(self, notification_category: str) -> bool:
+        """Controlla se le notifiche per una categoria sono abilitate"""
+        try:
+            if not self.supabase_manager:
+                return True  # Default abilitato se Supabase non disponibile
+            
+            # Recupera impostazioni notifiche dal database
+            response = self.supabase_manager.supabase.table('notification_settings').select('*').eq('notification_type', notification_category).execute()
+            
+            if response.data and len(response.data) > 0:
+                setting = response.data[0]
+                return setting.get('is_enabled', True)
+            else:
+                return True  # Default abilitato se nessuna impostazione trovata
+                
+        except Exception as e:
+            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")
+            return True  # Default abilitato in caso di errore
+    
+    def check_vps_expiring_notifications(self):
+        """Controlla VPS in scadenza e invia notifiche"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                return
+            
+            # Recupera VPS in scadenza (nei prossimi 7 giorni)
+            expiring_vps = self.get_vps_expiring_soon(7)
+            
+            for vps in expiring_vps:
+                try:
+                    days_left = vps.get('days_until_expiry', 0)
+                    
+                    # Invia notifica se scade tra 1-7 giorni
+                    if 1 <= days_left <= 7:
+                        self._send_vps_notification('vps_expiring', {
+                            'cliente_nome': vps.get('nome_cliente', 'N/A'),
+                            'vps_ip': vps.get('vps_ip', 'N/A'),
+                            'data_rinnovo': vps.get('data_rinnovo', 'N/A'),
+                            'days_left': days_left,
+                            'prezzo_vps': vps.get('prezzo_vps', 'N/A')
+                        })
+                except Exception as e:
+                    logger.error(f"❌ Errore controllo scadenza VPS {vps.get('id')}: {e}")
+                        
+        except Exception as e:
+            logger.error(f"❌ Errore controllo VPS in scadenza: {e}")

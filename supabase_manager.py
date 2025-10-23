@@ -32,12 +32,14 @@ class SupabaseManager:
                 pass
         
         self.is_configured = bool(self.supabase_url and self.supabase_key)
+        self.telegram_manager = None
         
         if self.is_configured:
             try:
                 from supabase import create_client, Client
                 self.supabase: Client = create_client(self.supabase_url, self.supabase_key)
                 logger.info("✅ Supabase client inizializzato")
+                self._init_telegram()
             except ImportError:
                 logger.warning("⚠️ Supabase non installato: pip install supabase")
                 self.supabase = None
@@ -47,6 +49,16 @@ class SupabaseManager:
         else:
             logger.warning("⚠️ Variabili ambiente Supabase non configurate")
             self.supabase = None
+    
+    def _init_telegram(self):
+        """Inizializza il gestore Telegram"""
+        try:
+            from components.telegram_manager import TelegramManager
+            self.telegram_manager = TelegramManager()
+            logger.info("✅ TelegramManager inizializzato per SupabaseManager")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione TelegramManager: {e}")
+            self.telegram_manager = None
     
     def test_connection(self) -> Tuple[bool, str]:
         """Testa la connessione a Supabase"""
@@ -95,6 +107,15 @@ class SupabaseManager:
             response = self.supabase.table('clienti').insert(cliente_data).execute()
             
             if response.data:
+                # Invia notifica Telegram per nuovo cliente
+                self._send_cliente_notification('new_client', {
+                    'nome_cliente': cliente_data.get('nome_cliente', 'N/A'),
+                    'email': cliente_data.get('email', 'N/A'),
+                    'telefono': cliente_data.get('telefono', 'N/A'),
+                    'broker': cliente_data.get('broker', 'N/A'),
+                    'created_at': cliente_data['created_at']
+                })
+                
                 return True, f"✅ Cliente {cliente_data.get('nome_cliente')} aggiunto"
             else:
                 return False, "❌ Errore inserimento cliente"
@@ -659,6 +680,48 @@ class SupabaseManager:
         except Exception as e:
             logger.error(f"❌ Errore aggiornamento utente {user_id}: {e}")
             return False, f"❌ Errore: {e}"
+    
+    def _send_cliente_notification(self, notification_type: str, data: Dict[str, Any]):
+        """Invia notifica Telegram per eventi clienti"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                logger.info("📱 Telegram non configurato, notifica cliente non inviata")
+                return
+            
+            # Controlla se le notifiche clienti sono abilitate
+            if not self._is_notification_enabled('cliente'):
+                logger.info("🔔 Notifiche clienti disabilitate")
+                return
+            
+            # Invia la notifica
+            success, message = self.telegram_manager.send_notification(notification_type, data)
+            
+            if success:
+                logger.info(f"✅ Notifica cliente '{notification_type}' inviata con successo")
+            else:
+                logger.warning(f"⚠️ Errore invio notifica cliente '{notification_type}': {message}")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore invio notifica cliente '{notification_type}': {e}")
+    
+    def _is_notification_enabled(self, notification_category: str) -> bool:
+        """Controlla se le notifiche per una categoria sono abilitate"""
+        try:
+            if not self.supabase:
+                return True  # Default abilitato se Supabase non disponibile
+            
+            # Recupera impostazioni notifiche dal database
+            response = self.supabase.table('notification_settings').select('*').eq('notification_type', notification_category).execute()
+            
+            if response.data and len(response.data) > 0:
+                setting = response.data[0]
+                return setting.get('is_enabled', True)
+            else:
+                return True  # Default abilitato se nessuna impostazione trovata
+                
+        except Exception as e:
+            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")
+            return True  # Default abilitato in caso di errore
 
 def show_supabase_status():
     """Mostra lo stato di Supabase nell'interfaccia"""
