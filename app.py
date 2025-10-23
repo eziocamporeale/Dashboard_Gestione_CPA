@@ -198,7 +198,10 @@ def init_components(db):
         if Charts:
             components_dict['charts'] = Charts()
         if IncrociTab and IncrociManager:
-            components_dict['incroci_tab'] = IncrociTab(IncrociManager(), db)
+            # Usa l'istanza esistente di IncrociManager invece di crearne una nuova
+            incroci_manager = IncrociManager()
+            components_dict['incroci_tab'] = IncrociTab(incroci_manager, db)
+            components_dict['incroci_manager'] = incroci_manager
         if BrokerLinksManager:
             components_dict['broker_links_manager'] = BrokerLinksManager()
         

@@ -15,7 +15,21 @@ logger = logging.getLogger(__name__)
 class SupabaseManager:
     """Gestore Supabase per database remoto professionale"""
     
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls):
+        """Implementa il pattern Singleton"""
+        if cls._instance is None:
+            cls._instance = super(SupabaseManager, cls).__new__(cls)
+        return cls._instance
+    
     def __init__(self):
+        """Inizializza il gestore Supabase"""
+        # Evita reinizializzazione se già inizializzato
+        if self._initialized:
+            return
+            
         # Prova prima le variabili ambiente locali
         self.supabase_url = os.getenv('SUPABASE_URL')
         self.supabase_key = os.getenv('SUPABASE_KEY')
@@ -50,6 +64,9 @@ class SupabaseManager:
         else:
             logger.warning("⚠️ Variabili ambiente Supabase non configurate")
             self.supabase = None
+        
+        # Marca come inizializzato
+        self._initialized = True
     
     def _init_telegram(self):
         """Inizializza il gestore Telegram"""
