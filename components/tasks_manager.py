@@ -694,8 +694,8 @@ class TasksManager:
                 return
             
             # Controlla se le notifiche task sono abilitate
-            if not self._is_notification_enabled('task'):
-                logger.info("🔔 Notifiche task disabilitate")
+            if not self._is_notification_enabled(notification_type):
+                logger.info(f"🔔 Notifiche {notification_type} disabilitate")
                 return
             
             # Invia la notifica
@@ -722,7 +722,14 @@ class TasksManager:
                 setting = response.data[0]
                 return setting.get('is_enabled', True)
             else:
-                return True  # Default abilitato se nessuna impostazione trovata
+                # Se non trova l'impostazione specifica, usa i default
+                default_settings = {
+                    'task_new_task': True,
+                    'task_completed': True,
+                    'task_due_soon': True,
+                    'task_daily_report': False,
+                }
+                return default_settings.get(notification_category, True)
                 
         except Exception as e:
             logger.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")

@@ -493,8 +493,8 @@ class IncrociManager:
                 return
             
             # Controlla se le notifiche incroci sono abilitate
-            if not self._is_notification_enabled('incrocio'):
-                logging.info("🔔 Notifiche incroci disabilitate")
+            if not self._is_notification_enabled(notification_type):
+                logging.info(f"🔔 Notifiche {notification_type} disabilitate")
                 return
             
             # Invia la notifica
@@ -521,7 +521,14 @@ class IncrociManager:
                 setting = response.data[0]
                 return setting.get('is_enabled', True)
             else:
-                return True  # Default abilitato se nessuna impostazione trovata
+                # Se non trova l'impostazione specifica, usa i default
+                default_settings = {
+                    'incrocio_new_incrocio': True,
+                    'incrocio_closed': True,
+                    'incrocio_daily_report': False,
+                    'incrocio_long_open_alert': False,
+                }
+                return default_settings.get(notification_category, True)
                 
         except Exception as e:
             logging.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")

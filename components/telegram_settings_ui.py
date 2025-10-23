@@ -201,53 +201,268 @@ Se ricevi questo messaggio, tutto funziona correttamente! 🎉
     def _render_notification_settings(self):
         """Rende le impostazioni delle notifiche"""
         st.subheader("⚙️ Impostazioni Notifiche")
-        st.info("🔔 **GESTIONE NOTIFICHE**: Abilita/disabilita i tipi di notifiche")
+        st.info("🔔 **GESTIONE NOTIFICHE**: Abilita/disabilita i tipi di notifiche per ogni sezione")
         
-        # Placeholder per le impostazioni notifiche
-        # In futuro implementeremo la gestione delle impostazioni per tipo
+        # Carica le impostazioni esistenti
+        notification_settings = self._load_notification_settings()
         
+        # Crea i toggle per ogni categoria
+        st.markdown("### 📋 **Task**")
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("**📋 Task:**")
-            task_new = st.checkbox("Nuovo task creato", value=True)
-            task_completed = st.checkbox("Task completato", value=True)
-            task_due = st.checkbox("Task in scadenza", value=True)
-            task_daily = st.checkbox("Report giornaliero task", value=False)
+            task_new = st.checkbox(
+                "🆕 Nuovo task creato", 
+                value=notification_settings.get('task_new_task', True),
+                key="task_new"
+            )
+            task_completed = st.checkbox(
+                "✅ Task completato", 
+                value=notification_settings.get('task_completed', True),
+                key="task_completed"
+            )
         
         with col2:
-            st.markdown("**🔄 Incroci:**")
-            incrocio_new = st.checkbox("Nuovo incrocio", value=True)
-            incrocio_closed = st.checkbox("Incrocio chiuso", value=True)
-            incrocio_daily = st.checkbox("Report giornaliero incroci", value=False)
+            task_due = st.checkbox(
+                "⏰ Task in scadenza", 
+                value=notification_settings.get('task_due_soon', True),
+                key="task_due"
+            )
+            task_daily = st.checkbox(
+                "📊 Report giornaliero task", 
+                value=notification_settings.get('task_daily_report', False),
+                key="task_daily"
+            )
         
-        col3, col4 = st.columns(2)
+        st.markdown("### 🔄 **Incroci**")
+        col1, col2 = st.columns(2)
         
-        with col3:
-            st.markdown("**👤 Clienti:**")
-            client_new = st.checkbox("Nuovo cliente", value=True)
-            client_modified = st.checkbox("Cliente modificato", value=False)
+        with col1:
+            incrocio_new = st.checkbox(
+                "🆕 Nuovo incrocio", 
+                value=notification_settings.get('incrocio_new_incrocio', True),
+                key="incrocio_new"
+            )
+            incrocio_closed = st.checkbox(
+                "🔒 Incrocio chiuso", 
+                value=notification_settings.get('incrocio_closed', True),
+                key="incrocio_closed"
+            )
         
-        with col4:
-            st.markdown("**💰 Transazioni:**")
-            transaction_new = st.checkbox("Nuova transazione", value=True)
-            balance_low = st.checkbox("Saldo basso", value=True)
+        with col2:
+            incrocio_daily = st.checkbox(
+                "📊 Report giornaliero incroci", 
+                value=notification_settings.get('incrocio_daily_report', False),
+                key="incrocio_daily"
+            )
+            incrocio_alert = st.checkbox(
+                "⚠️ Alert incroci aperti >X giorni", 
+                value=notification_settings.get('incrocio_long_open_alert', False),
+                key="incrocio_alert"
+            )
         
-        col5, col6 = st.columns(2)
+        st.markdown("### 👥 **Clienti**")
+        col1, col2 = st.columns(2)
         
-        with col5:
-            st.markdown("**🖥️ VPS:**")
-            vps_expiring = st.checkbox("VPS in scadenza", value=True)
-            vps_expired = st.checkbox("VPS scaduto", value=True)
+        with col1:
+            cliente_new = st.checkbox(
+                "🆕 Nuovo cliente", 
+                value=notification_settings.get('cliente_new_client', True),
+                key="cliente_new"
+            )
+            cliente_modified = st.checkbox(
+                "✏️ Cliente modificato", 
+                value=notification_settings.get('cliente_modified', False),
+                key="cliente_modified"
+            )
         
-        with col6:
-            st.markdown("**📊 Sistema:**")
-            system_errors = st.checkbox("Errori sistema", value=True)
-            daily_summary = st.checkbox("Riepilogo giornaliero", value=False)
+        with col2:
+            cliente_deleted = st.checkbox(
+                "🗑️ Cliente eliminato", 
+                value=notification_settings.get('cliente_deleted', True),
+                key="cliente_deleted"
+            )
         
-        if st.button("💾 Salva Impostazioni Notifiche", type="primary"):
-            st.success("✅ Impostazioni notifiche salvate!")
-            st.info("💡 Le impostazioni saranno applicate alle prossime notifiche")
+        st.markdown("### 💰 **Wallet/Transazioni**")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            wallet_deposit = st.checkbox(
+                "💰 Nuovo deposito", 
+                value=notification_settings.get('wallet_new_deposit', True),
+                key="wallet_deposit"
+            )
+            wallet_withdrawal = st.checkbox(
+                "💸 Nuovo prelievo", 
+                value=notification_settings.get('wallet_new_withdrawal', True),
+                key="wallet_withdrawal"
+            )
+        
+        with col2:
+            wallet_cross = st.checkbox(
+                "🔄 Transazione incrocio", 
+                value=notification_settings.get('wallet_cross_transaction', True),
+                key="wallet_cross"
+            )
+            wallet_low_balance = st.checkbox(
+                "⚠️ Alert saldo basso", 
+                value=notification_settings.get('wallet_low_balance_alert', False),
+                key="wallet_low_balance"
+            )
+        
+        st.markdown("### 🖥️ **VPS**")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            vps_expiring = st.checkbox(
+                "⏰ VPS in scadenza (7, 3, 1 giorni)", 
+                value=notification_settings.get('vps_expiring', True),
+                key="vps_expiring"
+            )
+            vps_expired = st.checkbox(
+                "❌ VPS scaduto", 
+                value=notification_settings.get('vps_expired', True),
+                key="vps_expired"
+            )
+        
+        with col2:
+            vps_new = st.checkbox(
+                "🆕 Nuovo VPS aggiunto", 
+                value=notification_settings.get('vps_new', True),
+                key="vps_new"
+            )
+            vps_monthly = st.checkbox(
+                "📊 Report mensile VPS", 
+                value=notification_settings.get('vps_monthly_report', False),
+                key="vps_monthly"
+            )
+        
+        # Pulsante salva
+        st.markdown("---")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col2:
+            if st.button("💾 Salva Impostazioni Notifiche", type="primary", use_container_width=True):
+                self._save_notification_settings({
+                    # Task
+                    'task_new_task': task_new,
+                    'task_completed': task_completed,
+                    'task_due_soon': task_due,
+                    'task_daily_report': task_daily,
+                    
+                    # Incroci
+                    'incrocio_new_incrocio': incrocio_new,
+                    'incrocio_closed': incrocio_closed,
+                    'incrocio_daily_report': incrocio_daily,
+                    'incrocio_long_open_alert': incrocio_alert,
+                    
+                    # Clienti
+                    'cliente_new_client': cliente_new,
+                    'cliente_modified': cliente_modified,
+                    'cliente_deleted': cliente_deleted,
+                    
+                    # Wallet
+                    'wallet_new_deposit': wallet_deposit,
+                    'wallet_new_withdrawal': wallet_withdrawal,
+                    'wallet_cross_transaction': wallet_cross,
+                    'wallet_low_balance_alert': wallet_low_balance,
+                    
+                    # VPS
+                    'vps_expiring': vps_expiring,
+                    'vps_expired': vps_expired,
+                    'vps_new': vps_new,
+                    'vps_monthly_report': vps_monthly,
+                })
+    
+    def _load_notification_settings(self) -> Dict[str, bool]:
+        """Carica le impostazioni notifiche dal database"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.supabase_manager:
+                logger.warning("⚠️ SupabaseManager non disponibile per caricamento impostazioni")
+                return self._get_default_notification_settings()
+            
+            # Recupera tutte le impostazioni notifiche
+            response = self.telegram_manager.supabase_manager.supabase.table('notification_settings').select('*').execute()
+            
+            if response.data:
+                settings = {}
+                for setting in response.data:
+                    settings[setting['notification_type']] = setting.get('is_enabled', True)
+                logger.info(f"✅ Caricate {len(settings)} impostazioni notifiche dal database")
+                return settings
+            else:
+                logger.info("📋 Nessuna impostazione notifiche trovata, uso default")
+                return self._get_default_notification_settings()
+                
+        except Exception as e:
+            logger.error(f"❌ Errore caricamento impostazioni notifiche: {e}")
+            return self._get_default_notification_settings()
+    
+    def _save_notification_settings(self, settings: Dict[str, bool]):
+        """Salva le impostazioni notifiche nel database"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.supabase_manager:
+                st.error("❌ SupabaseManager non disponibile per salvataggio impostazioni")
+                return
+            
+            # Prepara i dati per l'inserimento/aggiornamento
+            settings_data = []
+            for notification_type, is_enabled in settings.items():
+                settings_data.append({
+                    'notification_type': notification_type,
+                    'is_enabled': is_enabled,
+                    'updated_at': datetime.now().isoformat()
+                })
+            
+            # Usa upsert per inserire o aggiornare
+            response = self.telegram_manager.supabase_manager.supabase.table('notification_settings').upsert(
+                settings_data, 
+                on_conflict='notification_type'
+            ).execute()
+            
+            if response.data:
+                st.success(f"✅ Impostazioni notifiche salvate con successo! ({len(settings)} impostazioni)")
+                logger.info(f"✅ Salvate {len(settings)} impostazioni notifiche nel database")
+            else:
+                st.error("❌ Errore salvataggio impostazioni notifiche")
+                logger.error("❌ Errore salvataggio impostazioni notifiche")
+                
+        except Exception as e:
+            st.error(f"❌ Errore salvataggio impostazioni: {e}")
+            logger.error(f"❌ Errore salvataggio impostazioni notifiche: {e}")
+    
+    def _get_default_notification_settings(self) -> Dict[str, bool]:
+        """Restituisce le impostazioni notifiche di default"""
+        return {
+            # Task
+            'task_new_task': True,
+            'task_completed': True,
+            'task_due_soon': True,
+            'task_daily_report': False,
+            
+            # Incroci
+            'incrocio_new_incrocio': True,
+            'incrocio_closed': True,
+            'incrocio_daily_report': False,
+            'incrocio_long_open_alert': False,
+            
+            # Clienti
+            'cliente_new_client': True,
+            'cliente_modified': False,
+            'cliente_deleted': True,
+            
+            # Wallet
+            'wallet_new_deposit': True,
+            'wallet_new_withdrawal': True,
+            'wallet_cross_transaction': True,
+            'wallet_low_balance_alert': False,
+            
+            # VPS
+            'vps_expiring': True,
+            'vps_expired': True,
+            'vps_new': True,
+            'vps_monthly_report': False,
+        }
     
     def _render_notification_logs(self):
         """Rende i log delle notifiche"""
