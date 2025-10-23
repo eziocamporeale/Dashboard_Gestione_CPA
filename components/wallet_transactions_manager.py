@@ -595,9 +595,9 @@ class WalletTransactionsManager:
                 logger.info("📱 Telegram non configurato, notifica wallet non inviata")
                 return
             
-            # Controlla se le notifiche wallet sono abilitate
-            if not self._is_notification_enabled('wallet'):
-                logger.info("🔔 Notifiche wallet disabilitate")
+            # Controlla se le notifiche per questo tipo specifico sono abilitate
+            if not self._is_notification_enabled(notification_type):
+                logger.info(f"🔔 Notifiche '{notification_type}' disabilitate")
                 return
             
             # Invia la notifica
@@ -611,21 +611,42 @@ class WalletTransactionsManager:
         except Exception as e:
             logger.error(f"❌ Errore invio notifica wallet '{notification_type}': {e}")
     
-    def _is_notification_enabled(self, notification_category: str) -> bool:
-        """Controlla se le notifiche per una categoria sono abilitate"""
+    def _is_notification_enabled(self, notification_type: str) -> bool:
+        """Controlla se le notifiche per un tipo specifico sono abilitate"""
         try:
             if not self.supabase_manager:
-                return True  # Default abilitato se Supabase non disponibile
+                # Default settings se Supabase non disponibile
+                default_settings = {
+                    'wallet_new_deposit': True,
+                    'wallet_new_withdrawal': True,
+                    'wallet_cross_transaction': True,
+                    'wallet_low_balance_alert': False,
+                }
+                return default_settings.get(notification_type, True)
             
             # Recupera impostazioni notifiche dal database
-            response = self.supabase_manager.supabase.table('notification_settings').select('*').eq('notification_type', notification_category).execute()
+            response = self.supabase_manager.supabase.table('notification_settings').select('*').eq('notification_type', notification_type).execute()
             
             if response.data and len(response.data) > 0:
                 setting = response.data[0]
                 return setting.get('is_enabled', True)
             else:
-                return True  # Default abilitato se nessuna impostazione trovata
+                # Default settings se nessuna impostazione trovata
+                default_settings = {
+                    'wallet_new_deposit': True,
+                    'wallet_new_withdrawal': True,
+                    'wallet_cross_transaction': True,
+                    'wallet_low_balance_alert': False,
+                }
+                return default_settings.get(notification_type, True)
                 
         except Exception as e:
-            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")
-            return True  # Default abilitato in caso di errore
+            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_type}: {e}")
+            # Default settings in caso di errore
+            default_settings = {
+                'wallet_new_deposit': True,
+                'wallet_new_withdrawal': True,
+                'wallet_cross_transaction': True,
+                'wallet_low_balance_alert': False,
+            }
+            return default_settings.get(notification_type, True)

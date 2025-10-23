@@ -18,7 +18,9 @@ class VPSManager:
     
     def __init__(self):
         """Inizializza il VPS Manager"""
-        pass
+        self.telegram_manager = None
+        self.supabase_manager = None
+        self._init_managers()
     
     def _encrypt_password(self, password: str) -> str:
         """Password VPS senza crittografia (versione semplificata)"""
@@ -224,3 +226,91 @@ class VPSManager:
         except Exception as e:
             logger.error(f"Errore esportazione dati VPS: {e}")
             return pd.DataFrame()
+    
+    def _init_managers(self):
+        """Inizializza i manager necessari"""
+        try:
+            from components.telegram_manager import TelegramManager
+            from supabase_manager import SupabaseManager
+            
+            self.supabase_manager = SupabaseManager()
+            logger.info("✅ VPSManager inizializzato con Supabase")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione VPSManager: {e}")
+    
+    def _init_telegram(self):
+        """Inizializza TelegramManager se necessario"""
+        try:
+            if not self.telegram_manager:
+                from components.telegram_manager import TelegramManager
+                self.telegram_manager = TelegramManager()
+                logger.info("✅ TelegramManager inizializzato per VPSManager")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione TelegramManager: {e}")
+    
+    def _send_vps_notification(self, notification_type: str, data: Dict[str, Any]):
+        """Invia notifica Telegram per eventi VPS"""
+        try:
+            # Inizializza TelegramManager solo se necessario
+            if not self.telegram_manager:
+                self._init_telegram()
+            
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                logger.info("📱 Telegram non configurato, notifica VPS non inviata")
+                return
+            
+            # Controlla se le notifiche per questo tipo specifico sono abilitate
+            if not self._is_notification_enabled(notification_type):
+                logger.info(f"🔔 Notifiche '{notification_type}' disabilitate")
+                return
+            
+            # Invia la notifica
+            success, message = self.telegram_manager.send_notification(notification_type, data)
+            
+            if success:
+                logger.info(f"✅ Notifica VPS '{notification_type}' inviata con successo")
+            else:
+                logger.warning(f"⚠️ Errore invio notifica VPS '{notification_type}': {message}")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore invio notifica VPS '{notification_type}': {e}")
+    
+    def _is_notification_enabled(self, notification_type: str) -> bool:
+        """Controlla se le notifiche per un tipo specifico sono abilitate"""
+        try:
+            if not self.supabase_manager:
+                # Default settings se Supabase non disponibile
+                default_settings = {
+                    'vps_expiring': True,
+                    'vps_expired': True,
+                    'vps_new': True,
+                    'vps_monthly_report': False,
+                }
+                return default_settings.get(notification_type, True)
+            
+            # Recupera impostazioni notifiche dal database
+            response = self.supabase_manager.supabase.table('notification_settings').select('*').eq('notification_type', notification_type).execute()
+            
+            if response.data and len(response.data) > 0:
+                setting = response.data[0]
+                return setting.get('is_enabled', True)
+            else:
+                # Default settings se nessuna impostazione trovata
+                default_settings = {
+                    'vps_expiring': True,
+                    'vps_expired': True,
+                    'vps_new': True,
+                    'vps_monthly_report': False,
+                }
+                return default_settings.get(notification_type, True)
+                
+        except Exception as e:
+            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_type}: {e}")
+            # Default settings in caso di errore
+            default_settings = {
+                'vps_expiring': True,
+                'vps_expired': True,
+                'vps_new': True,
+                'vps_monthly_report': False,
+            }
+            return default_settings.get(notification_type, True)
