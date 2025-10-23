@@ -22,10 +22,23 @@ class IncrociManager:
         """Inizializza il manager degli incroci con Supabase"""
         if SupabaseManager:
             self.supabase = SupabaseManager()
+            self.telegram_manager = None
+            self._init_telegram()
             logging.info("IncrociManager inizializzato con Supabase")
         else:
             self.supabase = None
+            self.telegram_manager = None
             logging.warning("IncrociManager inizializzato senza Supabase")
+    
+    def _init_telegram(self):
+        """Inizializza il gestore Telegram"""
+        try:
+            from components.telegram_manager import TelegramManager
+            self.telegram_manager = TelegramManager()
+            logging.info("✅ TelegramManager inizializzato per IncrociManager")
+        except Exception as e:
+            logging.error(f"❌ Errore inizializzazione TelegramManager: {e}")
+            self.telegram_manager = None
     
     def ottieni_incroci(self, stato: Optional[str] = None) -> pd.DataFrame:
         """
@@ -346,6 +359,17 @@ class IncrociManager:
                 # Non bloccare la creazione dell'incrocio se c'è un errore wallet
             
             logging.info(f"Incrocio creato con ID: {incrocio_id}")
+            
+            # Invia notifica Telegram per nuovo incrocio
+            self._send_incrocio_notification('new_incrocio', {
+                'nome_incrocio': dati_incrocio['nome_incrocio'],
+                'pair_trading': dati_incrocio['pair_trading'],
+                'cliente_long': dati_incrocio.get('cliente_long', 'N/A'),
+                'cliente_short': dati_incrocio.get('cliente_short', 'N/A'),
+                'lot_size': dati_incrocio.get('volume_trading', 'N/A'),
+                'created_at': datetime.now().isoformat()
+            })
+            
             return True, incrocio_id
                 
         except Exception as e:
@@ -455,3 +479,45 @@ class IncrociManager:
         except Exception as e:
             logging.error(f"Errore eliminazione incrocio da Supabase: {e}")
             return False
+    
+    def _send_incrocio_notification(self, notification_type: str, data: Dict[str, Any]):
+        """Invia notifica Telegram per eventi incroci"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                logging.info("📱 Telegram non configurato, notifica incrocio non inviata")
+                return
+            
+            # Controlla se le notifiche incroci sono abilitate
+            if not self._is_notification_enabled('incrocio'):
+                logging.info("🔔 Notifiche incroci disabilitate")
+                return
+            
+            # Invia la notifica
+            success, message = self.telegram_manager.send_notification(notification_type, data)
+            
+            if success:
+                logging.info(f"✅ Notifica incrocio '{notification_type}' inviata con successo")
+            else:
+                logging.warning(f"⚠️ Errore invio notifica incrocio '{notification_type}': {message}")
+                
+        except Exception as e:
+            logging.error(f"❌ Errore invio notifica incrocio '{notification_type}': {e}")
+    
+    def _is_notification_enabled(self, notification_category: str) -> bool:
+        """Controlla se le notifiche per una categoria sono abilitate"""
+        try:
+            if not self.supabase:
+                return True  # Default abilitato se Supabase non disponibile
+            
+            # Recupera impostazioni notifiche dal database
+            response = self.supabase.supabase.table('notification_settings').select('*').eq('notification_type', notification_category).execute()
+            
+            if response.data and len(response.data) > 0:
+                setting = response.data[0]
+                return setting.get('is_enabled', True)
+            else:
+                return True  # Default abilitato se nessuna impostazione trovata
+                
+        except Exception as e:
+            logging.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")
+            return True  # Default abilitato in caso di errore

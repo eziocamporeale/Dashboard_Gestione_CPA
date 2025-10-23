@@ -44,7 +44,9 @@ class TasksManager:
     def __init__(self):
         """Inizializza il gestore task"""
         self.supabase_manager = None
+        self.telegram_manager = None
         self._init_supabase()
+        self._init_telegram()
         logger.info("✅ TasksManager inizializzato correttamente")
     
     def _init_supabase(self):
@@ -56,6 +58,16 @@ class TasksManager:
         except Exception as e:
             logger.error(f"❌ Errore inizializzazione Supabase: {e}")
             self.supabase_manager = None
+    
+    def _init_telegram(self):
+        """Inizializza il gestore Telegram"""
+        try:
+            from components.telegram_manager import TelegramManager
+            self.telegram_manager = TelegramManager()
+            logger.info("✅ TelegramManager inizializzato per TasksManager")
+        except Exception as e:
+            logger.error(f"❌ Errore inizializzazione TelegramManager: {e}")
+            self.telegram_manager = None
     
     def render_tasks_dashboard(self):
         """Rende il dashboard principale dei task"""
@@ -475,6 +487,10 @@ class TasksManager:
                     
                     if response.data:
                         logger.info(f"✅ Task '{title}' salvato nel database con ID {task_id}")
+                        
+                        # Invia notifica Telegram per nuovo task
+                        self._send_task_notification('new_task', task_data)
+                        
                         return True, f"✅ Task '{title}' creato e salvato nel database!"
                     else:
                         logger.warning(f"⚠️ Errore salvataggio database per task '{title}', uso sessione temporanea")
@@ -562,6 +578,17 @@ class TasksManager:
                     
                     if response.data:
                         logger.info(f"✅ Task {task_id} aggiornato a {new_status} nel database")
+                        
+                        # Invia notifica Telegram se task completato
+                        if new_status == TaskStatus.COMPLETED.value:
+                            # Recupera i dati del task per la notifica
+                            task_data = response.data[0] if response.data else {}
+                            self._send_task_notification('task_completed', {
+                                'title': task_data.get('title', 'N/A'),
+                                'completed_by': 'Admin',  # In futuro prendere dall'utente corrente
+                                'completed_at': update_data['completed_at']
+                            })
+                        
                         return True, f"✅ Task aggiornato a {new_status}"
                     else:
                         logger.warning(f"⚠️ Errore aggiornamento database per task {task_id}")
@@ -653,3 +680,75 @@ class TasksManager:
         except Exception as e:
             logger.error(f"❌ Errore recupero collaboratori per assegnazione: {e}")
             return ["Admin"]  # Fallback
+    
+    def _send_task_notification(self, notification_type: str, data: Dict[str, Any]):
+        """Invia notifica Telegram per eventi task"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                logger.info("📱 Telegram non configurato, notifica non inviata")
+                return
+            
+            # Controlla se le notifiche task sono abilitate
+            if not self._is_notification_enabled('task'):
+                logger.info("🔔 Notifiche task disabilitate")
+                return
+            
+            # Invia la notifica
+            success, message = self.telegram_manager.send_notification(notification_type, data)
+            
+            if success:
+                logger.info(f"✅ Notifica task '{notification_type}' inviata con successo")
+            else:
+                logger.warning(f"⚠️ Errore invio notifica task '{notification_type}': {message}")
+                
+        except Exception as e:
+            logger.error(f"❌ Errore invio notifica task '{notification_type}': {e}")
+    
+    def _is_notification_enabled(self, notification_category: str) -> bool:
+        """Controlla se le notifiche per una categoria sono abilitate"""
+        try:
+            if not self.supabase_manager:
+                return True  # Default abilitato se Supabase non disponibile
+            
+            # Recupera impostazioni notifiche dal database
+            response = self.supabase_manager.supabase.table('notification_settings').select('*').eq('notification_type', notification_category).execute()
+            
+            if response.data and len(response.data) > 0:
+                setting = response.data[0]
+                return setting.get('is_enabled', True)
+            else:
+                return True  # Default abilitato se nessuna impostazione trovata
+                
+        except Exception as e:
+            logger.error(f"❌ Errore controllo impostazioni notifiche {notification_category}: {e}")
+            return True  # Default abilitato in caso di errore
+    
+    def check_due_tasks_notifications(self):
+        """Controlla task in scadenza e invia notifiche"""
+        try:
+            if not self.telegram_manager or not self.telegram_manager.is_configured:
+                return
+            
+            # Recupera task in scadenza (nei prossimi 3 giorni)
+            tasks = self.get_tasks()
+            today = date.today()
+            
+            for task in tasks:
+                if task.get('due_date') and task.get('status') in [TaskStatus.TODO.value, TaskStatus.IN_PROGRESS.value]:
+                    try:
+                        due_date = datetime.fromisoformat(task['due_date']).date()
+                        days_left = (due_date - today).days
+                        
+                        # Invia notifica se scade tra 1-3 giorni
+                        if 1 <= days_left <= 3:
+                            self._send_task_notification('task_due_soon', {
+                                'title': task.get('title', 'N/A'),
+                                'days_left': days_left,
+                                'assigned_to': task.get('assigned_to', []),
+                                'priority': task.get('priority', 'N/A')
+                            })
+                    except Exception as e:
+                        logger.error(f"❌ Errore controllo scadenza task {task.get('id')}: {e}")
+                        
+        except Exception as e:
+            logger.error(f"❌ Errore controllo task in scadenza: {e}")
