@@ -103,7 +103,7 @@ class TelegramSettingsUI:
                 
                 if submitted:
                     if bot_token and chat_id:
-                        success, message = self.telegram_manager.save_config(bot_token, chat_id)
+                        success, message = self.telegram_manager.save_configuration(bot_token, chat_id)
                         if success:
                             st.success("✅ Configurazione salvata con successo!")
                             st.rerun()
