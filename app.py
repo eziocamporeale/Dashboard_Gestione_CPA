@@ -1331,8 +1331,8 @@ elif page == "⚙️ Impostazioni":
     st.info("🚀 **CONFIGURAZIONE SUPABASE**: Gestisci sistema remoto, sicurezza e configurazione")
     
     # Tab per organizzare le impostazioni
-    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings, tab_statistics = st.tabs([
-        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente", "📊 Statistiche Sistema"
+    tab_supabase, tab_system, tab_security, tab_permissions, tab_user_settings, tab_telegram, tab_statistics = st.tabs([
+        "🚀 Supabase", "ℹ️ Sistema", "🔒 Sicurezza", "🛡️ Permessi", "👤 Impostazioni Utente", "📱 Telegram", "📊 Statistiche Sistema"
     ])
     
     # TAB 1: Supabase
@@ -1787,7 +1787,41 @@ elif page == "⚙️ Impostazioni":
             st.error(f"❌ **Errore caricamento impostazioni utente:** {e}")
             st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
 
-    # TAB 6: Statistiche Sistema
+    # TAB 6: Telegram
+    with tab_telegram:
+        try:
+            from components.telegram_settings_ui import TelegramSettingsUI
+            
+            telegram_ui = TelegramSettingsUI()
+            telegram_ui.render_telegram_settings()
+            
+        except ImportError as e:
+            st.error(f"❌ **COMPONENTE TELEGRAM NON DISPONIBILE**: {e}")
+            st.info("💡 Controlla che il file `components/telegram_settings_ui.py` sia presente")
+            
+            # Fallback: mostra informazioni base
+            st.subheader("📱 Notifiche Telegram")
+            st.info("🤖 **BOT TELEGRAM**: Sistema di notifiche automatiche")
+            
+            st.markdown("""
+            **🚀 Funzionalità:**
+            - Notifiche per nuovi task
+            - Alert per incroci e VPS
+            - Report giornalieri automatici
+            - Notifiche transazioni e clienti
+            
+            **📋 Per configurare:**
+            1. Crea un bot con @BotFather
+            2. Aggiungi il bot al tuo canale/gruppo
+            3. Configura token e chat ID
+            4. Testa la connessione
+            """)
+            
+        except Exception as e:
+            st.error(f"❌ **Errore caricamento Telegram Settings**: {e}")
+            st.info("🔧 Controlla che tutte le dipendenze siano installate correttamente")
+
+    # TAB 7: Statistiche Sistema
     with tab_statistics:
         st.subheader("📊 Statistiche Sistema")
         st.info("📈 **STATISTICHE AVANZATE**: Visualizza metriche e analisi del sistema")
