@@ -7,7 +7,7 @@ USO SUPABASE invece di SQLite locale
 
 import pandas as pd
 from datetime import datetime, date
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 import logging
 
 try:

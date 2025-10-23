@@ -8,7 +8,7 @@ Creato da Ezio Camporeale
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 import logging
 import uuid
 from enum import Enum
